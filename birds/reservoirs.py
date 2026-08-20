@@ -1,0 +1,251 @@
+"""Reference reservoir compositions for overlay on bivariate plots.
+
+Major elements are wt.% on an anhydrous basis; trace elements are ppm
+(unless noted otherwise — K, Ti and P shown in both wt.% and ppm where
+useful).
+
+References
+----------
+* Rudnick, R. L. & Gao, S. (2003). Composition of the Continental Crust.
+  In *Treatise on Geochemistry* vol. 3, pp 1-64.
+* Taylor, S. R. & McLennan, S. M. (1985). *The Continental Crust: its
+  Composition and Evolution.*
+* Sun, S.-S. & McDonough, W. F. (1989). Chemical and isotopic systematics
+  of oceanic basalts. *GSL Sp. Pub.* 42, 313-345.
+* McDonough, W. F. & Sun, S.-S. (1995). The composition of the Earth.
+  *Chem. Geol.* 120, 223-253.
+* Workman, R. K. & Hart, S. R. (2005). Major and trace element
+  composition of the depleted MORB mantle. *EPSL* 231, 53-72.
+* Hirose, K. & Kushiro, I. (1993). Partial melting of dry peridotites
+  at high pressures (KLB-1). *EPSL* 114, 477-489.
+* Walter, M. J. (1998). Melting of garnet peridotite (KR4003) and the
+  origin of komatiite and depleted lithosphere. *J. Petrol.* 39, 29-60.
+* Hirschmann, M. M. et al. (2003). Library of experimental phase
+  relations (MIX1G garnet pyroxenite). *J. Petrol.* 44, 1389-1411.
+"""
+
+from __future__ import annotations
+
+from typing import Dict, List
+
+
+# ---------------------------------------------------------------------------
+# Reservoir catalogue
+# ---------------------------------------------------------------------------
+
+RESERVOIRS: Dict[str, Dict[str, float]] = {
+    # ── Rudnick & Gao 2003 — Continental Crust ────────────────────────────
+    "UCC (Rudnick & Gao 2003)": {
+        "SiO2": 66.60, "TiO2": 0.64, "Al2O3": 15.40, "FeOT": 5.04,
+        "MnO": 0.10, "MgO": 2.48, "CaO": 3.59, "Na2O": 3.27, "K2O": 2.80,
+        "P2O5": 0.15,
+        "Cs": 4.9, "Rb": 82, "Ba": 628, "Th": 10.5, "U": 2.7, "Nb": 12,
+        "K": 23200, "La": 31, "Ce": 63, "Pb": 17, "Pr": 7.1, "Sr": 320,
+        "Nd": 27, "Zr": 193, "Hf": 5.3, "Sm": 4.7, "Eu": 1.0, "Ti": 3840,
+        "Gd": 4.0, "Tb": 0.7, "Dy": 3.9, "Ho": 0.83, "Y": 21, "Er": 2.3,
+        "Tm": 0.30, "Yb": 2.0, "Lu": 0.31, "Ta": 0.9,
+        "Sc": 14, "V": 97, "Cr": 92, "Co": 17.3, "Ni": 47, "Cu": 28,
+        "Zn": 67, "Ga": 17.5,
+    },
+    "MCC (Rudnick & Gao 2003)": {
+        "SiO2": 63.50, "TiO2": 0.69, "Al2O3": 15.00, "FeOT": 6.02,
+        "MnO": 0.10, "MgO": 3.59, "CaO": 5.25, "Na2O": 3.39, "K2O": 2.30,
+        "P2O5": 0.15,
+        "Cs": 2.2, "Rb": 65, "Ba": 532, "Th": 6.5, "U": 1.3, "Nb": 10,
+        "La": 24, "Ce": 53, "Pb": 15.3, "Pr": 5.8, "Sr": 282,
+        "Nd": 25, "Zr": 149, "Hf": 4.4, "Sm": 4.6, "Eu": 1.4,
+        "Gd": 4.0, "Tb": 0.7, "Dy": 3.8, "Ho": 0.82, "Y": 20, "Er": 2.3,
+        "Tm": 0.32, "Yb": 2.2, "Lu": 0.40, "Ta": 0.6,
+        "Sc": 22, "V": 107, "Cr": 76, "Co": 22, "Ni": 33.5, "Cu": 26,
+        "Zn": 69.5, "Ga": 17.5,
+    },
+    "LCC (Rudnick & Gao 2003)": {
+        "SiO2": 53.40, "TiO2": 0.82, "Al2O3": 16.90, "FeOT": 8.57,
+        "MnO": 0.10, "MgO": 7.24, "CaO": 9.59, "Na2O": 2.65, "K2O": 0.61,
+        "P2O5": 0.10,
+        "Cs": 0.3, "Rb": 11, "Ba": 259, "Th": 1.2, "U": 0.2, "Nb": 5,
+        "La": 8, "Ce": 20, "Pb": 4, "Pr": 2.4, "Sr": 348,
+        "Nd": 11, "Zr": 68, "Hf": 1.9, "Sm": 2.8, "Eu": 1.1,
+        "Gd": 3.1, "Tb": 0.48, "Dy": 3.1, "Ho": 0.68, "Y": 16, "Er": 1.9,
+        "Tm": 0.24, "Yb": 1.5, "Lu": 0.25, "Ta": 0.6,
+        "Sc": 31, "V": 196, "Cr": 215, "Co": 38, "Ni": 88, "Cu": 26,
+        "Zn": 78, "Ga": 13,
+    },
+    "Bulk CC (Rudnick & Gao 2003)": {
+        "SiO2": 60.60, "TiO2": 0.72, "Al2O3": 15.90, "FeOT": 6.71,
+        "MnO": 0.10, "MgO": 4.66, "CaO": 6.41, "Na2O": 3.07, "K2O": 1.81,
+        "P2O5": 0.13,
+        "Cs": 2.0, "Rb": 49, "Ba": 456, "Th": 5.6, "U": 1.3, "Nb": 8,
+        "La": 20, "Ce": 43, "Pb": 11, "Pr": 4.9, "Sr": 320,
+        "Nd": 20, "Zr": 132, "Hf": 3.7, "Sm": 3.9, "Eu": 1.1,
+        "Gd": 3.7, "Tb": 0.6, "Dy": 3.6, "Ho": 0.77, "Y": 19, "Er": 2.1,
+        "Tm": 0.28, "Yb": 1.9, "Lu": 0.30, "Ta": 0.7,
+        "Sc": 21.9, "V": 138, "Cr": 135, "Co": 26.6, "Ni": 59, "Cu": 27,
+        "Zn": 72, "Ga": 16,
+    },
+
+    # ── Taylor & McLennan 1985 ──────────────────────────────────────────
+    "UCC (Taylor & McLennan 1985)": {
+        "SiO2": 65.89, "TiO2": 0.50, "Al2O3": 15.17, "FeOT": 4.49,
+        "MnO": 0.07, "MgO": 2.20, "CaO": 4.19, "Na2O": 3.89, "K2O": 3.39,
+        "P2O5": 0.20,
+        "Rb": 112, "Sr": 350, "Y": 22, "Zr": 190, "Nb": 25, "Cs": 3.7,
+        "Ba": 550, "La": 30, "Ce": 64, "Pr": 7.1, "Nd": 26, "Sm": 4.5,
+        "Eu": 0.88, "Gd": 3.8, "Tb": 0.64, "Dy": 3.5, "Ho": 0.80,
+        "Er": 2.3, "Tm": 0.33, "Yb": 2.2, "Lu": 0.32, "Hf": 5.8, "Ta": 2.2,
+        "Pb": 20, "Th": 10.7, "U": 2.8, "Sc": 11, "V": 60, "Cr": 35,
+        "Co": 10, "Ni": 20, "Cu": 25,
+    },
+    "Bulk CC (Taylor & McLennan 1985)": {
+        "SiO2": 57.3, "TiO2": 0.9, "Al2O3": 15.9, "FeOT": 9.1,
+        "MnO": 0.18, "MgO": 5.3, "CaO": 7.4, "Na2O": 3.1, "K2O": 1.1,
+        "Rb": 32, "Sr": 260, "Y": 20, "Zr": 100, "Nb": 11, "Cs": 1,
+        "Ba": 250, "La": 16, "Ce": 33, "Nd": 16, "Sm": 3.5, "Eu": 1.1,
+        "Gd": 3.3, "Tb": 0.6, "Dy": 3.7, "Ho": 0.78, "Er": 2.2,
+        "Yb": 2.2, "Lu": 0.30, "Hf": 3.0, "Ta": 1.0, "Pb": 8.0, "Th": 3.5,
+        "U": 0.91, "Sc": 30, "V": 230, "Cr": 185, "Co": 29, "Ni": 105,
+        "Cu": 75, "Zn": 80,
+    },
+
+    # ── Sun & McDonough 1989 — Oceanic basalts ─────────────────────────
+    "N-MORB (Sun & McDonough 1989)": {
+        "SiO2": 50.5, "TiO2": 1.50, "Al2O3": 15.00, "FeOT": 10.4,
+        "MnO": 0.19, "MgO": 7.70, "CaO": 11.40, "Na2O": 2.70, "K2O": 0.16,
+        "P2O5": 0.12,
+        "Cs": 0.007, "Rb": 0.56, "Ba": 6.3, "Th": 0.12, "U": 0.047,
+        "Nb": 2.33, "K": 600, "La": 2.50, "Ce": 7.50, "Pb": 0.30,
+        "Pr": 1.32, "Sr": 90, "P": 510, "Nd": 7.30, "Zr": 74,
+        "Hf": 2.05, "Sm": 2.63, "Eu": 1.02, "Ti": 7600, "Gd": 3.68,
+        "Tb": 0.67, "Dy": 4.55, "Ho": 1.01, "Y": 28, "Er": 2.97,
+        "Tm": 0.456, "Yb": 3.05, "Lu": 0.455, "Ta": 0.132,
+    },
+    "E-MORB (Sun & McDonough 1989)": {
+        "SiO2": 50.0, "TiO2": 1.70, "Al2O3": 14.80, "FeOT": 9.60,
+        "MnO": 0.19, "MgO": 7.60, "CaO": 11.40, "Na2O": 3.00, "K2O": 0.50,
+        "P2O5": 0.18,
+        "Cs": 0.063, "Rb": 5.04, "Ba": 57, "Th": 0.60, "U": 0.18,
+        "Nb": 8.30, "K": 2100, "La": 6.30, "Ce": 15.0, "Pb": 0.60,
+        "Pr": 2.05, "Sr": 155, "P": 1410, "Nd": 9.00, "Zr": 73,
+        "Hf": 2.03, "Sm": 2.60, "Eu": 0.91, "Ti": 6000, "Gd": 2.97,
+        "Tb": 0.53, "Dy": 3.55, "Ho": 0.79, "Y": 22, "Er": 2.31,
+        "Tm": 0.356, "Yb": 2.37, "Lu": 0.354, "Ta": 0.47,
+    },
+    "OIB (Sun & McDonough 1989)": {
+        "SiO2": 48.0, "TiO2": 2.50, "Al2O3": 13.50, "FeOT": 11.0,
+        "MnO": 0.17, "MgO": 10.0, "CaO": 10.0, "Na2O": 3.00, "K2O": 1.20,
+        "P2O5": 0.30,
+        "Cs": 0.387, "Rb": 31, "Ba": 350, "Th": 4.00, "U": 1.02,
+        "Nb": 48, "K": 12000, "La": 37, "Ce": 80, "Pb": 3.20,
+        "Pr": 9.70, "Sr": 660, "P": 2700, "Nd": 38.5, "Zr": 280,
+        "Hf": 7.80, "Sm": 10.0, "Eu": 3.00, "Ti": 17200, "Gd": 7.62,
+        "Tb": 1.05, "Dy": 5.60, "Ho": 1.06, "Y": 29, "Er": 2.62,
+        "Tm": 0.35, "Yb": 2.16, "Lu": 0.30, "Ta": 2.7,
+    },
+
+    # ── Mantle rocks ────────────────────────────────────────────────────
+    "Primitive mantle (McDonough & Sun 1995)": {
+        "SiO2": 44.95, "TiO2": 0.20, "Al2O3": 4.45, "FeOT": 8.05,
+        "MnO": 0.13, "MgO": 37.78, "CaO": 3.55, "Na2O": 0.36, "K2O": 0.029,
+        "P2O5": 0.021,
+        "Cs": 0.021, "Rb": 0.6, "Ba": 6.6, "Th": 0.0795, "U": 0.0203,
+        "Nb": 0.658, "K": 240, "La": 0.648, "Ce": 1.675, "Pb": 0.15,
+        "Pr": 0.254, "Sr": 19.9, "P": 90, "Nd": 1.250, "Zr": 10.5,
+        "Hf": 0.283, "Sm": 0.406, "Eu": 0.154, "Ti": 1205, "Gd": 0.544,
+        "Tb": 0.099, "Dy": 0.674, "Ho": 0.149, "Y": 4.3, "Er": 0.438,
+        "Tm": 0.068, "Yb": 0.441, "Lu": 0.0675, "Ta": 0.037,
+        "Sc": 16.2, "V": 82, "Cr": 2625, "Co": 105, "Ni": 1960,
+    },
+    "Depleted MORB mantle (Workman & Hart 2005)": {
+        "SiO2": 44.71, "TiO2": 0.133, "Al2O3": 3.98, "FeOT": 8.18,
+        "MnO": 0.13, "MgO": 38.73, "CaO": 3.17, "Na2O": 0.13, "K2O": 0.006,
+        "P2O5": 0.019,
+        "Cs": 0.00032, "Rb": 0.05, "Ba": 0.563, "Th": 0.0079, "U": 0.0032,
+        "Nb": 0.21, "La": 0.192, "Ce": 0.55, "Pb": 0.018, "Pr": 0.107,
+        "Sr": 7.66, "Nd": 0.581, "Zr": 5.082, "Hf": 0.157, "Sm": 0.239,
+        "Eu": 0.096, "Gd": 0.358, "Tb": 0.070, "Dy": 0.505, "Ho": 0.115,
+        "Y": 3.328, "Er": 0.348, "Yb": 0.365, "Lu": 0.058, "Ta": 0.0138,
+        "Sc": 16.3, "V": 79, "Cr": 2500, "Co": 106, "Ni": 1960,
+    },
+    "Spinel lherzolite (KLB-1)": {
+        "SiO2": 44.48, "TiO2": 0.16, "Al2O3": 3.59, "FeOT": 8.10,
+        "MnO": 0.12, "MgO": 39.22, "CaO": 3.44, "Na2O": 0.30, "K2O": 0.02,
+        "P2O5": 0.03,
+    },
+    "Garnet lherzolite (KR4003)": {
+        "SiO2": 44.90, "TiO2": 0.16, "Al2O3": 4.27, "FeOT": 8.05,
+        "MnO": 0.13, "MgO": 38.16, "CaO": 3.45, "Na2O": 0.22, "K2O": 0.02,
+        "P2O5": 0.02,
+    },
+    "Pyroxenite (MIX1G)": {
+        "SiO2": 45.59, "TiO2": 0.91, "Al2O3": 15.16, "FeOT": 7.83,
+        "MnO": 0.13, "MgO": 16.65, "CaO": 11.36, "Na2O": 1.50, "K2O": 0.04,
+        "P2O5": 0.10,
+    },
+    "Average peridotite (PM-like)": {
+        "SiO2": 45.0, "TiO2": 0.20, "Al2O3": 4.5, "FeOT": 8.10,
+        "MnO": 0.13, "MgO": 38.0, "CaO": 3.5, "Na2O": 0.35, "K2O": 0.03,
+        "P2O5": 0.02,
+    },
+}
+
+
+# Logical groupings used to build the tree widget in the UI.
+RESERVOIR_CATEGORIES: Dict[str, List[str]] = {
+    "Continental crust (Rudnick & Gao 2003)": [
+        "UCC (Rudnick & Gao 2003)",
+        "MCC (Rudnick & Gao 2003)",
+        "LCC (Rudnick & Gao 2003)",
+        "Bulk CC (Rudnick & Gao 2003)",
+    ],
+    "Continental crust (Taylor & McLennan 1985)": [
+        "UCC (Taylor & McLennan 1985)",
+        "Bulk CC (Taylor & McLennan 1985)",
+    ],
+    "Oceanic basalts (Sun & McDonough 1989)": [
+        "N-MORB (Sun & McDonough 1989)",
+        "E-MORB (Sun & McDonough 1989)",
+        "OIB (Sun & McDonough 1989)",
+    ],
+    "Mantle rocks": [
+        "Primitive mantle (McDonough & Sun 1995)",
+        "Depleted MORB mantle (Workman & Hart 2005)",
+        "Spinel lherzolite (KLB-1)",
+        "Garnet lherzolite (KR4003)",
+        "Pyroxenite (MIX1G)",
+        "Average peridotite (PM-like)",
+    ],
+}
+
+
+# Aliases / case-insensitive lookup of element symbols.
+_ELEMENT_ALIASES = {
+    "feot": "FeOT", "feo(t)": "FeOT", "feo_total": "FeOT", "fet": "FeOT",
+    "fe2o3t": "FeOT",  # interpret total iron as FeOT for the purposes of overlay
+    "mg#": "MgO",  # rough fallback; real Mg# is not stored in the table
+}
+
+
+def get_reservoir_value(name: str, element: str) -> float | None:
+    """Return the value of *element* in reservoir *name*.
+
+    Element matching is case-insensitive; common aliases (FeOT, Fe2O3T...)
+    are resolved to the stored key.
+    """
+    table = RESERVOIRS.get(name)
+    if table is None:
+        return None
+    key = element.strip()
+    # Direct hit
+    if key in table:
+        return table[key]
+    lookup = {k.lower(): k for k in table.keys()}
+    if key.lower() in lookup:
+        return table[lookup[key.lower()]]
+    alias = _ELEMENT_ALIASES.get(key.lower())
+    if alias and alias in table:
+        return table[alias]
+    return None
+
+
+def all_reservoir_names() -> List[str]:
+    return list(RESERVOIRS.keys())

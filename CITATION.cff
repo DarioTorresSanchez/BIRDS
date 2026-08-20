@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+title: "B.I.R.D.S — Broad Igneous Rocks: Diagrams & Statistics"
+message: >-
+  If you use this software, please cite it together with the primary
+  sources of the diagrams you used. Those are printed in each plot's
+  subtitle and listed in full under References → Show full bibliography.
+type: software
+authors:
+  - given-names: Darío
+    family-names: Torres
+abstract: >-
+  A desktop application for plotting, classifying and analysing
+  whole-rock geochemical data of igneous rocks. Bundles 52 diagram
+  templates (classification, tectonic discrimination, spider,
+  petrographic ternaries and isotope systematics), 23 published
+  normalisers, three CIPW norm algorithms and an eight-tab statistics
+  dashboard, with journal-ready figure export and reproducible
+  session files.
+keywords:
+  - igneous petrology
+  - geochemistry
+  - whole-rock analysis
+  - tectonic discrimination
+  - classification diagrams
+  - CIPW norm
+  - spider diagram
+  - REE
+  - PySide6
+version: 0.1.0
+license: MIT
