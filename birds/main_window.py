@@ -218,12 +218,13 @@ class BirdsMainWindow(QMainWindow):
     # ---- Norm menu ----------------------------------------------------------
     def _build_norm_menu(self, bar: QMenuBar) -> None:
         menu = bar.addMenu("&Norm")
-        act = QAction("CIPW norm (Classical / SINCLAS / Hutchison)…", self)
+        act = QAction("CIPW norm (classical)…", self)
         act.setShortcut("Ctrl+Shift+C")
         act.setStatusTip(
-            "Compute the CIPW normative mineralogy with one of three "
-            "published algorithms. Auto-fills normative columns into "
-            "the dataset and exports a multi-sheet XLSX report."
+            "Compute the classical CIPW normative mineralogy "
+            "(Cross-Iddings-Pirsson-Washington 1903). Auto-fills the "
+            "normative columns into the dataset and exports a "
+            "multi-sheet XLSX report."
         )
         act.triggered.connect(self._open_norm)
         menu.addAction(act)
@@ -595,6 +596,27 @@ class BirdsMainWindow(QMainWindow):
         self.on_dataset_replaced()
         self.mark_dirty()
 
+    def refresh_variable_lists(self) -> None:
+        """Re-read the dataset's columns into every view that lists them.
+
+        Anything that *widens* the dataset must call this or the new
+        columns stay invisible: the CIPW norm auto-filling its
+        ``norm_*`` minerals, pre-processing adding FeOt, the data table
+        gaining a column.  Without it the numbers are in ``data.df`` but
+        cannot be picked in the Bivariate or Isotopes variable pickers,
+        which reads as the feature simply not working.
+        """
+        for name in self._VIEW_ATTRS:
+            view = getattr(self, name, None)
+            if view is None:
+                continue
+            for hook in ("_refresh_variable_lists", "_populate_columns"):
+                if hasattr(view, hook):
+                    try:
+                        getattr(view, hook)()
+                    except Exception:                      # noqa: BLE001
+                        pass
+
     def on_dataset_replaced(self) -> None:
         """Drop every piece of state that belonged to the *previous* data.
 
@@ -610,6 +632,7 @@ class BirdsMainWindow(QMainWindow):
         self.selection.clear()
         self.data.realign_bdl_masks()
         self.data_table.refresh_from_data()
+        self.refresh_variable_lists()
 
     # ------------------------------------------------- style presets
     def on_save_style_preset(self) -> None:
@@ -727,9 +750,11 @@ class BirdsMainWindow(QMainWindow):
         if dlg.exec() == PreprocessDialog.DialogCode.Accepted:
             n = len(self.data.df)
             # Same samples, so the brushing selection stays valid — but
-            # the columns changed, so the masks and the table must follow.
+            # the columns changed, so the masks, the table and every
+            # variable picker must follow.
             self.data.realign_bdl_masks()
             self.data_table.refresh_from_data()
+            self.refresh_variable_lists()
             self.statusBar().showMessage(
                 f"Pre-processed {n} samples (majors → 100 % and Fe partition)."
             )
@@ -819,9 +844,9 @@ class BirdsMainWindow(QMainWindow):
         if sections_flags["raw"]:
             sections["Original data"] = self.data.df
 
-        # Compute the pre-processed analysis once with the canonical
-        # SINCLAS defaults (anhydrous rescale + Middlemost partition);
-        # both the "Adjusted" and "CIPW" sections feed off the result.
+        # Compute the pre-processed analysis once (anhydrous rescale +
+        # Middlemost Fe partition); both the "Adjusted" and "CIPW"
+        # sections feed off the result.
         adjusted: Optional[pd.DataFrame] = None
         if sections_flags["adjusted"] or sections_flags["cipw"]:
             try:
@@ -833,8 +858,7 @@ class BirdsMainWindow(QMainWindow):
             sections["Adjusted data (100% + Fe partition)"] = adjusted
         if sections_flags["cipw"] and adjusted is not None:
             try:
-                sections["CIPW norm"] = compute_cipw(
-                    adjusted, variant="sinclas")
+                sections["CIPW norm"] = compute_cipw(adjusted)
             except Exception:                              # noqa: BLE001
                 pass
         if sections_flags["descriptive"]:

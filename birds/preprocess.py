@@ -20,9 +20,6 @@ References
   181-189.
 - Middlemost, E.A.K. (1989). Iron oxidation ratios, norms and the
   classification of volcanic rocks. *Chem. Geol.* 77, 19-26.
-- Verma, S.P., Torres-Alvarado, I.S. & Sotelo-Rodríguez, Z.T. (2002).
-  SINCLAS: standard igneous norm and volcanic rock classification system.
-  *Comput. Geosci.* 28, 711-715.
 """
 
 from __future__ import annotations
@@ -364,7 +361,7 @@ def pre_process(df: pd.DataFrame,
                 adjust: AdjustOptions | str = "anhydrous",
                 iron: IronOptions | str = "middlemost"
                 ) -> pd.DataFrame:
-    """Run the canonical pre-process pipeline used by SINCLAS.
+    """Run the canonical pre-process pipeline.
 
     Steps
     -----

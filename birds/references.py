@@ -220,10 +220,12 @@ REFERENCES: List[Section] = [
          "5+5+5-panel DF for intermediate rocks (majors, immobile+trace, "
          "trace)."),
         ("Verma, S. P., Pandarinath, K., Verma, S. K., & Agrawal, S. "
-         "(2015). Fifteen new discriminant-function-based multi-"
+         "(2013). Fifteen new discriminant-function-based multi-"
          "dimensional robust diagrams for acid rocks and their "
-         "application to Precambrian rocks. *Lithos*, *216-217*, 80-94.",
-         "MOR vs Ocean-Plateau single-axis DF (Verma et al. 2015a)."),
+         "application to Precambrian rocks. *Lithos*, *168-169*, "
+         "113-123. https://doi.org/10.1016/j.lithos.2013.01.014",
+         "5+5+5-panel DF for acid rocks (majors, immobile majors + "
+         "traces, traces)."),
         ("Verma, S. P. (2015). Origin, evolution, and tectonic setting of "
          "the eastern part of the Mexican Volcanic Belt and comparison "
          "with the Central American Volcanic Arc from conventional "
@@ -231,25 +233,6 @@ REFERENCES: List[Section] = [
          "diagrams and discordancy and significance tests. *Turkish "
          "Journal of Earth Sciences*, *24*(2), 111-164.",
          "Nb/Nb*, Ta/Ta* canonical anomaly equations (Verma 2015b)."),
-        ("Verma, S. P., Rivera-Gómez, M. A., Díaz-González, L., "
-         "Quiroz-Ruiz, A., Pandarinath, K., Amezcua-Valdez, A., "
-         "Rosales-Rivera, M., Verma, S. K., Tapia-Crespo, L. M., "
-         "Torres-Sánchez, D., Cruz-Huicochea, R., & Velasco-Tapia, F. "
-         "(2016). Statistical evaluation of conventional and new "
-         "discriminant-function diagrams for the classification of high-Mg "
-         "rocks. *Lithos*, *264*, 250-263.",
-         "Komatiite / Meimechite / Picrite / Boninite multidim."),
-        ("Verma, S. P., Verma, S. K., Pandarinath, K., & Rivera-Gómez, M. "
-         "A. (2017). UBIA: New discriminant-function-based "
-         "multidimensional diagrams to classify intermediate, basic, "
-         "ultrabasic and acid igneous rocks. *Geological Journal*, "
-         "*52*(5), 815-833.",
-         "Ultrabasic / Basic / Intermediate / Acid classification."),
-        ("Verma, S. P., Torres-Alvarado, I. S., & Sotelo-Rodríguez, Z. T. "
-         "(2002). SINCLAS: Standard igneous norm and volcanic rock "
-         "classification system. *Computers & Geosciences*, *28*(5), "
-         "711-715.",
-         "SINCLAS pre-processor for Fe-oxidation adjustment."),
     ]),
     # ----------------------------------------------------------------------
     ("Petrography (IUGS)", [
@@ -298,6 +281,39 @@ REFERENCES: List[Section] = [
          "major and trace element characteristics. *Geochimica et "
          "Cosmochimica Acta*, *48*(12), 2469-2482.",
          "NASC reference."),
+        ("Barnes, S.-J., & Maier, W. D. (1999). The fractionation of Ni, "
+         "Cu and the noble metals in silicate and sulphide liquids. In "
+         "R. R. Keays, C. M. Lesher, P. C. Lightfoot, & C. E. G. Farrow "
+         "(Eds.), *Dynamic processes in magmatic ore deposits and their "
+         "application to mineral exploration* (Geological Association of "
+         "Canada Short Course Notes 13, pp. 69-106).",
+         "Primitive-mantle metal values for Ni-Cu-PGE normalisation."),
+        ("Becker, H., Horan, M. F., Walker, R. J., Gao, S., Lorand, "
+         "J.-P., & Rudnick, R. L. (2006). Highly siderophile element "
+         "composition of the Earth's primitive upper mantle: Constraints "
+         "from new data on peridotite massifs and xenoliths. *Geochimica "
+         "et Cosmochimica Acta*, *70*(17), 4528-4550. "
+         "https://doi.org/10.1016/j.gca.2006.06.004",
+         "Primitive upper mantle HSE (Os, Ir, Ru, Pt, Pd, Re)."),
+        ("Fischer-Gödde, M., Becker, H., & Wombacher, F. (2011). Rhodium, "
+         "gold and other highly siderophile element abundances in "
+         "chondritic meteorites. *Geochimica et Cosmochimica Acta*, "
+         "*75*(20), 6027-6048. "
+         "https://doi.org/10.1016/j.gca.2011.07.038",
+         "Rh and Au completing the primitive-mantle HSE set."),
+        ("Horan, M. F., Walker, R. J., Morgan, J. W., Grossman, J. N., & "
+         "Rubin, A. E. (2003). Highly siderophile element concentrations "
+         "in chondrites. *Chemical Geology*, *196*(1-4), 27-42.",
+         "CI chondrite HSE reference for metal/metal ratios."),
+        ("Salters, V. J. M., & Stracke, A. (2004). Composition of the "
+         "depleted mantle. *Geochemistry, Geophysics, Geosystems*, *5*(5), "
+         "Q05B07. https://doi.org/10.1029/2003GC000597",
+         "Depleted MORB mantle reference for oceanic sulphide settings."),
+        ("Barnes, S.-J., & Ripley, E. M. (2016). Highly siderophile and "
+         "strongly chalcophile elements in magmatic ore deposits. "
+         "*Reviews in Mineralogy and Geochemistry*, *81*(1), 725-774. "
+         "https://doi.org/10.2138/rmg.2016.81.12",
+         "Metal ordering by compatibility with sulphide liquid."),
         ("Nakamura, N. (1974). Determination of REE, Ba, Fe, Mg, Na and "
          "K in carbonaceous and ordinary chondrites. *Geochimica et "
          "Cosmochimica Acta*, *38*(5), 757-775.",
@@ -341,18 +357,6 @@ REFERENCES: List[Section] = [
         ("Kelsey, C. H. (1965). Calculation of the CIPW norm. "
          "*Mineralogical Magazine*, *34*(268), 276-282.",
          "Classical CIPW computational recipe."),
-        ("Hutchison, C. S. (1974). Laboratory handbook of petrographic "
-         "techniques. Wiley.",
-         "Hutchison CIPW variant."),
-        ("Verma, S. P., Torres-Alvarado, I. S., & Sotelo-Rodríguez, Z. T. "
-         "(2002). SINCLAS: Standard igneous norm and volcanic rock "
-         "classification system. *Computers & Geosciences*, *28*(5), "
-         "711-715.",
-         "SINCLAS CIPW + Fe-oxidation adjustment."),
-        ("Verma, S. P., & Rivera-Gómez, M. A. (2013). Computer program "
-         "for the classification and nomenclature of igneous rocks. "
-         "*Episodes*, *36*(2), 115-124.",
-         "Updated CIPW (lite variant in BIRDS)."),
     ]),
     # ----------------------------------------------------------------------
     ("Pre-process / Fe partition", [

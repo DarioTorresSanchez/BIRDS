@@ -32,7 +32,7 @@ diagram is *accounted for* rather than silently dropped, below-detection
 values are handled explicitly instead of becoming blanks, and the figure you
 export is sized in millimetres for the journal you are submitting to.
 
-**52 diagram templates · 23 published normalisers · 3 CIPW algorithms ·
+**52 diagram templates · 28 published normalisers · classical CIPW norm ·
 8-tab statistics dashboard**
 
 ---
@@ -86,7 +86,7 @@ structured:
 | **Data** | Import, data table, detection limits, plot styling, style presets, pre-processing, sessions, export |
 | **Classification diagrams** | TAS and the rest of the compositional classification schemes, split volcanic / plutonic |
 | **Bivariate diagrams** | Harker-style plots, single or in grids, with regressions and annotations |
-| **Spider diagrams** | REE patterns and multi-element diagrams with 23 normalisers |
+| **Spider diagrams** | REE, multi-element and Ni-Cu-PGE metal patterns with 28 normalisers |
 | **Tectonic diagrams** | Discrimination schemes, grouped by composition and rock family |
 | **Norm** | CIPW normative mineralogy |
 | **Petrography** | Modal ternaries (QAPF, gabbro, ultramafic, tuff) |
@@ -168,7 +168,7 @@ structured:
 </details>
 
 <details>
-<summary><b>Spider diagrams — 23 normalisers</b></summary>
+<summary><b>Spider diagrams — 28 normalisers</b></summary>
 
 **REE chondrites (8)** — Sun & McDonough 1989 (CI), McDonough & Sun 1995 (CI),
 Anders & Grevesse 1989 (CI avg), Pourmand et al. 2012, Barrat et al. 2012
@@ -183,6 +183,15 @@ Average (Bau et al. 2018), Upper Continental Crust (Rudnick & Gao 2014).
 O'Neill 2014), CI Chondrite (McDonough & Sun 1995), N-MORB and E-MORB
 (Sun & McDonough 1989), N-MORB mean (Arevalo & McDonough 2010), Upper and
 Bulk Continental Crust (Rudnick & Gao 2014), NASC (Gromet et al. 1984).
+
+**Ni-Cu-PGE metals (5)** — Primitive Mantle (Barnes & Maier 1999),
+Primitive Upper Mantle (Becker et al. 2006), Primitive Mantle
+(Fischer-Gödde et al. 2011), CI Chondrite (Horan et al. 2003), Depleted
+MORB Mantle (Salters & Stracke 2004). These carry their own x-axis —
+Ni · Os · Ir · Ru · Rh · Pt · Pd · Au · Cu, ordered by compatibility with
+sulphide liquid rather than by incompatibility — and are offered in both
+the REE and the multi-element tabs, so a magmatic-sulphide study can sit
+its metal pattern next to its REE pattern.
 
 Patterns can be drawn per sample or per group, with min–max / P10–P90 /
 P25–P75 envelopes, editable reservoir lines and full annotation support.
@@ -266,10 +275,14 @@ An eight-tab dashboard:
    schemes
 8. **Plots** — box, violin, histogram, density and scatter-matrix panels
 
-The **CIPW norm** module (`Norm` menu) computes normative mineralogy with
-three published algorithms — classical, SINCLAS (Verma et al. 2002) and
-Hutchison — writes the normative columns back into the dataset and exports a
-multi-sheet XLSX report.
+The **CIPW norm** module (`Norm` menu) computes the classical
+Cross-Iddings-Pirsson-Washington (1903) normative mineralogy, writes the
+normative columns back into the dataset and exports a multi-sheet XLSX
+report. Because the minerals are written back as ordinary columns, they
+become plottable immediately: `norm_An` vs `norm_Q`, or any normative
+mineral against a measured oxide, appears in the Bivariate variable
+pickers as soon as the norm is computed. Pre-processing behaves the same
+way — the columns it adds show up without a reload.
 
 ---
 
@@ -428,6 +441,11 @@ under testing. Known limitations worth stating plainly:
   **Winchester & Floyd (1977)** Zr/TiO₂–Nb/Y are approximate digitisations
   rather than transcriptions from the source figures. Both carry a warning in
   their module docstring and are pending calibration.
+- The **Ni-Cu-PGE reference values** are taken from the usual literature
+  compilations and have not been re-checked page by page against the
+  original papers. Pattern *shapes* are robust; verify the absolute
+  normalised level against the source before publishing. The module
+  carries the same warning in its docstring.
 - Validation against certified reference materials (USGS BHVO-2, BCR-2,
   AGV-2) has not yet been carried out.
 - The Map view needs `contextily`; `pyproj` and `mgrs` are optional and only

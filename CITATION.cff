@@ -12,10 +12,10 @@ abstract: >-
   A desktop application for plotting, classifying and analysing
   whole-rock geochemical data of igneous rocks. Bundles 52 diagram
   templates (classification, tectonic discrimination, spider,
-  petrographic ternaries and isotope systematics), 23 published
-  normalisers, three CIPW norm algorithms and an eight-tab statistics
-  dashboard, with journal-ready figure export and reproducible
-  session files.
+  petrographic ternaries and isotope systematics), 28 published
+  normalisers including Ni-Cu-PGE metal references, the classical
+  CIPW norm and an eight-tab statistics dashboard, with journal-ready
+  figure export and reproducible session files.
 keywords:
   - igneous petrology
   - geochemistry
@@ -25,6 +25,8 @@ keywords:
   - CIPW norm
   - spider diagram
   - REE
+  - Ni-Cu-PGE
+  - platinum-group elements
   - PySide6
 version: 0.1.0
 license: MIT

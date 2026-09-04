@@ -4,8 +4,7 @@ Two complementary representations of the same result:
 
 * **Tab 1 — Table**: one row per sample, one column per mineral
   (wt %), plus a silica-saturation column colour-coded by category
-  (oversaturated / saturated / undersaturated) and, for the SINCLAS
-  variant, a TAS-derived rock name.
+  (oversaturated / saturated / undersaturated).
 
 * **Tab 2 — Bar plot**: stacked 100 %-bar chart by sample (or by
   group), with a fixed palette that maps each normative mineral to a
@@ -79,15 +78,9 @@ MINERAL_COLOURS: Dict[str, str] = {
     "Tn": "#d4a017",   # titanite           ochre
     "Cm": "#3a2e2e",   # chromite           near-black
     "Ap": "#bfd8d2",   # apatite            mint
-    "Pf": "#f3e6c3",   # perovskite         cream
     "Z":  "#c97f7f",   # zircon             dusty rose
     "Ac": "#2e7d32",   # acmite             forest
     "Ns": "#8e44ad",   # Na metasilicate    purple
-    # Hutchison extras
-    "Py": "#fee08b",   # pyrite             gold
-    "Cc": "#dfdfdf",   # calcite            pale grey
-    "Hl": "#ffffff",   # halite             white
-    "Fl": "#ebd6f1",   # fluorite           lilac
 }
 
 # Foreground for the saturation column in the table
@@ -96,15 +89,6 @@ SAT_FILL: Dict[str, QColor] = {
     "saturated":       QColor(218, 235, 199),   # mint
     "undersaturated":  QColor(196, 212, 240),   # cool blue
 }
-
-
-VARIANTS = (
-    ("SINCLAS (Verma 2002) — recommended", "sinclas"),
-    ("Verma & Rivera-Gómez (2013) — SINCLAS + titanite / perovskite chain",
-     "verma_rg_2013"),
-    ("Classical (Cross-Iddings-Pirsson-Washington 1903)", "classical"),
-    ("Extended (Hutchison 1974 + Verma 2003 — Py, Cc, Hl, Fl)", "hutchison"),
-)
 
 
 # ---------------------------------------------------------------------------
@@ -237,24 +221,6 @@ class NormView(QWidget):
             )
             return f
 
-        # Algorithm -------------------------------------------------------
-        algo_box = QGroupBox("Algorithm")
-        algo_box.setToolTip(
-            "Choose the CIPW algorithm. SINCLAS is the recommended "
-            "modern variant; Verma & Rivera-Gómez 2013 adds the titanite "
-            "/ perovskite chain for silica-undersaturated rocks."
-        )
-        algo_layout = QVBoxLayout(algo_box)
-        algo_layout.setContentsMargins(8, 12, 8, 8)
-        algo_layout.setSpacing(4)
-        f = _compact_form()
-        self.variant_combo = QComboBox()
-        for label, key in VARIANTS:
-            self.variant_combo.addItem(label, key)
-        f.addRow("Variant:", self.variant_combo)
-        algo_layout.addLayout(f)
-        layout.addWidget(algo_box)
-
         # Bar plot options -----------------------------------------------
         bar_box = QGroupBox("Bar plot")
         bar_layout = QVBoxLayout(bar_box)
@@ -313,9 +279,11 @@ class NormView(QWidget):
         if self.data.df is None or self.data.df.empty:
             self._empty("Load a dataset (Data → Import) before computing CIPW.")
             return
-        # Don't auto-compute — the user might want to pick a variant first
+        # Don't auto-compute — computing is explicit so the user knows
+        # exactly which analysis the norm was run on.
         self.summary_label.setText(
-            "Pick a variant on the left and click 'Compute CIPW norm'.")
+            "Click 'Compute CIPW norm' to run the classical norm on the "
+            "loaded dataset.")
 
     def compute(self) -> None:
         df = self.data.df
@@ -324,9 +292,8 @@ class NormView(QWidget):
                                     "Load a dataset before computing.")
             return
 
-        variant = self.variant_combo.currentData()
         try:
-            result = compute_cipw(df, variant=variant)
+            result = compute_cipw(df)
         except Exception as exc:                           # noqa: BLE001
             QMessageBox.critical(self, "CIPW error", str(exc))
             return
@@ -334,15 +301,19 @@ class NormView(QWidget):
         self._result = result
         self._preprocessed = df.copy()
 
-        # Optionally write back
+        # Optionally write back.  Widening the dataset is only half the
+        # job: unless every variable picker re-reads its columns, the
+        # normative minerals stay invisible in the Bivariate view and
+        # the auto-fill looks broken.
         if self.attach_chk.isChecked():
             for col in result.columns:
                 df[col] = result[col]
+            self._announce_new_columns()
 
         # Update tabs
         self._fill_table(result)
         self._draw_bar_plot(result)
-        self._update_summary(result, variant)
+        self._update_summary(result)
 
     # ------------------------------------------------------------ table tab
     def _fill_table(self, result: pd.DataFrame) -> None:
@@ -353,9 +324,7 @@ class NormView(QWidget):
                         if c == "norm_Total"
                         or (pd.to_numeric(result[c], errors="coerce") > 0.01).any()]
         sat_col = "silica_saturation"
-        tas_col = "tas_field" if "tas_field" in result.columns else None
         headers = (["Sample", sat_col]
-                   + ([tas_col] if tas_col else [])
                    + [c.replace("norm_", "") for c in nonzero_cols])
         self.table.clear()
         self.table.setRowCount(len(result))
@@ -380,10 +349,6 @@ class NormView(QWidget):
                 item_sat.setBackground(QBrush(SAT_FILL[sat]))
             self.table.setItem(i, 1, item_sat)
             col_offset = 2
-            if tas_col:
-                self.table.setItem(i, 2, QTableWidgetItem(
-                    str(result.at[idx, tas_col])))
-                col_offset = 3
             for j, c in enumerate(nonzero_cols):
                 v = pd.to_numeric(result.at[idx, c], errors="coerce")
                 text = "" if pd.isna(v) else f"{v:.2f}"
@@ -474,11 +439,12 @@ class NormView(QWidget):
         self.canvas.draw()
 
     # ------------------------------------------------------------- summary
-    def _update_summary(self, result: pd.DataFrame, variant: str) -> None:
+    def _update_summary(self, result: pd.DataFrame) -> None:
         n = len(result)
         sat_counts = result["silica_saturation"].value_counts()
         parts = [
-            f"Variant   : {variant.upper()}",
+            "Algorithm : Classical CIPW (Cross-Iddings-Pirsson-"
+            "Washington 1903)",
             f"Samples   : {n}",
             f"Norm Σ ±  : "
             + f"{result['norm_Total'].mean():.2f} ± "
@@ -490,12 +456,6 @@ class NormView(QWidget):
             count = int(sat_counts.get(label, 0))
             parts.append(f"  {label:18s}{count:5d}   "
                          f"({(count/n*100 if n else 0):.1f} %)")
-        if "tas_field" in result.columns:
-            tas_counts = result["tas_field"].value_counts()
-            parts.append("")
-            parts.append("TAS rock distribution (SINCLAS):")
-            for name, count in tas_counts.items():
-                parts.append(f"  {name:25s}{int(count):5d}")
         # Mean of each non-zero mineral
         parts.append("")
         parts.append("Mean wt% per normative mineral (≥ 0.1 %):")
@@ -528,21 +488,20 @@ class NormView(QWidget):
                 self._result.to_excel(writer, sheet_name="CIPW", index=True)
                 # 3. Classification only
                 class_cols = ["silica_saturation"]
-                if "tas_field" in self._result.columns:
-                    class_cols.append("tas_field")
                 self._result[class_cols].to_excel(
                     writer, sheet_name="Classification", index=True)
                 # 4. Total per sample
                 self._result[["norm_Total"]].to_excel(
                     writer, sheet_name="Totals", index=True)
-                # 5. Variant info
+                # 5. Run metadata
                 pd.DataFrame({
                     "Field": [
-                        "Algorithm variant", "Number of samples",
+                        "Algorithm", "Number of samples",
                         "Mean norm total (wt%)",
                     ],
                     "Value": [
-                        self.variant_combo.currentText(),
+                        "Classical CIPW "
+                        "(Cross-Iddings-Pirsson-Washington 1903)",
                         len(self._result),
                         f"{self._result['norm_Total'].mean():.3f}",
                     ],
@@ -554,6 +513,29 @@ class NormView(QWidget):
             self, "Export complete",
             f"CIPW report written to:\n{path}"
         )
+
+    def _announce_new_columns(self) -> None:
+        """Tell the main window the dataset grew, so pickers refresh.
+
+        Walks up the parent chain rather than holding a back-reference,
+        which keeps NormView constructible on its own in tests.
+        """
+        widget = self
+        while widget is not None:
+            hook = getattr(widget, "refresh_variable_lists", None)
+            if callable(hook):
+                try:
+                    hook()
+                except Exception:                          # noqa: BLE001
+                    pass
+                table = getattr(widget, "data_table", None)
+                if table is not None:
+                    try:
+                        table.refresh_from_data()
+                    except Exception:                      # noqa: BLE001
+                        pass
+                return
+            widget = widget.parent()
 
     # ------------------------------------------------------------ utilities
     def _empty(self, message: str) -> None:
@@ -569,7 +551,6 @@ class NormView(QWidget):
     def serialize(self) -> dict:
         from .. import widget_state as ws
         return {
-            "variant": self.variant_combo.currentData() or "sinclas",
             "aggregation": self.aggregate_combo.currentData() or "sample",
             "show_legend": ws.check_state(self.show_legend_chk),
             "min_pct_index": self.min_pct_threshold.currentIndex(),
@@ -582,7 +563,6 @@ class NormView(QWidget):
         if not state:
             return
         for code, combo in [
-            (state.get("variant"), self.variant_combo),
             (state.get("aggregation"), self.aggregate_combo),
         ]:
             if code:
@@ -602,7 +582,6 @@ class NormView(QWidget):
         if result_df is None or result_df.empty:
             return
         self._result = result_df
-        variant = self.variant_combo.currentData() or "sinclas"
         self._fill_table(result_df)
         self._draw_bar_plot(result_df)
-        self._update_summary(result_df, variant)
+        self._update_summary(result_df)

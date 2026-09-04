@@ -427,24 +427,36 @@ class SpiderView(QWidget):
     def _populate_norm_combo(ctrl: _SpiderControls, mode: str) -> None:
         ctrl.norm_combo.blockSignals(True)
         ctrl.norm_combo.clear()
+        from ..normalizations import CHALCOPHILE_NORMS
+
+        def _header(text: str) -> None:
+            ctrl.norm_combo.addItem(text, None)
+            ctrl.norm_combo.model().item(
+                ctrl.norm_combo.count() - 1).setEnabled(False)
+
         if mode == "ree":
-            # Insert section header items (disabled)
-            ctrl.norm_combo.addItem("— REE chondrite —", None)
-            idx = ctrl.norm_combo.count() - 1
-            ctrl.norm_combo.model().item(idx).setEnabled(False)
+            _header("— REE chondrite —")
             for name in REE_CHONDRITES:
                 ctrl.norm_combo.addItem(name, name)
-            ctrl.norm_combo.addItem("— REE shale / crustal composite —", None)
-            idx = ctrl.norm_combo.count() - 1
-            ctrl.norm_combo.model().item(idx).setEnabled(False)
+            _header("— REE shale / crustal composite —")
             for name in REE_SHALES:
+                ctrl.norm_combo.addItem(name, name)
+            # Ni-Cu-PGE references are offered in both modes: a sulphide
+            # study normally wants the metal plot next to the REE one,
+            # and hunting for it in another tab helps nobody.
+            _header("— Ni-Cu-PGE metals —")
+            for name in CHALCOPHILE_NORMS:
                 ctrl.norm_combo.addItem(name, name)
             # Default: Sun & McDonough 1989
             ctrl.norm_combo.setCurrentIndex(1)
         else:
+            _header("— Multi-element —")
             for name in MULTIELEMENT_NORMS:
                 ctrl.norm_combo.addItem(name, name)
-            ctrl.norm_combo.setCurrentIndex(0)
+            _header("— Ni-Cu-PGE metals —")
+            for name in CHALCOPHILE_NORMS:
+                ctrl.norm_combo.addItem(name, name)
+            ctrl.norm_combo.setCurrentIndex(1)
         ctrl.norm_combo.blockSignals(False)
 
     def _empty_canvas(self, message: str) -> None:
@@ -477,8 +489,13 @@ class SpiderView(QWidget):
             self._empty_canvas(f"Reference '{norm_name}' not found.")
             return
 
-        # Element order
-        if self._mode == "ree":
+        # Element order.  A Ni-Cu-PGE reference brings its own x-axis —
+        # metals ordered by compatibility with sulphide liquid — which
+        # overrides both the REE and the incompatibility orders.
+        from ..normalizations import chalcophile_order, is_chalcophile_normaliser
+        if is_chalcophile_normaliser(norm_name):
+            order = chalcophile_order(norm_name)
+        elif self._mode == "ree":
             include_y = bool(ctrl.include_y_chk and ctrl.include_y_chk.isChecked())
             order = REE_ORDER_WITH_Y if include_y else REE_ORDER
         else:

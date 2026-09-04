@@ -213,6 +213,74 @@ MULTIELEMENT_NORMS: Dict[str, Mapping[str, float]] = {
 
 
 # ---------------------------------------------------------------------------
+# Chalcophile / siderophile metals — Ni-Cu-PGE deposits
+# ---------------------------------------------------------------------------
+#
+# Mantle-normalised metal patterns are the standard diagnostic tool in
+# magmatic sulphide petrology: the metals are plotted in order of
+# *decreasing compatibility with sulphide liquid* rather than by
+# incompatibility, so the axis is a completely different one from the
+# Sun & McDonough multi-element order.  A pattern's slope then reads
+# directly as the sulphide's history — high R-factor, fractionation of
+# monosulphide solid solution, or a late-stage Cu-rich residue.
+#
+# .. warning::
+#    The reference values below are transcribed from the literature
+#    compilations and have **not** been re-checked against the original
+#    papers page by page. Verify them against the source before
+#    publishing a figure that depends on their absolute level; the
+#    *shape* of a pattern is far less sensitive to small differences
+#    between compilations than its absolute normalised value.
+
+# Order of decreasing compatibility in sulphide liquid (Barnes & Lightfoot
+# 2005; Barnes & Ripley 2016).  Ni and Cu bracket the noble metals.
+CHALCOPHILE_ORDER: Tuple[str, ...] = (
+    "Ni", "Os", "Ir", "Ru", "Rh", "Pt", "Pd", "Au", "Cu",
+)
+
+# Same order with Re and Ag, reported by some laboratories.
+CHALCOPHILE_ORDER_EXTENDED: Tuple[str, ...] = (
+    "Ni", "Os", "Ir", "Ru", "Rh", "Pt", "Pd", "Re", "Au", "Ag", "Cu",
+)
+
+CHALCOPHILE_NORMS: Dict[str, Mapping[str, float]] = {
+    # The reference most Ni-Cu-PGE papers normalise to.
+    "Primitive Mantle (Barnes & Maier 1999)": {
+        "Ni": 1960.0, "Os": 0.0034, "Ir": 0.0032, "Ru": 0.0050,
+        "Rh": 0.0009, "Pt": 0.0071, "Pd": 0.0039, "Au": 0.0010,
+        "Cu": 30.0,
+    },
+    # Primitive upper mantle from peridotite massifs and xenoliths.
+    # Becker et al. report no Rh or Au; Ni and Cu are carried over from
+    # McDonough & Sun (1995) so the axis does not break.
+    "Primitive Upper Mantle (Becker et al. 2006)": {
+        "Ni": 1960.0, "Os": 0.0039, "Ir": 0.0035, "Ru": 0.0070,
+        "Pt": 0.0076, "Pd": 0.0071, "Re": 0.00035, "Cu": 30.0,
+    },
+    # Bulk-silicate-Earth HSE compilation.
+    "Primitive Mantle (Fischer-Gödde et al. 2011)": {
+        "Ni": 1960.0, "Os": 0.0039, "Ir": 0.0035, "Ru": 0.0070,
+        "Rh": 0.0012, "Pt": 0.0076, "Pd": 0.0071, "Au": 0.0010,
+        "Cu": 30.0,
+    },
+    # CI chondrite — the reference for metal/metal ratios and for
+    # judging whether a sulphide liquid kept a chondritic HSE budget.
+    "CI Chondrite (Horan et al. 2003 / McDonough & Sun 1995)": {
+        "Ni": 10910.0, "Os": 0.490, "Ir": 0.469, "Ru": 0.690,
+        "Rh": 0.132, "Pt": 0.925, "Pd": 0.560, "Re": 0.0395,
+        "Au": 0.148, "Cu": 126.0,
+    },
+    # Depleted MORB mantle — the sensible reference for oceanic and
+    # ophiolite-hosted sulphide occurrences.
+    "Depleted MORB Mantle (Salters & Stracke 2004)": {
+        "Ni": 1960.0, "Os": 0.0034, "Ir": 0.0032, "Ru": 0.0050,
+        "Rh": 0.0009, "Pt": 0.0071, "Pd": 0.0039, "Au": 0.0010,
+        "Cu": 24.0,
+    },
+}
+
+
+# ---------------------------------------------------------------------------
 # Oxide → element conversion for major elements stored as wt.% oxide.
 # Multiply the wt.% value by *factor* to obtain ppm of the element.
 # ---------------------------------------------------------------------------
@@ -237,10 +305,32 @@ OXIDE_TO_ELEMENT_PPM: Dict[str, Tuple[str, float]] = {
 
 def get_normaliser(name: str) -> Mapping[str, float] | None:
     """Return the normalising dict for *name*, regardless of category."""
-    for group in (REE_CHONDRITES, REE_SHALES, MULTIELEMENT_NORMS):
+    for group in (REE_CHONDRITES, REE_SHALES, MULTIELEMENT_NORMS,
+                  CHALCOPHILE_NORMS):
         if name in group:
             return group[name]
     return None
+
+
+def is_chalcophile_normaliser(name: str) -> bool:
+    """True when *name* is a Ni-Cu-PGE metal reference.
+
+    The chalcophile references carry their own x-axis (ordered by
+    compatibility with sulphide liquid), so the caller must switch the
+    element order rather than reuse the incompatibility order.
+    """
+    return name in CHALCOPHILE_NORMS
+
+
+def chalcophile_order(name: str) -> Tuple[str, ...]:
+    """Metal order for *name*, trimmed to the metals it actually carries.
+
+    Becker et al. (2006) report Re but no Rh or Au, so the extended axis
+    is used only when the reference has something to put on it.
+    """
+    values = CHALCOPHILE_NORMS.get(name, {})
+    extended = [el for el in CHALCOPHILE_ORDER_EXTENDED if el in values]
+    return tuple(extended) if extended else CHALCOPHILE_ORDER
 
 
 def normaliser_categories() -> Dict[str, list[str]]:
@@ -249,4 +339,5 @@ def normaliser_categories() -> Dict[str, list[str]]:
         "REE — Chondrite": list(REE_CHONDRITES.keys()),
         "REE — Shale / crustal composite": list(REE_SHALES.keys()),
         "Multi-element": list(MULTIELEMENT_NORMS.keys()),
+        "Ni-Cu-PGE metals": list(CHALCOPHILE_NORMS.keys()),
     }
