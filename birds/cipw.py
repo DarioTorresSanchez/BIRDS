@@ -26,12 +26,10 @@ References
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
-
-from .preprocess import FE2O3_TO_FEO, get_feot
 
 
 # ---------------------------------------------------------------------------

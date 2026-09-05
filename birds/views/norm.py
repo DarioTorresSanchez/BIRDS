@@ -17,7 +17,6 @@ fully self-contained for thesis appendices.
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Dict, List, Optional
 
 import numpy as np
@@ -32,7 +31,6 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QFrame,
     QGroupBox,
-    QHBoxLayout,
     QLabel,
     QMessageBox,
     QPushButton,
@@ -47,7 +45,6 @@ from PySide6.QtWidgets import (
 
 from ..cipw import OUTPUT_MINERALS, compute_cipw
 from ..diagrams.templates.base import get_groups
-from ..preprocess import pre_process
 from .plot_canvas import PlotCanvas
 
 

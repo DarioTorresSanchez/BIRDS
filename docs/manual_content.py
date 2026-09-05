@@ -25,11 +25,12 @@ SECTIONS = [
         {"type": "p", "text":
          "B.I.R.D.S (Broad Igneous Rocks — Diagrams & Statistics) is a desktop "
          "application for plotting and analysing whole-rock geochemical "
-         "data of igneous rocks. It bundles 25 plotting templates, a "
-         "spider-diagram engine with 25 published normalisers, a "
-         "discrimination module with 14 tectonic diagrams, and a "
-         "statistics dashboard with REE-anomaly indices and a "
-         "correlation-matrix heat-map."},
+         "data of igneous rocks. It bundles 52 plotting templates, a "
+         "spider-diagram engine with 28 published normalisers "
+         "(REE chondrites and shales, multi-element references and "
+         "Ni-Cu-PGE metal references), a discrimination module with 33 "
+         "tectonic diagrams, and a statistics dashboard with REE-anomaly "
+         "indices and a correlation-matrix heat-map."},
         {"type": "p", "text":
          "The software is built on top of the open scientific Python "
          "stack (PySide6, matplotlib, pandas, NumPy, SciPy) and runs "
@@ -39,8 +40,8 @@ SECTIONS = [
         {"type": "p", "text":
          "If you use B.I.R.D.S in a publication, please cite the "
          "underlying references printed in each plot's subtitle, plus "
-         "the software itself: Torres, D. (2026). B.I.R.D.S — Basic "
-         "Igneous Rocks Diagrams Software (v0.1.0)."},
+         "the software itself: Torres, D. (2026). B.I.R.D.S — Broad "
+         "Igneous Rocks: Diagrams & Statistics (v0.1.0)."},
     ]),
 
     ("2. System requirements", [

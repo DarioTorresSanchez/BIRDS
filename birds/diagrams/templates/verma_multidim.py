@@ -30,10 +30,8 @@ from .base import (
     Diagram,
     MultiPanelDiagram,
     PanelSpec,
-    PlotOptions,
     build_logratios,
     feot_from_oxides,
-    get_groups,
     resolve_column,
 )
 from .verma_coefficients import (
@@ -563,7 +561,8 @@ class VermaAgrawal2011(_TripletDF):
     composition_filter = "basic+ultrabasic"  # SiO2 < 52 (Verma 2011 cal.)
     title = ("Verma & Agrawal (2011) — Basic + ultrabasic rocks "
              "(5 triplet DF panels)")
-    citation = ("Verma S.P. & Agrawal S. (2011) Geofísica Internacional. "
+    citation = ("Verma S.P. & Agrawal S. (2011) Revista Mexicana de Ciencias "
+                "Geológicas 28(1), 24-44. "
                 "Discriminates IAB · CRB · OIB · MORB from log-ratios "
                 "ln(Nb/TiO2), ln(V/TiO2), ln(Y/TiO2), ln(Zr/TiO2) on "
                 "100 %-anhydrous adjusted compositions, with (TiO2)adj "
@@ -825,8 +824,8 @@ class VermaVerma2013Major(_TripletDF):
     composition_filter = "intermediate"  # 52 ≤ SiO2 < 63 (Verma 2013 cal.)
     title = ("Verma & Verma (2013) — Intermediate rocks, Set 1: majors "
              "(5 triplet DF panels)")
-    citation = ("Verma S.K. & Verma S.P. (2013) Turkish J Earth Sci 22, "
-                "931–948.  Equations (1)–(10) on pp. 933–935; field "
+    citation = ("Verma S.P. & Verma S.K. (2013) Turkish J Earth Sci 22, "
+                "931–995.  Equations (1)–(10) on pp. 933–935; field "
                 "boundaries from Figure 1 caption.  Discriminates IA · "
                 "CA · CR+OI · Col using natural-log ratios of 10 major "
                 "oxides (TiO2, Al2O3, Fe2O3, FeO, MnO, MgO, CaO, Na2O, "
@@ -918,8 +917,8 @@ class VermaVerma2013ImMint(_TripletDF):
     composition_filter = "intermediate"
     title = ("Verma & Verma (2013) — Intermediate rocks, Set 2: immobile "
              "majors + traces (5 triplet DF panels)")
-    citation = ("Verma S.K. & Verma S.P. (2013) Turkish J Earth Sci 22, "
-                "931–948.  Equations (11)–(20) on pp. 937–938; field "
+    citation = ("Verma S.P. & Verma S.K. (2013) Turkish J Earth Sci 22, "
+                "931–995.  Equations (11)–(20) on pp. 937–938; field "
                 "boundaries from Figure 2 caption (p. 941).  Discriminates "
                 "IA · CA · CR+OI · Col using natural-log ratios of MgO, "
                 "P2O5 (wt%, adjusted) and Nb, Ni, V, Y, Zr (ppm → wt%) "
@@ -1047,8 +1046,8 @@ class VermaVerma2013Trace(_TripletDF):
     composition_filter = "intermediate"
     title = ("Verma & Verma (2013) — Intermediate rocks, Set 3: immobile "
              "traces (5 triplet DF panels)")
-    citation = ("Verma S.K. & Verma S.P. (2013) Turkish J Earth Sci 22, "
-                "931–948.  Equations (21)–(30) on pp. 939, 941; field "
+    citation = ("Verma S.P. & Verma S.K. (2013) Turkish J Earth Sci 22, "
+                "931–995.  Equations (21)–(30) on pp. 939, 941; field "
                 "boundaries from Figure 3 caption (p. 943).  Discriminates "
                 "IA · CA · CR+OI · Col using natural-log ratios of La, "
                 "Ce, Sm, Nb, Th, Y, Zr against Yb (all in ppm).  Each of "
@@ -1124,7 +1123,7 @@ class Verma2012Acid(_TripletDF):
     """Verma et al. (2012) — Acid (granitic / felsic) rocks, 5 triplet panels.
 
     Canonical implementation following Verma S.K., Pandarinath K. &
-    Rivera-Gomez M.A. (2012) International Geology Review 54(3), 325–347,
+    Verma S.P. (2012) International Geology Review 54(3), 325–347,
     Table 3 (Eqs 1–10).  Each panel discriminates THREE of the 4 tectonic
     settings (IA, CA, CR, Col) — acid rocks are not produced in significant
     amounts in MORB or OIB settings, so those are absent here.
@@ -1149,7 +1148,7 @@ class Verma2012Acid(_TripletDF):
     composition_filter = "acid"  # SiO2 ≥ 63 (Verma et al. 2012 cal.)
     title = ("Verma, Pandarinath & Rivera-Gomez (2012) — Acid rocks "
              "(5 triplet DF panels)")
-    citation = ("Verma S.K., Pandarinath K. & Rivera-Gomez M.A. (2012) "
+    citation = ("Verma S.K., Pandarinath K. & Verma S.P. (2012) "
                 "International Geology Review 54(3), 325–347.  Table 3, "
                 "Eqs (1)–(10) on pp. 335–336; field boundaries from "
                 "Figure 5 caption (p. 337).  Discriminates IA · CA · CR · "

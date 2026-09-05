@@ -200,23 +200,22 @@ REFERENCES: List[Section] = [
         ("Verma, S. P., & Agrawal, S. (2011). New tectonic discrimination "
          "diagrams for basic and ultrabasic volcanic rocks through "
          "log-transformed ratios of high field strength elements and "
-         "implications for petrogenetic processes. *Journal of the "
-         "Geological Society of India*, *79*(5), 519-525. "
-         "https://doi.org/10.1007/s12594-012-0064-5",
+         "implications for petrogenetic processes. *Revista Mexicana de "
+         "Ciencias Geológicas*, *28*(1), 24-44.",
          "5-panel Nb-V-Y-Zr/TiO2 DF set for basic + ultrabasic rocks."),
-        ("Verma, S. K., Pandarinath, K., & Rivera-Gómez, M. A. (2012). "
+        ("Verma, S. K., Pandarinath, K., & Verma, S. P. (2012). "
          "Statistical evaluation of tectonomagmatic discrimination "
          "diagrams for granitic rocks and proposal of new "
          "discriminant-function-based multi-dimensional diagrams for acid "
-         "magmas. *International Geology Review*, *54*(3), 325-347. "
-         "https://doi.org/10.1080/00206814.2010.543783",
+         "rocks. *International Geology Review*, *54*(3), 325-347. "
+         "https://doi.org/10.1080/00206814.2010.543784",
          "5-panel DF for acid rocks (Eqs 1-10)."),
-        ("Verma, S. K., & Verma, S. P. (2013). Identification of "
-         "paleotectonic settings of intermediate magmas through "
-         "discriminant-function diagrams based on log-ratio "
-         "transformations of major-element and immobile element "
-         "compositions. *Turkish Journal of Earth Sciences*, *22*(6), "
-         "931-948.",
+        ("Verma, S. P., & Verma, S. K. (2013). First 15 probability-based "
+         "multidimensional tectonic discrimination diagrams for "
+         "intermediate magmas and their robustness against "
+         "postemplacement compositional changes and petrogenetic "
+         "processes. *Turkish Journal of Earth Sciences*, *22*(6), "
+         "931-995. https://doi.org/10.3906/yer-1204-6",
          "5+5+5-panel DF for intermediate rocks (majors, immobile+trace, "
          "trace)."),
         ("Verma, S. P., Pandarinath, K., Verma, S. K., & Agrawal, S. "
