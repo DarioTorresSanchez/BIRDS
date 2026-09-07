@@ -3,13 +3,14 @@
 # ---------------------------------------------------------------------------
 
 # --- Real sample data -------------------------------------------------------
-# The empty data-entry templates ARE tracked (they are part of the product).
-# These carry actual analyses — some of them other people's, possibly
-# unpublished — so they stay local until their owner decides otherwise.
-templates/BIRDS_data_Granites_*.xlsx
-templates/BIRDS_data_template_Granaties.xlsx
-templates/BIRDS_data_template_MGVF.xlsx
-templates/session.birds
+# Only the EMPTY data-entry templates are tracked; they are part of the
+# product.  Anything dropped into templates/ that carries real analyses
+# stays local — a working dataset is the author's to publish, and some of
+# it belongs to collaborators.  Add a pattern here rather than relying on
+# remembering not to `git add` it.
+templates/*_data_*.xlsx
+!templates/BIRDS_data_template.xlsx
+!templates/BIRDS_data_template.csv
 *.birds
 *.birdstyle
 
