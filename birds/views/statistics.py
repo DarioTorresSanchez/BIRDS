@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable, List, Optional
+from typing import List, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -38,7 +38,6 @@ from ..stats_engine import (
     paper_table_to_markdown,
 )
 from ..tectonic_results import (
-    Discriminator,
     compute_results as compute_tectonic_results,
     discriminator_catalog,
 )
@@ -531,20 +530,20 @@ class StatisticsView(QWidget):
                     border: str = "#888") -> QWidget:
         """A coloured square + a short description, used by the legend."""
         row = QWidget()
-        l = QHBoxLayout(row)
-        l.setContentsMargins(0, 0, 0, 0)
-        l.setSpacing(6)
+        row_layout = QHBoxLayout(row)
+        row_layout.setContentsMargins(0, 0, 0, 0)
+        row_layout.setSpacing(6)
         swatch = QLabel()
         swatch.setFixedSize(18, 14)
         swatch.setStyleSheet(
             f"background: {_hex(color)}; border: 1px solid {border};"
             " border-radius: 2px;"
         )
-        l.addWidget(swatch)
+        row_layout.addWidget(swatch)
         label = QLabel(text)
         label.setStyleSheet("background: transparent; border: none;"
                             " color: #1c2237;")
-        l.addWidget(label)
+        row_layout.addWidget(label)
         return row
 
     # ------------------------------------------------------------ tectonic
@@ -909,8 +908,8 @@ class StatisticsView(QWidget):
                 kde = gaussian_kde(values)
                 xs = np.linspace(values.min(), values.max(), 200)
                 density = kde(xs)
-                # Scale to histogram counts: density * bin_width * N
-                bin_width = (values.max() - values.min()) / bins
+                # The KDE goes on its own twin axis, so it carries its
+                # own density scale and needs no rescaling to counts.
                 ax2 = ax.twinx()
                 ax2.plot(xs, density, color="#b13a3a", linewidth=1.6,
                          label="KDE")
@@ -967,7 +966,7 @@ class StatisticsView(QWidget):
             data = [values.dropna().values]
             labels = [var]
         # Drop empty groups so matplotlib doesn't choke.
-        keep = [(d, l) for d, l in zip(data, labels) if len(d) > 0]
+        keep = [(d, lab) for d, lab in zip(data, labels) if len(d) > 0]
         if not keep:
             ax.text(0.5, 0.5, "No data for the selected variable.",
                     ha="center", va="center", color="#6c7388")
@@ -1060,7 +1059,6 @@ class StatisticsView(QWidget):
             sorted_values = np.sort(values.values)
             n = len(sorted_values)
             quantiles = (np.arange(1, n + 1) - 0.5) / n
-            from math import sqrt
             try:
                 from statistics import NormalDist
                 theoretical = [NormalDist().inv_cdf(q) for q in quantiles]
@@ -1313,7 +1311,6 @@ class StatisticsView(QWidget):
     # Session persistence
     # ------------------------------------------------------------------
     def serialize(self) -> dict:
-        from .. import widget_state as ws
         out: dict = {
             "normaliser": self.norm_combo.currentText(),
             "active_tab": self.tabs.currentIndex(),

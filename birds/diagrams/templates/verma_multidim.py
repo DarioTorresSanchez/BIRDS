@@ -24,10 +24,8 @@ from typing import Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from matplotlib.figure import Figure
 
 from .base import (
-    Diagram,
     MultiPanelDiagram,
     PanelSpec,
     build_logratios,

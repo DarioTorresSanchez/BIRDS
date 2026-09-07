@@ -61,7 +61,7 @@ class Haplogranite(Diagram):
 
         # Apex A = Q, B = Ab, C = Or
         xs, ys, labels = [], [], []
-        for ab, orx, q, p, kind in _MIN_EUT:
+        for ab, orx, q, p, _kind in _MIN_EUT:
             x, y = ternary_to_xy(pd.Series([q]), pd.Series([ab]), pd.Series([orx]))
             xs.append(x.iloc[0]); ys.append(y.iloc[0])
             labels.append(f"{p:g} kb")

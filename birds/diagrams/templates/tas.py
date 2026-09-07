@@ -32,7 +32,7 @@ _VOLCANIC_FIELDS = {
                                  (57.6, 11.7), (52.5, 14)],
     "Phonolite":                [(57.6,11.7),(63,14.5),
                                  (57.6,11.7),(52.5,14),(50,15.083)],
-    
+
 }
 
 
@@ -137,7 +137,7 @@ _PLUTONIC_FIELDS = {
     "Foid\nMonzodiorite":[(45,9.4),(49.4,7.3)],
     "Foid\nMonzosyenite":[(48.4,11.5),(53,9.3)],
     "Foid\nSyenite":     [(52.5,14),(57,18),(63,16.2),(61,13.5),(57.6,11.7),(52.5,14)],
-    
+
 }
 
 
@@ -153,19 +153,19 @@ class TASPlutonic(Diagram):
     field_polygons = _PLUTONIC_FIELDS
     field_label_pos = {
         "Foidolite":      (40, 12.5),
-        "Foid syenite":   (56.5, 15),       
+        "Foid syenite":   (56.5, 15),
         "Peridotgabbro":  (40, 1.5),
         "Gabbro":         (48.5, 2.5),
         "Diorite":        (60, 3.0),
         "Granodiorite":   (70, 3.5),
         "Granite":        (80, 5.0),
-        "Monzogabbro":    (47, 6.5),        
+        "Monzogabbro":    (47, 6.5),
         "Monzodiorite":   (52, 7.2),
         "Monzonite":      (58, 8.5),
         "Syenite":        (65, 12),
-        "Quartz\nMonzonite": (66, 8.5),       
+        "Quartz\nMonzonite": (66, 8.5),
         "Foid gabbro":    (43, 7.0),
-        "Foid\nMonzodiorite": (49, 10),    
+        "Foid\nMonzodiorite": (49, 10),
         "Foid\nMonzosyenite": (53, 12),
     }
 

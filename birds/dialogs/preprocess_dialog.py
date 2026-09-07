@@ -8,13 +8,10 @@ user can see exactly what is going to change.
 
 from __future__ import annotations
 
-from typing import Optional
 
-import numpy as np
 import pandas as pd
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QCheckBox,
     QComboBox,
     QDialog,
     QDialogButtonBox,
@@ -24,7 +21,6 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
-    QPushButton,
     QSizePolicy,
     QTableWidget,
     QTableWidgetItem,
@@ -36,8 +32,6 @@ from ..preprocess import (
     AdjustOptions,
     IronOptions,
     MAJOR_OXIDES,
-    adjust_to_100,
-    partition_iron,
     pre_process,
 )
 

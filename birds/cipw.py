@@ -133,7 +133,7 @@ def _moles_from_wt(row: pd.Series) -> Dict[str, float]:
 
 
 def _allocate(row: pd.Series
-              ) -> Tuple[Dict[str, float], Dict[str, float], str]:
+              ) -> Tuple[Dict[str, float], Dict[str, float], str, float]:
     """Run the CIPW allocation for one sample.
 
     Returns
@@ -144,9 +144,20 @@ def _allocate(row: pd.Series
                     and is reported as Quartz or as a deficit handled by
                     olivine/nepheline substitution).
     saturation    : "oversaturated" | "saturated" | "undersaturated"
+    deficit_mol   : SiO₂ (moles per 100 g) the desilication cascade could
+                    not resolve — non-zero only for extremely
+                    silica-poor rocks; see :func:`compute_cipw`.
     """
     mol = _moles_from_wt(row)
     min_: Dict[str, float] = _empty_minerals()
+
+    # Mn²⁺ substitutes for Fe²⁺ in every ferromagnesian normative
+    # mineral, so the classical norm folds MnO into FeO before any
+    # allocation.  Skipping this silently drops the manganese from the
+    # norm and leaves the total short by exactly the MnO content.
+    if mol["MnO"] > 0:
+        mol["FeO"] += mol["MnO"]
+        mol["MnO"] = 0.0
 
     # ----- pre-silicate minerals --------------------------------------------
     # 1. Apatite — 1 mol P2O5 + 3.333 mol CaO
@@ -271,6 +282,7 @@ def _allocate(row: pd.Series
     # sio2_avail < 0  ⇒ under-saturated (Ol replaces Hy, Ne replaces Ab, ...)
 
     sat = "saturated"
+    unresolved = 0.0
     if sio2_avail > 1e-9:
         min_["Q"] = sio2_avail
         min_["Or"] = or_prov
@@ -319,6 +331,13 @@ def _allocate(row: pd.Series
         min_["Or"] = or_prov
         min_["Ab"] = ab_prov
         sat = "undersaturated"
+        # Anything still unresolved here means the rock is more
+        # silica-poor than Hy→Ol, Ab→Ne, Or→Lc and Lc→Kp can absorb.
+        # The classical recipe continues into the larnite (Cs) steps,
+        # which are NOT implemented; rather than pretend the balance
+        # closed — which silently inflates the norm total by the
+        # residue — the leftover is reported so the caller can flag it.
+        unresolved = max(deficit, 0.0)
 
     # If we never went into the deficit branch, Hy is mono-block; otherwise
     # already split.
@@ -337,7 +356,7 @@ def _allocate(row: pd.Series
     else:
         sat = "saturated"
 
-    return min_, mol, sat
+    return min_, mol, sat, unresolved
 
 
 # ---------------------------------------------------------------------------
@@ -377,30 +396,39 @@ def compute_cipw(df: pd.DataFrame) -> pd.DataFrame:
     ``norm_Q, norm_C, norm_Or, norm_Ab, norm_An, norm_Ne, norm_Lc,
     norm_Kp, norm_Ac, norm_Ns, norm_Di, norm_Wo, norm_Hy, norm_Ol,
     norm_Mt, norm_Hm, norm_Il, norm_Ru, norm_Cm, norm_Ap, norm_Z,
-    norm_Total, silica_saturation``
+    norm_Total, silica_saturation, silica_deficit``
 
     The columns are populated with 0.0 (not NaN) when the corresponding
     mineral is not predicted, so the DataFrame can be summed / plotted
     immediately.
+
+    ``silica_deficit`` is the wt % of SiO₂ the desilication cascade could
+    not place.  It is 0 for every ordinary rock.  A non-zero value means
+    the analysis is more silica-poor than Hy→Ol, Ab→Ne, Or→Lc and Lc→Kp
+    can absorb — melilitites, nephelinites and kimberlites reach this —
+    and that ``norm_Total`` is overstated by roughly that amount, because
+    the larnite (Cs) steps of the full classical recipe are not
+    implemented.  Callers should surface it rather than ignore it.
     """
     out_records: List[Dict[str, float]] = []
     sats: List[str] = []
+    deficits: List[float] = []
 
-    # Make sure FeOt exists if FeO/Fe2O3 are zero (the user can run the
-    # preprocess dialog before; here we simply trust the inputs).
     for _, row in df.iterrows():
-        min_, _leftover, sat = _allocate(row)
+        min_, _leftover, sat, unresolved = _allocate(row)
         wts = _to_weights(min_)
         record = {f"norm_{k}": v for k, v in wts.items()}
         record["norm_Total"] = sum(wts.values())
         out_records.append(record)
         sats.append(sat)
+        deficits.append(unresolved * MW_OXIDE["SiO2"])
 
     result = pd.DataFrame(out_records, index=df.index)
     # Re-order columns following OUTPUT_MINERALS for readability
     ordered = [f"norm_{m}" for m in OUTPUT_MINERALS] + ["norm_Total"]
     result = result[ordered]
     result["silica_saturation"] = sats
+    result["silica_deficit"] = deficits
     return result
 
 

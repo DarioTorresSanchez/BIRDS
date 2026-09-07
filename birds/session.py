@@ -57,12 +57,11 @@ import os
 import platform
 import shutil
 import sys
-import tempfile
 import zipfile
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 
 import pandas as pd
 

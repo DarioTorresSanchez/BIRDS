@@ -31,7 +31,6 @@ from __future__ import annotations
 
 from typing import Optional, Tuple
 
-import numpy as np
 import pandas as pd
 
 # Strict boundaries (wt %) used in Le Bas et al. 1986 / Le Maitre 2002

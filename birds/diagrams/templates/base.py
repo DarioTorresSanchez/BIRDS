@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -594,7 +594,10 @@ class MultiPanelDiagram(Diagram):
         for x in panel.vertical_lines:
             ax.axvline(x, color="#444", linewidth=0.9, linestyle="--",
                        alpha=0.8, zorder=1)
-        for m, b, lab_lo, lab_hi in panel.boundary_lines:
+        # The two label slots are part of the PanelSpec contract but are
+        # not rendered yet, and no template populates boundary_lines
+        # today — the Verma panels carry their own field geometry.
+        for m, b, _lab_lo, _lab_hi in panel.boundary_lines:
             if panel.x_range is None:
                 continue
             xs = np.linspace(panel.x_range[0], panel.x_range[1], 50)
@@ -672,12 +675,12 @@ class MultiPanelDiagram(Diagram):
         handles, labels = [], []
         seen = set()
         for ax in axes:
-            for h, l in zip(*ax.get_legend_handles_labels()):
-                if l in seen or l.startswith("_"):
+            for handle, label in zip(*ax.get_legend_handles_labels()):
+                if label in seen or label.startswith("_"):
                     continue
-                seen.add(l)
-                handles.append(h)
-                labels.append(l)
+                seen.add(label)
+                handles.append(handle)
+                labels.append(label)
         if not handles:
             return
         figure.legend(handles, labels, loc="lower center",

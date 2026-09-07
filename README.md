@@ -13,6 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
+[![Tests](https://img.shields.io/badge/tests-1278%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -49,6 +50,7 @@ export is sized in millimetres for the journal you are submitting to.
 - [Installation](#installation)
 - [Quick start](#quick-start)
 - [Keyboard shortcuts](#keyboard-shortcuts)
+- [Development and testing](#development-and-testing)
 - [Project layout](#project-layout)
 - [Status](#status)
 - [Citation](#citation)
@@ -397,6 +399,40 @@ A complete user manual ships with the repository:
 | Update active plot | `Ctrl+R` or `F5` |
 | Full bibliography | `Ctrl+Shift+B` |
 | Home / help / shortcuts | `Ctrl+H` · `F1` · `Ctrl+/` |
+
+---
+
+## Development and testing
+
+The test suite runs headless — Qt uses its offscreen platform plugin — so
+it works over SSH and in CI without a display.
+
+```bash
+python3 -m pip install -e ".[dev]"
+```
+
+```bash
+python3 -m pytest
+```
+
+```bash
+ruff check birds main.py tests
+```
+
+What the suite covers, and why those things and not others:
+
+| Area | What is asserted |
+|---|---|
+| **CIPW norm** | Mass balance against the oxide sum, Q/Ne mutual exclusion, no negative minerals, scale invariance, determinism, and that the silica-deficit flag quantifies its own error |
+| **Detection limits** | Every censored form parses, each policy substitutes correctly, an unknown policy raises rather than discarding data, and the policy round-trips losslessly |
+| **Diagrams** | All 52 templates render against ten dataset shapes — normal, NaN-riddled, majors-only, all-NaN, single-row, negative, zeros, 10¹², 10⁻¹² — and their sample tallies stay self-consistent |
+| **Normalisers** | Every reference resolves, all values are positive and finite, REE tables cover the lanthanides, and a name listed in two categories resolves to the richer table |
+| **GUI state** | Each test corresponds to a bug that actually shipped: stale data tables, selections outliving their dataset, tallies that ignored group visibility, misaligned below-detection masks |
+| **Sessions** | `.birds` and `.birdstyle` round-trips, including the detection limits that make the policy changeable after a reload |
+
+The bibliography is tested too: citations verified against their source
+PDFs must be present, and the ones removed as wrong or orphaned must not
+come back.
 
 ---
 

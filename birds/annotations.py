@@ -16,10 +16,9 @@ for session round-trip.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Optional
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 

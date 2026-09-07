@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -10,7 +9,6 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
-    QFileDialog,
     QFormLayout,
     QFrame,
     QGroupBox,
@@ -30,13 +28,10 @@ from PySide6.QtWidgets import (
 
 from .. import annotations as _ann
 from ..diagrams.templates.base import (
-    AxisStyle,
-    LegendStyle,
-    PlotOptions,
     get_groups,
 )
 from ..expression import ExpressionError, evaluate, evaluate_scalar
-from ..reservoirs import RESERVOIRS, get_reservoir_value
+from ..reservoirs import RESERVOIRS
 from .plot_canvas import PlotCanvas
 from .widgets import (
     ANN_MODE_ARROW,

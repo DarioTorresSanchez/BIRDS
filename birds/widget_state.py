@@ -13,17 +13,14 @@ control.
 
 from __future__ import annotations
 
-from typing import Any, Iterable, Optional
+from typing import Iterable, Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QCheckBox,
     QComboBox,
     QDoubleSpinBox,
     QLineEdit,
     QListWidget,
-    QListWidgetItem,
-    QRadioButton,
     QSpinBox,
     QTreeWidget,
 )

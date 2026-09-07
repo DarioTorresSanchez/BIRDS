@@ -12,7 +12,6 @@ from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import (
     QFileDialog,
     QMainWindow,
-    QMenu,
     QMenuBar,
     QMessageBox,
     QStackedWidget,
@@ -26,7 +25,6 @@ from .session import (
     SessionError,
     SessionState,
     autosave_path,
-    autosave_backup_path,
     clear_autosave,
     load_session,
     rotate_autosave,
@@ -1509,7 +1507,8 @@ class BirdsMainWindow(QMainWindow):
     @staticmethod
     def _log_autosave_failure(stage: str, exc: Exception) -> None:
         """Append an auto-save failure traceback to ~/.birds/crash.log."""
-        import datetime as _dt, traceback as _tb
+        import datetime as _dt
+        import traceback as _tb
         from pathlib import Path as _Path
         try:
             log = _Path.home() / ".birds" / "crash.log"

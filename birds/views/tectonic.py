@@ -8,7 +8,6 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
-    QFileDialog,
     QFormLayout,
     QFrame,
     QGroupBox,
@@ -429,7 +428,7 @@ class TectonicView(QWidget):
         rng = info.get("range", "")
         if src == "missing":
             self.composition_status.setText(
-                f"<b>Warning:</b> No SiO₂ column found "
+                "<b>Warning:</b> No SiO₂ column found "
                 "(expected one of SiO2 / SiO2_adj).  Showing all samples."
             )
             self.composition_status.setTextFormat(Qt.TextFormat.RichText)
@@ -465,7 +464,7 @@ class TectonicView(QWidget):
         filtered, info = filter_by_rock_type(df, self._family)
         if info["source"] is None:
             self.rock_type_status.setText(
-                f"<b>Rock_Type:</b> column not found — all samples shown."
+                "<b>Rock_Type:</b> column not found — all samples shown."
             )
             self.rock_type_status.setTextFormat(Qt.TextFormat.RichText)
             return df

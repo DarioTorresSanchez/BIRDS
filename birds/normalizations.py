@@ -304,12 +304,24 @@ OXIDE_TO_ELEMENT_PPM: Dict[str, Tuple[str, float]] = {
 # ---------------------------------------------------------------------------
 
 def get_normaliser(name: str) -> Mapping[str, float] | None:
-    """Return the normalising dict for *name*, regardless of category."""
-    for group in (REE_CHONDRITES, REE_SHALES, MULTIELEMENT_NORMS,
-                  CHALCOPHILE_NORMS):
-        if name in group:
-            return group[name]
-    return None
+    """Return the normalising dict for *name*, regardless of category.
+
+    A few references are legitimately listed in more than one category —
+    Rudnick & Gao's Upper Continental Crust is both a REE composite and a
+    multi-element normaliser — and the tables differ only in how many
+    elements they carry.  Returning the first match would hand the
+    multi-element view the REE-only subset, silently dropping Cs, Rb, Ba,
+    Th, U, Nb, Ta, K, Pb, Sr, P, Zr, Hf and Ti from the diagram with no
+    warning.  The richest table is therefore the one that wins; the
+    narrower views simply ask for fewer elements than it offers.
+    """
+    matches = [group[name] for group in
+               (REE_CHONDRITES, REE_SHALES, MULTIELEMENT_NORMS,
+                CHALCOPHILE_NORMS)
+               if name in group]
+    if not matches:
+        return None
+    return max(matches, key=len)
 
 
 def is_chalcophile_normaliser(name: str) -> bool:

@@ -1,0 +1,102 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "birds-geochem"
+version = "0.1.0"
+description = "Broad Igneous Rocks — Diagrams & Statistics: a desktop application for whole-rock igneous geochemistry"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [{ name = "Darío Torres" }]
+keywords = [
+    "igneous petrology",
+    "geochemistry",
+    "whole-rock analysis",
+    "tectonic discrimination",
+    "CIPW norm",
+    "spider diagram",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: X11 Applications :: Qt",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "PySide6>=6.5",
+    "matplotlib>=3.7",
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "openpyxl>=3.1",
+    "scipy>=1.10",
+    "python-docx>=1.0",
+    "reportlab>=4.0",
+]
+
+[project.optional-dependencies]
+# The Map view degrades gracefully without these — see INSTALL.md.
+map = ["contextily>=1.5", "pyproj>=3.4", "mgrs>=1.4"]
+test = ["pytest>=7.0"]
+dev = ["pytest>=7.0", "ruff>=0.4"]
+
+[project.urls]
+Homepage = "https://github.com/dariotorres/BIRDS"
+Issues = "https://github.com/dariotorres/BIRDS/issues"
+
+[project.gui-scripts]
+birds = "main:main"
+
+[tool.setuptools]
+packages = [
+    "birds",
+    "birds.diagrams",
+    "birds.diagrams.templates",
+    "birds.dialogs",
+    "birds.views",
+]
+
+[tool.setuptools.package-data]
+birds = ["resources/*.png"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "tests"]
+addopts = "-q --strict-markers"
+filterwarnings = [
+    "error::DeprecationWarning:birds.*",
+]
+
+[tool.ruff]
+line-length = 79
+target-version = "py39"
+
+[tool.ruff.lint]
+# Correctness first.  The pyupgrade (UP) rules are deliberately left out:
+# they would rewrite typing.Dict → dict in annotations, which reads better
+# but is exactly the kind of churn that hides a real diff, and the project
+# still supports Python 3.9.
+select = ["E", "F", "W", "B"]
+ignore = [
+    "E501",   # long lines are governed by line-length above
+    "B008",   # Qt constructors as defaults are idiomatic in PySide
+    # Semicolons are used to keep blocks of parallel element lookups
+    # (la_n = normed("La"); ce_n = normed("Ce"); …) readable as one
+    # unit.  Expanding them to one statement per line makes those
+    # sections longer and harder to scan, not clearer.
+    "E702",
+    "E731",   # short local lambdas read better than a nested def here
+]
+
+[tool.ruff.lint.per-file-ignores]
+# QT_QPA_PLATFORM has to be set before PySide6 is imported anywhere.
+"tests/conftest.py" = ["E402"]
+"tests/*" = ["F401"]   # fixtures are referenced by name, not by use

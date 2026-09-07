@@ -26,13 +26,11 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
-    QFileDialog,
     QFormLayout,
     QFrame,
     QGroupBox,
     QHBoxLayout,
     QLabel,
-    QMessageBox,
     QPushButton,
     QScrollArea,
     QSpinBox,
@@ -661,9 +659,16 @@ class MapView(QWidget):
             any_data = True
 
         if not any_data:
+            # The coordinate columns parsed, but nothing survived the
+            # range check.  Name the columns when the parser labelled the
+            # series (decimal degrees); the UTM and MGRS parsers build
+            # unnamed series, so fall back to a generic phrase rather
+            # than reaching for names that do not exist here.
+            lat_name = getattr(lat_all, "name", None) or "latitude"
+            lon_name = getattr(lon_all, "name", None) or "longitude"
             self._empty(
                 ax,
-                f"No usable coordinates in '{lat_col}' / '{lon_col}'.\n"
+                f"No usable coordinates in '{lat_name}' / '{lon_name}'.\n"
                 "Make sure the values are numeric and inside "
                 "[-90, 90] × [-180, 180].",
             )

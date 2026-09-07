@@ -443,7 +443,7 @@ class NormView(QWidget):
             "Algorithm : Classical CIPW (Cross-Iddings-Pirsson-"
             "Washington 1903)",
             f"Samples   : {n}",
-            f"Norm Σ ±  : "
+            "Norm Σ ±  : "
             + f"{result['norm_Total'].mean():.2f} ± "
             + f"{result['norm_Total'].std(ddof=0):.2f}  wt%",
             "",
@@ -453,6 +453,29 @@ class NormView(QWidget):
             count = int(sat_counts.get(label, 0))
             parts.append(f"  {label:18s}{count:5d}   "
                          f"({(count/n*100 if n else 0):.1f} %)")
+
+        # Samples too silica-poor for the implemented desilication steps.
+        # Their norm total is overstated, so say so where it cannot be
+        # missed rather than letting the number stand on its own.
+        if "silica_deficit" in result.columns:
+            deficit = pd.to_numeric(result["silica_deficit"],
+                                    errors="coerce").fillna(0.0)
+            flagged = int((deficit > 1e-6).sum())
+            if flagged:
+                parts += [
+                    "",
+                    f"!! {flagged} sample{'s' if flagged != 1 else ''} could "
+                    "not be fully desilicated.",
+                    "   The rock is more silica-poor than the Hy→Ol, Ab→Ne,",
+                    "   Or→Lc and Lc→Kp steps can absorb (melilitite / "
+                    "nephelinite",
+                    "   territory). Their norm total is overstated by up to "
+                    f"{deficit.max():.2f} wt%;",
+                    "   the larnite steps of the full recipe are not "
+                    "implemented.",
+                    "   See the 'silica_deficit' column in the XLSX export.",
+                ]
+
         # Mean of each non-zero mineral
         parts.append("")
         parts.append("Mean wt% per normative mineral (≥ 0.1 %):")
@@ -485,6 +508,8 @@ class NormView(QWidget):
                 self._result.to_excel(writer, sheet_name="CIPW", index=True)
                 # 3. Classification only
                 class_cols = ["silica_saturation"]
+                if "silica_deficit" in self._result.columns:
+                    class_cols.append("silica_deficit")
                 self._result[class_cols].to_excel(
                     writer, sheet_name="Classification", index=True)
                 # 4. Total per sample

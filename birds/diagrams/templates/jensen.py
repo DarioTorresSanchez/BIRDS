@@ -27,7 +27,6 @@ class Jensen(Diagram):
                 "Coordinates from Rollinson & Pease (2021) Fig. 3.8b.")
 
     def _abc(self, df):
-        si = resolve_column(df, ["SiO2"])
         ti = resolve_column(df, ["TiO2"])
         al = resolve_column(df, ["Al2O3"])
         feo = resolve_column(df, ["FeO"])
