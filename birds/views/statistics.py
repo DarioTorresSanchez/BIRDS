@@ -11,6 +11,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import (
     QAbstractItemView,
+    QCheckBox,
     QComboBox,
     QFrame,
     QHBoxLayout,
@@ -113,6 +114,86 @@ def _categorise(column: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Sample identity and grouping
+# ---------------------------------------------------------------------------
+# The per-sample result tables (anomalies, ratios, tectonic discriminators)
+# are computed positionally, so on their own they come back indexed 0..n
+# and a reader has no way to tell which row is which rock.  These helpers
+# put the user's own labels back on the rows, and expose the grouping they
+# set up in Edit plot so a table or a figure can be split by it.
+
+#: Columns tried, in order, when labelling a row.
+_LABEL_COLUMNS = ("Sample_Label", "Sample_Name", "Sample", "Name", "No.")
+
+#: Header used for the grouping column prepended to split tables.
+GROUP_COLUMN = "Group"
+
+
+def sample_labels(df: Optional[pd.DataFrame]) -> Optional[pd.Series]:
+    """User-facing name for every row of *df*.
+
+    ``Sample_Label`` is the template's free-text field and is what the
+    user actually typed, so it wins over ``Sample_Name``; the row index
+    is the last resort.  Blank cells fall back rather than showing an
+    empty row header.
+    """
+    if df is None or df.empty:
+        return None
+    fallback = pd.Series([str(i) for i in df.index], index=df.index)
+    for column in _LABEL_COLUMNS:
+        if column not in df.columns:
+            continue
+        values = df[column].astype("string").str.strip()
+        return values.mask(values.isna() | (values == ""), fallback)
+    return fallback
+
+
+def group_labels(df: Optional[pd.DataFrame],
+                 plot_style) -> Optional[pd.Series]:
+    """One label per row from the grouping set in Edit plot.
+
+    Returns ``None`` when the user has not defined a grouping, which the
+    callers read as "there is nothing to split by".
+    """
+    if df is None or df.empty or plot_style is None:
+        return None
+    columns = [c for c in getattr(plot_style, "group_columns", []) or []
+               if c and c in df.columns]
+    if not columns:
+        return None
+    if len(columns) == 1:
+        labels = df[columns[0]].astype("string")
+    else:
+        labels = (df[columns].astype("string").fillna("NA")
+                  .agg(" | ".join, axis=1))
+    return labels.fillna("NA").astype(str).str.strip()
+
+
+def with_identity(frame: pd.DataFrame, source: pd.DataFrame,
+                  plot_style=None, *, split_by_group: bool = False
+                  ) -> pd.DataFrame:
+    """Prepend the sample label — and optionally the group — to *frame*.
+
+    *frame* is a positionally-computed result table whose index matches
+    *source*.  When *split_by_group* is on and a grouping exists, the
+    rows are also ordered by group so each block reads together.
+    """
+    if frame is None or frame.empty or source is None:
+        return frame
+    out = frame.copy()
+    labels = sample_labels(source)
+    if labels is not None:
+        out.insert(0, "Sample_Label", labels.reindex(out.index))
+    if split_by_group:
+        groups = group_labels(source, plot_style)
+        if groups is not None:
+            out.insert(0, GROUP_COLUMN, groups.reindex(out.index))
+            out = out.sort_values(
+                by=GROUP_COLUMN, kind="stable")
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Main view
 # ---------------------------------------------------------------------------
 
@@ -196,28 +277,42 @@ class StatisticsView(QWidget):
 
         self.tabs = QTabWidget()
         self.tabs.setVisible(False)
-        # Tab 1: descriptive
+        # Every caption is later rewritten with a live count.  The pages
+        # are remembered by name and resolved through ``_set_tab_text``
+        # rather than by position: inserting a tab used to silently
+        # retitle its neighbour, which is how the tectonic caption ended
+        # up on the correlation tab.
+        self._tab_pages: dict[str, QWidget] = {}
+
         self.descriptive_table = self._make_table()
-        self.tabs.addTab(self.descriptive_table, "Descriptive")
-        # Tab 2: by group
+        self._add_tab("descriptive", self.descriptive_table, "Descriptive")
         self.by_group_table = self._make_table()
-        self.tabs.addTab(self.by_group_table, "By group")
-        # Tab 2b: publication-ready mean ± 1σ (n) summary
-        self.tabs.addTab(self._build_paper_tab(), "Paper table")
-        # Tab 3: anomalies — table + colour legend
-        self.tabs.addTab(self._build_anomalies_tab(), "Anomalies & ratios")
-        # Tab 4: trace ratios
+        self._add_tab("by_group", self.by_group_table, "By group")
+        self._add_tab("paper", self._build_paper_tab(), "Paper table")
+        self._add_tab("anomalies", self._build_anomalies_tab(),
+                      "Anomalies & ratios")
         self.ratios_table = self._make_table()
-        self.tabs.addTab(self.ratios_table, "Trace-element ratios")
-        # Tab 5: correlation heatmap — split between element selector and canvas
-        self.tabs.addTab(self._build_correlation_tab(), "Correlation matrix")
-        # Tab 6: tectonic discrimination — selectable per-sample DFs / ratios
-        self.tabs.addTab(self._build_tectonic_tab(), "Tectonic discrimination")
-        # Tab 7: statistical plots — histogram, pie, box, violin, bar,
-        # ECDF, Q-Q.  Variable selector + group selector on the left,
-        # PlotCanvas on the right.
-        self.tabs.addTab(self._build_plots_tab(), "Plots")
+        self._add_tab("ratios", self.ratios_table, "Trace-element ratios")
+        self._add_tab("correlation", self._build_correlation_tab(),
+                      "Correlation matrix")
+        self._add_tab("tectonic", self._build_tectonic_tab(),
+                      "Tectonic discrimination")
+        self._add_tab("plots", self._build_plots_tab(), "Plots")
         layout.addWidget(self.tabs, stretch=1)
+
+    # --------------------------------------------------------- tab titles
+    def _add_tab(self, name: str, page: QWidget, title: str) -> None:
+        self._tab_pages[name] = page
+        self.tabs.addTab(page, title)
+
+    def _set_tab_text(self, name: str, title: str) -> None:
+        """Retitle a tab by name, so reordering can never mis-target it."""
+        page = self._tab_pages.get(name)
+        if page is None:
+            return
+        index = self.tabs.indexOf(page)
+        if index >= 0:
+            self.tabs.setTabText(index, title)
 
     # ----------------------------------------------------------- tab builders
     def _build_paper_tab(self) -> QWidget:
@@ -441,6 +536,19 @@ class StatisticsView(QWidget):
         wl.setContentsMargins(0, 0, 0, 0)
         wl.setSpacing(4)
 
+        # Split control — the grouping comes from Edit plot, so the table
+        # sections the same way the diagrams colour their points.
+        self.anomalies_split_chk = QCheckBox("Split rows by group")
+        self.anomalies_split_chk.setToolTip(
+            "Prepend the grouping column set in Data → Edit plot and "
+            "order the rows so each group reads as one block.")
+        self.anomalies_split_chk.toggled.connect(self._refill_identity_tables)
+        split_row = QHBoxLayout()
+        split_row.setContentsMargins(6, 0, 6, 0)
+        split_row.addWidget(self.anomalies_split_chk)
+        split_row.addStretch(1)
+        wl.addLayout(split_row)
+
         self.anomalies_table = self._make_table()
         wl.addWidget(self.anomalies_table, stretch=1)
 
@@ -512,6 +620,22 @@ class StatisticsView(QWidget):
             self.corr_method_combo.addItem(label, key)
         method_row.addWidget(self.corr_method_combo, stretch=1)
         ll.addLayout(method_row)
+
+        # Splitting by the grouping set in Edit plot.  Correlations are
+        # the statistic most distorted by pooling distinct populations —
+        # a strong pooled coefficient is often just the offset between
+        # two groups — so this is worth having one click away.
+        group_row = QHBoxLayout()
+        group_row.addWidget(QLabel("Samples:"))
+        self.corr_group_combo = QComboBox()
+        self.corr_group_combo.setToolTip(
+            "Compute the matrix over all samples, over one group, or "
+            "side by side for every group. The grouping is the one set "
+            "in Data → Edit plot.")
+        self.corr_group_combo.currentIndexChanged.connect(
+            self._update_correlation)
+        group_row.addWidget(self.corr_group_combo, stretch=1)
+        ll.addLayout(group_row)
 
         update_corr = QPushButton("Update matrix")
         update_corr.clicked.connect(self._update_correlation)
@@ -609,6 +733,18 @@ class StatisticsView(QWidget):
         self.tect_summary.setStyleSheet("color: #5b6478;")
         self.tect_summary.setWordWrap(True)
         rl.addWidget(self.tect_summary)
+
+        self.tect_split_chk = QCheckBox("Split rows by group")
+        self.tect_split_chk.setToolTip(
+            "Prepend the grouping column set in Data → Edit plot and "
+            "order the rows so each group reads as one block.")
+        self.tect_split_chk.toggled.connect(self._refill_identity_tables)
+        tect_split_row = QHBoxLayout()
+        tect_split_row.setContentsMargins(0, 0, 0, 0)
+        tect_split_row.addWidget(self.tect_split_chk)
+        tect_split_row.addStretch(1)
+        rl.addLayout(tect_split_row)
+
         self.tectonic_table = self._make_table()
         rl.addWidget(self.tectonic_table, stretch=1)
         wrap.addWidget(right)
@@ -669,7 +805,10 @@ class StatisticsView(QWidget):
             self._fill_table(self.tectonic_table, self._tectonic)
             return
         self._tectonic = compute_tectonic_results(df, keys)
-        self._fill_table(self.tectonic_table, self._tectonic)
+        self._fill_table(
+            self.tectonic_table,
+            with_identity(self._tectonic, df, self.plot_style,
+                          split_by_group=self._is_checked("tect_split_chk")))
         n = self._tectonic.shape[1]
         skipped = len(keys) - n
         msg = (f"{n} discriminator{'s' if n != 1 else ''} computed for "
@@ -677,9 +816,46 @@ class StatisticsView(QWidget):
         if skipped:
             msg += f"  •  {skipped} skipped (missing input columns)."
         self.tect_summary.setText(msg)
-        # Tab caption reflects the actual matrix size
-        self.tabs.setTabText(5,
-            f"Tectonic discrimination ({n})")
+        # Retitled by name: this used to land on the correlation tab.
+        self._set_tab_text("tectonic", f"Tectonic discrimination ({n})")
+
+    # --------------------------------------------------- identity tables
+    def _refill_identity_tables(self) -> None:
+        """Re-render the per-sample tables that carry the sample label.
+
+        Anomalies / ratios and the tectonic discriminators are computed
+        positionally, so the label and group columns are attached at
+        display time; toggling the split only has to re-render, never
+        recompute.
+        """
+        df = self.data.df
+        if df is None or df.empty:
+            return
+        anomalies_split = self._is_checked("anomalies_split_chk")
+        self._fill_table(
+            self.anomalies_table,
+            with_identity(self._anomalies, df, self.plot_style,
+                          split_by_group=anomalies_split),
+            colour_anomalies=True)
+        self._fill_table(
+            self.ratios_table,
+            with_identity(self._ratios, df, self.plot_style,
+                          split_by_group=anomalies_split))
+        tectonic = getattr(self, "_tectonic", None)
+        if tectonic is not None and not tectonic.empty:
+            self._fill_table(
+                self.tectonic_table,
+                with_identity(tectonic, df, self.plot_style,
+                              split_by_group=self._is_checked(
+                                  "tect_split_chk")))
+
+    def _is_checked(self, attribute: str) -> bool:
+        """Read a checkbox that may not exist yet during construction."""
+        widget = getattr(self, attribute, None)
+        return bool(widget is not None and widget.isChecked())
+
+    def _has_grouping(self) -> bool:
+        return bool(group_labels(self.data.df, self.plot_style) is not None)
 
     # ------------------------------------------------------------------ API
     @property
@@ -745,6 +921,29 @@ class StatisticsView(QWidget):
         self._plots_cat_combo = QComboBox()
         self._plots_cat_combo.currentIndexChanged.connect(self._render_stat_plot)
         ll.addWidget(self._plots_cat_combo)
+
+        # Splitting by the grouping defined in Edit plot.  Distinct from
+        # the "Group by" combo above, which picks any categorical column
+        # for the plots that need a category axis; this one follows the
+        # grouping the rest of the application already colours by, so a
+        # histogram here matches the points on a TAS diagram.
+        self._plots_split_lbl = QLabel("<b>Split by plot groups</b>")
+        ll.addWidget(self._plots_split_lbl)
+        self._plots_split_combo = QComboBox()
+        for label, key in (
+            ("No split — all samples", "none"),
+            ("Overlay groups on one axis", "overlay"),
+            ("One panel per group", "facet"),
+        ):
+            self._plots_split_combo.addItem(label, key)
+        self._plots_split_combo.setToolTip(
+            "Use the grouping set in Data → Edit plot, with the same "
+            "colours the diagrams use. Applies to the histogram, ECDF "
+            "and Q-Q plots; box, violin, bar and pie already split by "
+            "the 'Group by' column above.")
+        self._plots_split_combo.currentIndexChanged.connect(
+            self._render_stat_plot)
+        ll.addWidget(self._plots_split_combo)
 
         # Histogram-specific options
         from PySide6.QtWidgets import QCheckBox, QSpinBox
@@ -833,7 +1032,40 @@ class StatisticsView(QWidget):
         for w in (self._hist_bins_lbl, self._hist_bins,
                   self._hist_kde, self._hist_log):
             w.setVisible(wants_hist)
+        # The Edit-plot split only applies where a second category axis
+        # would not already be in play, and only once a grouping exists.
+        splittable = kind in self._SPLITTABLE
+        for w in (self._plots_split_lbl, self._plots_split_combo):
+            w.setVisible(splittable)
+        self._plots_split_combo.setEnabled(
+            splittable and self._has_grouping())
         self._render_stat_plot()
+
+    #: Plot kinds the Edit-plot grouping can split.  Box, violin, bar and
+    #: pie already take a category from the "Group by" combo, so adding a
+    #: second axis of splitting to them would only confuse.
+    _SPLITTABLE = ("histogram", "ecdf", "qq")
+
+    def _split_mode(self) -> str:
+        combo = getattr(self, "_plots_split_combo", None)
+        if combo is None:
+            return "none"
+        return combo.currentData() or "none"
+
+    def _plot_subsets(self) -> "list[tuple[str, pd.DataFrame, object]]":
+        """(label, rows, GroupStyle) for each group, honouring Edit plot.
+
+        Reuses ``get_groups`` so the colours, the draw order and the
+        hidden-group flags match every other view in the application.
+        """
+        df = self.data.df
+        try:
+            from ..diagrams.templates.base import get_groups
+            groups = get_groups(df, self.plot_style)
+        except Exception:                                  # noqa: BLE001
+            groups = []
+        return [(label, sub, gs) for label, sub, gs in groups
+                if sub is not None and not sub.empty]
 
     def _render_stat_plot(self) -> None:
         """Re-draw the active plot based on the current selections."""
@@ -842,32 +1074,42 @@ class StatisticsView(QWidget):
             return
         fig = canvas.figure
         fig.clear()
-        ax = fig.add_subplot(111)
         df = self.data.df
         if df is None or df.empty:
+            ax = fig.add_subplot(111)
             ax.text(0.5, 0.5,
                     "Load a dataset first (Data → Import).",
                     ha="center", va="center", color="#6c7388")
             ax.axis("off")
             canvas.draw()
             return
+
         kind = self._plot_type_combo.currentData()
+        mode = self._split_mode()
+        subsets = (self._plot_subsets()
+                   if kind in self._SPLITTABLE and mode != "none" else [])
+
         try:
-            if kind == "histogram":
-                self._draw_histogram(ax)
-            elif kind == "pie":
-                self._draw_pie(ax)
-            elif kind == "box":
-                self._draw_box_or_violin(ax, violin=False)
-            elif kind == "violin":
-                self._draw_box_or_violin(ax, violin=True)
-            elif kind == "bar":
-                self._draw_bar(ax)
-            elif kind == "ecdf":
-                self._draw_ecdf(ax)
-            elif kind == "qq":
-                self._draw_qq(ax)
+            if not subsets:
+                self._draw_stat_plot(fig.add_subplot(111), kind, df)
+            elif mode == "overlay":
+                ax = fig.add_subplot(111)
+                for label, sub, gs in subsets:
+                    self._draw_stat_plot(ax, kind, sub, label=label,
+                                         style=gs, overlay=True)
+                if ax.get_legend_handles_labels()[0]:
+                    ax.legend(fontsize=8)
+            else:
+                ncols = min(len(subsets), 2)
+                nrows = -(-len(subsets) // ncols)
+                for position, (label, sub, gs) in enumerate(subsets, 1):
+                    ax = fig.add_subplot(nrows, ncols, position)
+                    self._draw_stat_plot(ax, kind, sub, label=label,
+                                         style=gs)
+                    ax.set_title(f"{label}  (n = {len(sub)})", fontsize=9)
         except Exception as exc:  # noqa: BLE001
+            fig.clear()
+            ax = fig.add_subplot(111)
             ax.text(0.5, 0.5, f"Plot error:\n{exc}",
                     ha="center", va="center", color="#b13a3a",
                     fontsize=10, wrap=True)
@@ -875,17 +1117,45 @@ class StatisticsView(QWidget):
         fig.tight_layout()
         canvas.draw()
 
+    def _draw_stat_plot(self, ax, kind: str, df: pd.DataFrame, *,
+                        label: Optional[str] = None, style=None,
+                        overlay: bool = False) -> None:
+        """Dispatch one plot onto *ax* using the rows in *df*."""
+        if kind == "histogram":
+            self._draw_histogram(ax, df, label=label, style=style,
+                                 overlay=overlay)
+        elif kind == "pie":
+            self._draw_pie(ax)
+        elif kind == "box":
+            self._draw_box_or_violin(ax, violin=False)
+        elif kind == "violin":
+            self._draw_box_or_violin(ax, violin=True)
+        elif kind == "bar":
+            self._draw_bar(ax)
+        elif kind == "ecdf":
+            self._draw_ecdf(ax, df, label=label, style=style)
+        elif kind == "qq":
+            self._draw_qq(ax, df, label=label, style=style)
+
     # ------------------------------------------------------------------
     # Stat-plot renderers
     # ------------------------------------------------------------------
     def _numeric_series(self, col: str) -> pd.Series:
         return pd.to_numeric(self.data.df[col], errors="coerce").dropna()
 
-    def _draw_histogram(self, ax) -> None:
+    @staticmethod
+    def _group_colour(style, fallback: str = "#0e6cb6") -> str:
+        return getattr(style, "color", None) or fallback
+
+    def _draw_histogram(self, ax, df: Optional[pd.DataFrame] = None, *,
+                        label: Optional[str] = None, style=None,
+                        overlay: bool = False) -> None:
         col = self._plots_var_combo.currentData()
         if not col:
             return
-        values = self._numeric_series(col)
+        frame = self.data.df if df is None else df
+        values = pd.to_numeric(frame.get(col), errors="coerce").dropna() \
+            if col in frame.columns else pd.Series(dtype=float)
         if values.empty:
             ax.text(0.5, 0.5, f"No numeric data in '{col}'.",
                     ha="center", va="center", color="#6c7388")
@@ -897,12 +1167,17 @@ class StatisticsView(QWidget):
             x_label = f"ln({col})"
         else:
             x_label = col
+        colour = self._group_colour(style)
         bins = self._hist_bins.value()
-        ax.hist(values, bins=bins, color="#0e6cb6", alpha=0.7,
-                edgecolor="white", linewidth=0.5, label="Histogram")
+        ax.hist(values, bins=bins, color=colour,
+                alpha=0.55 if overlay else 0.7,
+                edgecolor="white", linewidth=0.5,
+                label=label or "Histogram")
         ax.set_xlabel(x_label)
         ax.set_ylabel("Frequency")
-        if self._hist_kde.isChecked() and len(values) >= 3:
+        # A twin density axis per group would stack unreadably, so the
+        # KDE is only overlaid when this axis holds a single series.
+        if self._hist_kde.isChecked() and len(values) >= 3 and not overlay:
             try:
                 from scipy.stats import gaussian_kde
                 kde = gaussian_kde(values)
@@ -915,11 +1190,12 @@ class StatisticsView(QWidget):
                          label="KDE")
                 ax2.set_ylabel("Density (KDE)", color="#b13a3a")
                 ax2.tick_params(axis="y", colors="#b13a3a")
-            except ImportError:
-                pass
-        n = len(values)
-        ax.set_title(f"{col} — n={n}, μ={values.mean():.3g}, "
-                     f"σ={values.std(ddof=1):.3g}")
+            except (ImportError, np.linalg.LinAlgError, ValueError):
+                pass       # a degenerate group (all-identical values)
+        if label is None:
+            n = len(values)
+            ax.set_title(f"{col} — n={n}, μ={values.mean():.3g}, "
+                         f"σ={values.std(ddof=1):.3g}")
         ax.grid(True, axis="y", alpha=0.3)
 
     def _draw_pie(self, ax) -> None:
@@ -1020,11 +1296,20 @@ class StatisticsView(QWidget):
             lbl.set_horizontalalignment("right")
         ax.grid(True, axis="y", alpha=0.3)
 
-    def _draw_ecdf(self, ax) -> None:
+    def _subset_series(self, df: Optional[pd.DataFrame],
+                       col: str) -> pd.Series:
+        """Numeric values of *col*, from *df* or the whole dataset."""
+        frame = self.data.df if df is None else df
+        if frame is None or col not in frame.columns:
+            return pd.Series(dtype=float)
+        return pd.to_numeric(frame[col], errors="coerce").dropna()
+
+    def _draw_ecdf(self, ax, df: Optional[pd.DataFrame] = None, *,
+                   label: Optional[str] = None, style=None) -> None:
         col = self._plots_var_combo.currentData()
         if not col:
             return
-        values = self._numeric_series(col).sort_values()
+        values = self._subset_series(df, col).sort_values()
         if values.empty:
             ax.text(0.5, 0.5, f"No numeric data in '{col}'.",
                     ha="center", va="center", color="#6c7388")
@@ -1032,18 +1317,22 @@ class StatisticsView(QWidget):
             return
         n = len(values)
         y = np.arange(1, n + 1) / n
-        ax.step(values, y, where="post", color="#0e6cb6", linewidth=1.6)
+        ax.step(values, y, where="post",
+                color=self._group_colour(style), linewidth=1.6,
+                label=label)
         ax.set_xlabel(col)
         ax.set_ylabel("Cumulative fraction")
-        ax.set_title(f"ECDF — {col} (n={n})")
+        if label is None:
+            ax.set_title(f"ECDF — {col} (n={n})")
         ax.grid(True, alpha=0.3)
         ax.set_ylim(0, 1.02)
 
-    def _draw_qq(self, ax) -> None:
+    def _draw_qq(self, ax, df: Optional[pd.DataFrame] = None, *,
+                 label: Optional[str] = None, style=None) -> None:
         col = self._plots_var_combo.currentData()
         if not col:
             return
-        values = self._numeric_series(col)
+        values = self._subset_series(df, col)
         if len(values) < 3:
             ax.text(0.5, 0.5, "Q-Q plot needs at least 3 finite values.",
                     ha="center", va="center", color="#6c7388")
@@ -1052,8 +1341,19 @@ class StatisticsView(QWidget):
         try:
             from scipy.stats import probplot
             probplot(values, dist="norm", plot=ax)
+            # probplot paints its own colours and leaves its artists
+            # unlabelled, so an overlay would draw an empty legend.
+            # Recolour the sample points to the group's and name them.
+            if ax.lines:
+                if style is not None:
+                    colour = self._group_colour(style)
+                    ax.lines[0].set_color(colour)
+                    ax.lines[0].set_markerfacecolor(colour)
+                if label:
+                    ax.lines[0].set_label(label)
             # probplot draws its own labels; tidy them.
-            ax.set_title(f"Q-Q plot — {col} (n={len(values)})")
+            ax.set_title("" if label else
+                         f"Q-Q plot — {col} (n={len(values)})")
         except ImportError:
             # Manual fallback if scipy is missing.
             sorted_values = np.sort(values.values)
@@ -1069,14 +1369,16 @@ class StatisticsView(QWidget):
                         ha="center", va="center", color="#6c7388")
                 ax.axis("off")
                 return
-            ax.scatter(theoretical, sorted_values, s=14, color="#0e6cb6",
-                       edgecolor="white", linewidth=0.4)
+            ax.scatter(theoretical, sorted_values, s=14,
+                       color=self._group_colour(style),
+                       edgecolor="white", linewidth=0.4, label=label)
             lo, hi = min(theoretical[0], sorted_values[0]), max(
                 theoretical[-1], sorted_values[-1])
             ax.plot([lo, hi], [lo, hi], color="#b13a3a", linewidth=1.0)
             ax.set_xlabel("Theoretical normal quantile")
             ax.set_ylabel("Sample value")
-            ax.set_title(f"Q-Q plot — {col} (n={n})")
+            if label is None:
+                ax.set_title(f"Q-Q plot — {col} (n={n})")
             ax.grid(True, alpha=0.3)
 
     @property
@@ -1104,10 +1406,17 @@ class StatisticsView(QWidget):
 
         self._fill_table(self.descriptive_table, self._descriptive)
         self._fill_table(self.by_group_table, self._by_group)
-        self._fill_table(
-            self.anomalies_table, self._anomalies, colour_anomalies=True
-        )
-        self._fill_table(self.ratios_table, self._ratios)
+        # Anomalies / ratios carry the sample label, and the split
+        # checkbox only changes how they are rendered.
+        self._refill_identity_tables()
+        # The split control is meaningless without a grouping.
+        for attribute in ("anomalies_split_chk", "tect_split_chk"):
+            widget = getattr(self, attribute, None)
+            if widget is not None:
+                widget.setEnabled(self._has_grouping())
+                widget.setToolTip(
+                    widget.toolTip() if self._has_grouping() else
+                    "Set a grouping column first in Data → Edit plot.")
 
         # Publication-ready table — variable picker then the table itself.
         self._populate_paper_tree(df)
@@ -1117,26 +1426,23 @@ class StatisticsView(QWidget):
         # available numeric columns so the matrix is non-empty on first
         # open. The user can then narrow down via the tree.
         self._populate_corr_tree(df)
+        self._refresh_corr_group_combo()
         self._update_correlation()
 
         cols = (
             getattr(self.plot_style, "group_columns", []) or []
         )
-        self.tabs.setTabText(0,
+        self._set_tab_text("descriptive",
             f"Descriptive ({len(self._descriptive)} elements)")
-        self.tabs.setTabText(1,
+        self._set_tab_text("by_group",
             f"By group ({len(self._by_group)} groups)"
-            + (f" – {', '.join(cols)}" if cols else " – set in Edit plot")
-        )
+            + (f" – {', '.join(cols)}" if cols else " – set in Edit plot"))
         n_paper = max(len(getattr(self, "_paper", pd.DataFrame())) - 1, 0)
-        self.tabs.setTabText(2,
-            f"Paper table ({n_paper} variables)")
-        self.tabs.setTabText(3,
+        self._set_tab_text("paper", f"Paper table ({n_paper} variables)")
+        self._set_tab_text("anomalies",
             f"Anomalies & ratios ({len(self._anomalies.columns)} indices)")
-        self.tabs.setTabText(4,
+        self._set_tab_text("ratios",
             f"Trace ratios ({len(self._ratios.columns)} ratios)")
-        self.tabs.setTabText(5,
-            f"Correlation ({len(self._correlation.columns)}×{len(self._correlation.columns)})")
 
         self.placeholder.setVisible(False)
         self.tabs.setVisible(True)
@@ -1145,7 +1451,10 @@ class StatisticsView(QWidget):
         # plot too so it doesn't show stale axes after a re-import.
         if hasattr(self, "_plots_var_combo"):
             self._refresh_plots_selectors()
-            self._render_stat_plot()
+            # Re-run the visibility / enabled logic: the plot type may
+            # not have changed since construction, when no dataset — and
+            # so no grouping — existed yet.
+            self._on_plot_type_changed(self._plot_type_combo.currentIndex())
 
     # -------------------------------------------------------------- helpers
     @staticmethod
@@ -1172,16 +1481,30 @@ class StatisticsView(QWidget):
         table.setRowCount(len(frame.index))
         table.setHorizontalHeaderLabels(cols)
         table.setVerticalHeaderLabels([str(i) for i in frame.index])
+        # The identity columns prepended by ``with_identity`` hold text,
+        # so they are left-aligned and never run through the anomaly
+        # colour scale — float() on a sample label would raise.
+        identity = {"Sample_Label", GROUP_COLUMN}
         for r in range(len(frame.index)):
             for c in range(len(frame.columns)):
                 value = frame.iloc[r, c]
                 text = "" if pd.isna(value) else f"{value}"
                 item = QTableWidgetItem(text)
+                is_identity = cols[c] in identity
                 item.setTextAlignment(
-                    Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+                    (Qt.AlignmentFlag.AlignLeft if is_identity
+                     else Qt.AlignmentFlag.AlignRight)
+                    | Qt.AlignmentFlag.AlignVCenter
                 )
-                if colour_anomalies and not pd.isna(value):
-                    colour = _anomaly_color(cols[c], float(value))
+                if is_identity:
+                    font = item.font()
+                    font.setBold(True)
+                    item.setFont(font)
+                elif colour_anomalies and not pd.isna(value):
+                    try:
+                        colour = _anomaly_color(cols[c], float(value))
+                    except (TypeError, ValueError):
+                        colour = None      # a non-numeric column slipped in
                     if colour is not None:
                         item.setBackground(QBrush(colour))
                 table.setItem(r, c, item)
@@ -1256,23 +1579,75 @@ class StatisticsView(QWidget):
         for cat_i in range(self.corr_tree.topLevelItemCount()):
             self.corr_tree.topLevelItem(cat_i).setCheckState(0, state)
 
+    _CORR_ALL = "__all__"
+    _CORR_FACET = "__facet__"
+
+    def _refresh_corr_group_combo(self) -> None:
+        """Offer the pooled matrix, a per-group facet, and each group."""
+        combo = getattr(self, "corr_group_combo", None)
+        if combo is None:
+            return
+        previous = combo.currentData()
+        combo.blockSignals(True)
+        combo.clear()
+        combo.addItem("All samples (pooled)", self._CORR_ALL)
+        groups = group_labels(self.data.df, self.plot_style)
+        if groups is not None:
+            names = list(dict.fromkeys(groups.dropna().tolist()))
+            if names:
+                combo.addItem(f"One matrix per group ({len(names)})",
+                              self._CORR_FACET)
+                for name in names:
+                    combo.addItem(f"Only: {name}", name)
+        index = combo.findData(previous)
+        combo.setCurrentIndex(index if index >= 0 else 0)
+        combo.blockSignals(False)
+
+    def _corr_subsets(self) -> "list[tuple[str, pd.DataFrame]]":
+        """(title, rows) pairs the matrix should be computed over."""
+        df = self.data.df
+        choice = (getattr(self, "corr_group_combo", None)
+                  and self.corr_group_combo.currentData()) or self._CORR_ALL
+        if choice == self._CORR_ALL:
+            return [("All samples", df)]
+        groups = group_labels(df, self.plot_style)
+        if groups is None:
+            return [("All samples", df)]
+        if choice == self._CORR_FACET:
+            names = list(dict.fromkeys(groups.dropna().tolist()))
+            return [(name, df.loc[groups == name]) for name in names]
+        return [(str(choice), df.loc[groups == choice])]
+
     def _update_correlation(self) -> None:
         df = self.data.df
         if df is None or df.empty:
             return
         cols = self._selected_corr_columns()
         method = self.corr_method_combo.currentData() or "pearson"
-        self._correlation = compute_correlation_matrix(
-            df, columns=cols if cols else None, method=method)
+        subsets = self._corr_subsets()
+        self._correlations = [
+            (title, compute_correlation_matrix(
+                subset, columns=cols if cols else None, method=method))
+            for title, subset in subsets
+        ]
+        # The single-matrix attribute stays the pooled / selected one so
+        # the Save-File export and the public property keep working.
+        self._correlation = (self._correlations[0][1] if self._correlations
+                             else pd.DataFrame())
         self._draw_correlation_heatmap()
-        # Refresh the tab caption to reflect the actual matrix size
         n = len(self._correlation.columns)
-        self.tabs.setTabText(4, f"Correlation ({n}×{n})")
+        caption = f"Correlation ({n}×{n})"
+        if len(self._correlations) > 1:
+            caption += f" × {len(self._correlations)} groups"
+        self._set_tab_text("correlation", caption)
 
     def _draw_correlation_heatmap(self) -> None:
         fig = self.correlation_canvas.figure
         fig.clear()
-        if self._correlation.empty:
+        panels = [(title, matrix) for title, matrix
+                  in getattr(self, "_correlations", []) or []
+                  if matrix is not None and not matrix.empty]
+        if not panels:
             ax = fig.add_subplot(111)
             ax.text(0.5, 0.5,
                     "Not enough numeric columns to compute correlations.",
@@ -1281,30 +1656,51 @@ class StatisticsView(QWidget):
             self.correlation_canvas.draw()
             return
 
-        ax = fig.add_subplot(111)
-        cols = list(self._correlation.columns)
-        n = len(cols)
-        im = ax.imshow(self._correlation.values, cmap="RdBu_r",
-                       vmin=-1, vmax=1, aspect="auto")
-        ax.set_xticks(range(n))
-        ax.set_xticklabels(cols, rotation=45, ha="right", fontsize=8)
-        ax.set_yticks(range(n))
-        ax.set_yticklabels(cols, fontsize=8)
-        # Annotate cells when the matrix is small enough
-        if n <= 18:
-            for i in range(n):
-                for j in range(n):
-                    v = self._correlation.iloc[i, j]
-                    if pd.isna(v):
-                        continue
-                    txt_color = "white" if abs(v) > 0.6 else "black"
-                    ax.text(j, i, f"{v:.2f}", ha="center", va="center",
-                            fontsize=7, color=txt_color)
-        cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-        cbar.set_label("Pearson r", fontsize=9)
-        ax.set_title(f"Correlation matrix ({n} elements)",
-                     fontsize=11, pad=8)
-        fig.tight_layout()
+        method = (self.corr_method_combo.currentText().split(" ")[0]
+                  if hasattr(self, "corr_method_combo") else "Pearson")
+        ncols = min(len(panels), 2 if len(panels) > 1 else 1)
+        nrows = -(-len(panels) // ncols)
+        image = None
+        for position, (title, matrix) in enumerate(panels, start=1):
+            ax = fig.add_subplot(nrows, ncols, position)
+            cols = list(matrix.columns)
+            n = len(cols)
+            image = ax.imshow(matrix.values, cmap="RdBu_r",
+                              vmin=-1, vmax=1, aspect="auto")
+            # Tick labels become unreadable once several panels share the
+            # canvas, so they shrink with the grid and drop out entirely
+            # when there is no room left for them.
+            font = 8 if len(panels) == 1 else max(4, 8 - len(panels))
+            show_ticks = n <= (30 if len(panels) == 1 else 15)
+            ax.set_xticks(range(n) if show_ticks else [])
+            ax.set_yticks(range(n) if show_ticks else [])
+            if show_ticks:
+                ax.set_xticklabels(cols, rotation=45, ha="right",
+                                   fontsize=font)
+                ax.set_yticklabels(cols, fontsize=font)
+            if len(panels) == 1 and n <= 18:
+                for i in range(n):
+                    for j in range(n):
+                        v = matrix.iloc[i, j]
+                        if pd.isna(v):
+                            continue
+                        ax.text(j, i, f"{v:.2f}", ha="center", va="center",
+                                fontsize=7,
+                                color="white" if abs(v) > 0.6 else "black")
+            heading = (f"Correlation matrix ({n} elements)"
+                       if len(panels) == 1
+                       else f"{title}  (n = {n})")
+            ax.set_title(heading, fontsize=11 if len(panels) == 1 else 9,
+                         pad=6)
+        # Lay the panels out first: a colorbar steals space from the axes
+        # it is attached to, and tight_layout cannot reason about it
+        # afterwards without warning.
+        if len(panels) == 1:
+            fig.tight_layout()
+        if image is not None:
+            cbar = fig.colorbar(image, ax=fig.axes, fraction=0.046,
+                                pad=0.04)
+            cbar.set_label(f"{method} r", fontsize=9)
         self.correlation_canvas.draw()
 
     # ------------------------------------------------------------------
@@ -1314,6 +1710,13 @@ class StatisticsView(QWidget):
         out: dict = {
             "normaliser": self.norm_combo.currentText(),
             "active_tab": self.tabs.currentIndex(),
+            # How the user chose to split each view by their grouping.
+            "anomalies_split": self._is_checked("anomalies_split_chk"),
+            "tectonic_split": self._is_checked("tect_split_chk"),
+            "correlation_subset": (
+                self.corr_group_combo.currentData()
+                if hasattr(self, "corr_group_combo") else None),
+            "plots_split": self._split_mode(),
         }
         # Tectonic discriminators if the user has ticked some
         try:
@@ -1340,3 +1743,24 @@ class StatisticsView(QWidget):
                 self._set_tect_tree_state(set(keys))
             except Exception:
                 pass
+
+        # Splitting choices.  Set quietly — restoring must not trigger a
+        # cascade of re-renders while the rest of the session loads.
+        for attribute, key in (("anomalies_split_chk", "anomalies_split"),
+                               ("tect_split_chk", "tectonic_split")):
+            widget = getattr(self, attribute, None)
+            if widget is not None and state.get(key) is not None:
+                widget.blockSignals(True)
+                widget.setChecked(bool(state[key]))
+                widget.blockSignals(False)
+        for attribute, key in (("corr_group_combo", "correlation_subset"),
+                               ("_plots_split_combo", "plots_split")):
+            combo = getattr(self, attribute, None)
+            value = state.get(key)
+            if combo is None or value is None:
+                continue
+            index = combo.findData(value)
+            if index >= 0:
+                combo.blockSignals(True)
+                combo.setCurrentIndex(index)
+                combo.blockSignals(False)
