@@ -216,6 +216,79 @@ class TestCorrelationSplit:
         assert w.statistics.corr_group_combo.count() == 1
 
 
+class TestCorrelationLabels:
+    """A matrix without element names cannot be read, so they always show."""
+
+    @pytest.fixture
+    def wide_window(self, qapp):
+        """A realistic dataset: 34 numeric columns, as a full analysis."""
+        from birds.main_window import BirdsMainWindow
+        rng = np.random.default_rng(3)
+        n = 15
+        columns = [
+            "SiO2", "TiO2", "Al2O3", "Fe2O3", "FeO", "MnO", "MgO", "CaO",
+            "Na2O", "K2O", "P2O5", "La", "Ce", "Pr", "Nd", "Sm", "Eu",
+            "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu", "Rb", "Ba",
+            "Th", "U", "Nb", "Ta", "Sr", "Zr", "Hf",
+        ]
+        w = BirdsMainWindow()
+        w.data.df = pd.DataFrame({
+            "Sample_Name": [f"S{i}" for i in range(n)],
+            "Group": ["A"] * 5 + ["B"] * 5 + ["C"] * 5,
+            **{c: np.abs(rng.normal(20, 5, n)) + 1 for c in columns},
+        })
+        w.style.group_columns = ["Group"]
+        w.style.groups = [GroupStyle(name=g) for g in ("A", "B", "C")]
+        w.statistics.refresh()
+        return w
+
+    def test_labels_present_on_a_wide_matrix(self, wide_window):
+        ax = wide_window.statistics.correlation_canvas.figure.axes[0]
+        names = [t.get_text() for t in ax.get_xticklabels()]
+        assert len(names) == len(wide_window.statistics._correlation.columns)
+        assert "SiO2" in names and "Yb" in names
+
+    def test_both_axes_are_labelled(self, wide_window):
+        ax = wide_window.statistics.correlation_canvas.figure.axes[0]
+        assert [t.get_text() for t in ax.get_xticklabels()] == \
+            [t.get_text() for t in ax.get_yticklabels()]
+
+    def test_labels_fit_inside_the_canvas(self, wide_window):
+        fig = wide_window.statistics.correlation_canvas.figure
+        fig.canvas.draw()
+        renderer = fig.canvas.get_renderer()
+        ax = fig.axes[0]
+        bottom = min(t.get_window_extent(renderer).y0
+                     for t in ax.get_xticklabels())
+        left = min(t.get_window_extent(renderer).x0
+                   for t in ax.get_yticklabels())
+        assert bottom >= 0, "x labels are clipped off the figure"
+        assert left >= 0, "y labels are clipped off the figure"
+
+    def test_labels_survive_the_facet_view(self, wide_window):
+        stats = wide_window.statistics
+        combo = stats.corr_group_combo
+        combo.setCurrentIndex(combo.findData(stats._CORR_FACET))
+        for ax in stats.correlation_canvas.figure.axes:
+            if ax.get_label() == "<colorbar>":
+                continue
+            if ax.images:
+                assert len(ax.get_xticklabels()) > 0
+
+    @pytest.mark.parametrize("n_elements,n_panels", [
+        (5, 1), (12, 1), (34, 1), (60, 1), (34, 3), (60, 4),
+    ])
+    def test_font_size_stays_within_legible_bounds(self, n_elements,
+                                                    n_panels):
+        from birds.views.statistics import _tick_font_size
+        size = _tick_font_size(n_elements, n_panels)
+        assert 3.5 <= size <= 9.0
+
+    def test_font_shrinks_as_the_matrix_grows(self):
+        from birds.views.statistics import _tick_font_size
+        assert _tick_font_size(12) > _tick_font_size(34) >= _tick_font_size(60)
+
+
 class TestPlotsSplit:
     @pytest.mark.parametrize("kind", ["histogram", "ecdf", "qq"])
     def test_facet_draws_one_panel_per_group(self, window, kind):

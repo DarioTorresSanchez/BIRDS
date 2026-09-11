@@ -169,6 +169,20 @@ def group_labels(df: Optional[pd.DataFrame],
     return labels.fillna("NA").astype(str).str.strip()
 
 
+def _tick_font_size(n_elements: int, n_panels: int = 1) -> float:
+    """Point size for correlation-matrix tick labels.
+
+    A full geochemical dataset reaches 40-60 numeric columns, so the
+    labels have to shrink rather than disappear — an unlabelled matrix
+    tells the reader nothing.  The floor keeps them legible once the
+    figure is zoomed or exported as vector, where small type is fine.
+    """
+    size = 220.0 / max(n_elements, 1)
+    if n_panels > 1:
+        size /= max(1.0, n_panels ** 0.5)
+    return float(min(9.0, max(3.5, size)))
+
+
 def with_identity(frame: pd.DataFrame, source: pd.DataFrame,
                   plot_style=None, *, split_by_group: bool = False
                   ) -> pd.DataFrame:
@@ -1625,9 +1639,13 @@ class StatisticsView(QWidget):
         cols = self._selected_corr_columns()
         method = self.corr_method_combo.currentData() or "pearson"
         subsets = self._corr_subsets()
+        # The sample count travels with each matrix: a coefficient over
+        # four samples is not a result, and the reader has to be able to
+        # see that from the panel.
         self._correlations = [
             (title, compute_correlation_matrix(
-                subset, columns=cols if cols else None, method=method))
+                subset, columns=cols if cols else None, method=method),
+             0 if subset is None else len(subset))
             for title, subset in subsets
         ]
         # The single-matrix attribute stays the pooled / selected one so
@@ -1644,7 +1662,7 @@ class StatisticsView(QWidget):
     def _draw_correlation_heatmap(self) -> None:
         fig = self.correlation_canvas.figure
         fig.clear()
-        panels = [(title, matrix) for title, matrix
+        panels = [(title, matrix, n_samples) for title, matrix, n_samples
                   in getattr(self, "_correlations", []) or []
                   if matrix is not None and not matrix.empty]
         if not panels:
@@ -1661,23 +1679,23 @@ class StatisticsView(QWidget):
         ncols = min(len(panels), 2 if len(panels) > 1 else 1)
         nrows = -(-len(panels) // ncols)
         image = None
-        for position, (title, matrix) in enumerate(panels, start=1):
+        for position, (title, matrix, n_samples) in enumerate(panels,
+                                                              start=1):
             ax = fig.add_subplot(nrows, ncols, position)
             cols = list(matrix.columns)
             n = len(cols)
             image = ax.imshow(matrix.values, cmap="RdBu_r",
                               vmin=-1, vmax=1, aspect="auto")
-            # Tick labels become unreadable once several panels share the
-            # canvas, so they shrink with the grid and drop out entirely
-            # when there is no room left for them.
-            font = 8 if len(panels) == 1 else max(4, 8 - len(panels))
-            show_ticks = n <= (30 if len(panels) == 1 else 15)
-            ax.set_xticks(range(n) if show_ticks else [])
-            ax.set_yticks(range(n) if show_ticks else [])
-            if show_ticks:
-                ax.set_xticklabels(cols, rotation=45, ha="right",
-                                   fontsize=font)
-                ax.set_yticklabels(cols, fontsize=font)
+            # Element names always appear: a correlation matrix without
+            # them cannot be read at all.  The type shrinks as the grid
+            # grows instead, with a floor that stays legible when zoomed
+            # or exported as vector.
+            font = _tick_font_size(n, len(panels))
+            ax.set_xticks(range(n))
+            ax.set_yticks(range(n))
+            ax.set_xticklabels(cols, rotation=90, fontsize=font)
+            ax.set_yticklabels(cols, fontsize=font)
+            ax.tick_params(axis="both", length=2, pad=1)
             if len(panels) == 1 and n <= 18:
                 for i in range(n):
                     for j in range(n):
@@ -1687,20 +1705,45 @@ class StatisticsView(QWidget):
                         ax.text(j, i, f"{v:.2f}", ha="center", va="center",
                                 fontsize=7,
                                 color="white" if abs(v) > 0.6 else "black")
-            heading = (f"Correlation matrix ({n} elements)"
+            # "n" is the sample count, as it is everywhere else in
+            # petrology; the element count is stated as such.
+            heading = (f"Correlation matrix — {n} elements, "
+                       f"n = {n_samples} samples"
                        if len(panels) == 1
-                       else f"{title}  (n = {n})")
+                       else f"{title}  (n = {n_samples})")
+            colour = "#b13a3a" if n_samples < 5 else "black"
             ax.set_title(heading, fontsize=11 if len(panels) == 1 else 9,
-                         pad=6)
-        # Lay the panels out first: a colorbar steals space from the axes
-        # it is attached to, and tight_layout cannot reason about it
-        # afterwards without warning.
-        if len(panels) == 1:
-            fig.tight_layout()
+                         pad=6, color=colour)
+        # Reserve room for the labels before the colorbar is attached:
+        # the colorbar steals space from the axes it is anchored to, and
+        # tight_layout cannot reason about it afterwards without warning.
+        # Longest element name drives how much margin the rotated tick
+        # labels need — "Al2O3" and "norm_Total" are very different.
+        longest = max((len(str(c)) for _, m, _n in panels
+                       for c in m.columns),
+                      default=4)
+        margin = min(0.42, 0.06 + 0.018 * longest)
+        fig.subplots_adjust(left=margin, bottom=margin,
+                            # The colorbar is anchored outside the axes,
+                            # so the right edge has to be left free for
+                            # it or its scale ends up clipped.
+                            right=0.88,
+                            top=0.90 if len(panels) == 1 else 0.93,
+                            wspace=0.35, hspace=0.45)
         if image is not None:
             cbar = fig.colorbar(image, ax=fig.axes, fraction=0.046,
                                 pad=0.04)
             cbar.set_label(f"{method} r", fontsize=9)
+        # When the labels have been squeezed to the floor they are still
+        # drawn — they read fine in an exported PDF — but on screen they
+        # need explaining, so say what to do about it.
+        biggest = max((len(m.columns) for _, m, _n in panels), default=0)
+        if _tick_font_size(biggest, len(panels)) <= 4.0:
+            fig.text(0.5, 0.005,
+                     "Element labels are at their minimum size — untick "
+                     "elements on the left, or export as PDF/SVG and "
+                     "zoom.",
+                     ha="center", va="bottom", fontsize=8, color="#8a6d1a")
         self.correlation_canvas.draw()
 
     # ------------------------------------------------------------------
