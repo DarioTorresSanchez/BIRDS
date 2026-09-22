@@ -473,10 +473,12 @@ BIRDS/
 **Version 0.1.0 (alpha).** The application is in active development and
 under testing. Known limitations worth stating plainly:
 
-- The field boundaries of **Hastie et al. (2007)** Th–Co and
-  **Winchester & Floyd (1977)** Zr/TiO₂–Nb/Y are approximate digitisations
-  rather than transcriptions from the source figures. Both carry a warning in
-  their module docstring and are pending calibration.
+- The field boundaries of **Winchester & Floyd (1977)** Zr/TiO₂–Nb/Y are an
+  approximate digitisation rather than a transcription from the source
+  figure. The module carries a warning in its docstring and is pending
+  calibration. (**Hastie et al. 2007** Th–Co has now been calibrated
+  against the published figure — its four boundaries reproduce it to
+  better than 1 % in Th and 0.1 ppm in Co.)
 - The **Ni-Cu-PGE reference values** are taken from the usual literature
   compilations and have not been re-checked page by page against the
   original papers. Pattern *shapes* are robust; verify the absolute
