@@ -4,11 +4,18 @@ Two sections are bundled into a single widget:
 
 * **Sr-Nd**: ⁸⁷Sr/⁸⁶Sr  vs  ¹⁴³Nd/¹⁴⁴Nd, optional age correction to
   initial ratios, optional εNd / εSr secondary axes, six mantle
-  reservoirs (DM, BSE/CHUR, PREMA, HIMU, EM1, EM2) and the mantle-array
-  reference line.
+  end-member fields (DM, PREMA, HIMU, BSE, EMI, EMII), the mantle-array
+  lines and the CHUR / BSE rules.  The fields and lines are measured
+  from the published figure — see :mod:`birds.isotope_fields`.
+
+  Note that the figure's vertical rule sits at ⁸⁷Sr/⁸⁶Sr = 0.7051,
+  which is *not* the ``SR_UR_87_86`` = 0.7045 that εSr is referenced
+  to, so that rule is drawn as BSE and the εSr axis zero falls a little
+  to its left.
 * **Pb**: ²⁰⁶Pb/²⁰⁴Pb  vs  ²⁰⁷Pb/²⁰⁴Pb and  ²⁰⁶Pb/²⁰⁴Pb  vs
-  ²⁰⁸Pb/²⁰⁴Pb. The Northern Hemisphere Reference Line (NHRL; Hart 1984)
-  is drawn on the 208/204 panel only.
+  ²⁰⁸Pb/²⁰⁴Pb, carrying the Northern Hemisphere Reference Line
+  (NHRL; Hart 1984) and nothing else.  Hart publishes it for both
+  planes, so it is offered on both.
 
 References
 ----------
@@ -45,6 +52,16 @@ from PySide6.QtWidgets import (
 )
 
 from ..diagrams.templates.base import get_groups, resolve_column
+from ..isotope_fields import (
+    BSE_SR_87_86,
+    MANTLE_ARRAY,
+    MANTLE_ARRAY_LABEL,
+    SR_ND_FIELDS,
+    SR_ND_WINDOW,
+    nhrl,
+    pb_window,
+    resolve_field,
+)
 from .annotation_controller import AnnotationController, nearest_sample
 from .plot_canvas import PlotCanvas
 
@@ -68,29 +85,11 @@ SM_ND_CHUR  = 0.1967
 RB_SR_TO_87_86 = 2.894    # 87Rb/86Sr ≈ this × (Rb/Sr)
 SM_ND_TO_147_144 = 0.6043 # 147Sm/144Nd ≈ this × (Sm/Nd)
 
-# ---------------------------------------------------------------------------
-# Mantle reservoirs — present-day 87Sr/86Sr , 143Nd/144Nd  (Zindler & Hart
-# 1986; Hofmann 2003). Colours match the conventional petrology palette.
-# ---------------------------------------------------------------------------
+# The mantle end-members are compositional ranges, so they are drawn as the
+# published fields rather than as single points.  Their outlines, the two
+# array lines and the CHUR / BSE reference lines are in isotope_fields,
+# measured from the source figure.
 
-RESERVOIRS: Dict[str, Tuple[float, float, str, str]] = {
-    # name -> (87Sr/86Sr, 143Nd/144Nd, long_name, colour)
-    "DM":    (0.70220, 0.51315, "Depleted MORB Mantle",        "#2a9d8f"),
-    "BSE":   (0.70450, 0.51264, "Bulk Silicate Earth / CHUR",  "#264653"),
-    "PREMA": (0.70330, 0.51298, "Prevalent Mantle",            "#e9c46a"),
-    "HIMU":  (0.70290, 0.51285, "High-µ",                      "#f4a261"),
-    "EM1":   (0.70500, 0.51240, "Enriched Mantle 1",           "#9d4edd"),
-    "EM2":   (0.70800, 0.51260, "Enriched Mantle 2",           "#e63946"),
-}
-
-# Approximate mantle array (DM ↔ BSE ↔ EM, slope from Faure & Mensing 2005).
-# Drawn as a dashed grey line on the Sr-Nd panel when the user toggles it on.
-MANTLE_ARRAY_SR = (0.7020, 0.7090)        # (x_low, x_high)
-MANTLE_ARRAY_ND = (0.51325, 0.51230)      # corresponding y at those x's
-
-# NHRL (Hart 1984) — Northern Hemisphere Reference Line
-NHRL_207_206 = (0.1084, 13.491)           # slope, intercept (drawn optionally)
-NHRL_208_206 = (1.209,  15.627)           # slope, intercept
 
 
 # ---------------------------------------------------------------------------
@@ -129,6 +128,34 @@ def compute_initial_ratio(measured: pd.Series, parent: pd.Series,
 
 def epsilon_nd(nd_ratio: pd.Series) -> pd.Series:
     return (nd_ratio / ND_CHUR - 1.0) * 1.0e4
+
+
+def _widen(window: Tuple[float, float], values, pad: float
+           ) -> Tuple[float, float]:
+    """*window*, extended to hold *values* with a margin when they escape.
+
+    The published window is the default view; it only grows, so the
+    reference fields keep the same place on screen whatever the dataset.
+    """
+    lo, hi = window
+    if not len(values):
+        return lo, hi
+    return min(lo, min(values) - pad), max(hi, max(values) + pad)
+
+
+def _around(values, fallback: Tuple[float, float], min_pad: float
+            ) -> Tuple[float, float]:
+    """A range holding *values* with a margin, or *fallback* if empty.
+
+    The margin is a tenth of the spread, never less than *min_pad*, so
+    a tight cluster still gets room around it instead of sitting on the
+    frame.
+    """
+    if not len(values):
+        return fallback
+    lo, hi = min(values), max(values)
+    pad = max((hi - lo) * 0.10, min_pad)
+    return lo - pad, hi + pad
 
 
 def epsilon_sr(sr_ratio: pd.Series) -> pd.Series:
@@ -377,12 +404,13 @@ class IsotopesView(QWidget):
         self.res_box = QGroupBox("Mantle reservoirs")
         rv = _wrap(self.res_box)
         self.res_checks: Dict[str, QCheckBox] = {}
-        for name in RESERVOIRS:
-            cb = QCheckBox(f"{name} — {RESERVOIRS[name][2]}")
+        for fld in SR_ND_FIELDS:
+            cb = QCheckBox(f"{fld.name} — {fld.long_name}")
             cb.setChecked(True)
             rv.addWidget(cb)
-            self.res_checks[name] = cb
+            self.res_checks[fld.name] = cb
         layout.addWidget(self.res_box)
+
 
         # ---- Reference lines ----------------------------------------------
         self.ref_box = QGroupBox("Reference lines")
@@ -391,7 +419,7 @@ class IsotopesView(QWidget):
         self.mantle_array_chk.setChecked(True)
         rrv.addWidget(self.mantle_array_chk)
         self.nhrl_chk = QCheckBox(
-            "NHRL — Northern Hemisphere Reference Line (Pb 208/204)")
+            "NHRL — Northern Hemisphere Reference Line (Hart 1984)")
         self.nhrl_chk.setChecked(True)
         rrv.addWidget(self.nhrl_chk)
         self.eps_axes_chk = QCheckBox("Show secondary εNd / εSr axes (Sr-Nd)")
@@ -420,14 +448,15 @@ class IsotopesView(QWidget):
     def _on_diagram_changed(self, _index: int) -> None:
         key = self.diagram_combo.currentData()
         is_snd = key == "sr_nd"
-        is_pb208 = key == "pb_208"
         self.snd_box.setVisible(is_snd)
         self.age_box.setVisible(is_snd)
         self.pb_box.setVisible(not is_snd)
         self.mantle_array_chk.setVisible(is_snd)
         self.eps_axes_chk.setVisible(is_snd)
-        self.nhrl_chk.setVisible(is_pb208)
         self.res_box.setVisible(is_snd)
+        # Hart publishes the NHRL for both Pb planes, so it is offered
+        # on both; the old code drew it only on ²⁰⁸Pb.
+        self.nhrl_chk.setVisible(not is_snd)
 
         if key == "sr_nd":
             self.title_label.setText("⁸⁷Sr/⁸⁶Sr  vs  ¹⁴³Nd/¹⁴⁴Nd")
@@ -671,24 +700,7 @@ class IsotopesView(QWidget):
                        edgecolors="black", linewidths=0.5, zorder=5)
             any_data = True
 
-        # Reservoirs as starred markers
-        for name, (sr, nd, long_name, color) in RESERVOIRS.items():
-            if not self.res_checks[name].isChecked():
-                continue
-            ax.scatter([sr], [nd], marker="*", s=260, c=color,
-                       edgecolors="black", linewidths=0.9, zorder=6,
-                       label=f"{name} ({long_name})")
-            ax.annotate(name, (sr, nd), xytext=(8, 6),
-                        textcoords="offset points", fontsize=9,
-                        fontweight="bold", color="black",
-                        bbox=dict(facecolor="white", edgecolor="none",
-                                  alpha=0.7, pad=1.5), zorder=7)
-
-        # Mantle array
-        if self.mantle_array_chk.isChecked():
-            ax.plot(MANTLE_ARRAY_SR, MANTLE_ARRAY_ND,
-                    color="#444", linewidth=1.4, linestyle="--",
-                    alpha=0.85, zorder=2, label="Mantle array")
+        self._draw_sr_nd_background(ax)
 
         # Axes
         ax.set_xlabel("⁸⁷Sr/⁸⁶Sr" + ("  (initial)" if use_initial else ""),
@@ -698,23 +710,23 @@ class IsotopesView(QWidget):
         ax.grid(True, which="major", linestyle=":", linewidth=0.5,
                 color="#aaa", alpha=0.7)
 
-        # Auto-fit axes around data + reservoirs
-        all_x = [sr for _, (sr, _, _, _) in RESERVOIRS.items()]
-        all_y = [nd for _, (_, nd, _, _) in RESERVOIRS.items()]
+        # Start from the published window and widen it only for data that
+        # falls outside: a sample clipped off the plot would still be
+        # counted as plotted, and the reference fields would shift about
+        # from one dataset to the next.
+        xs_data: list = []
+        ys_data: list = []
         if any_data:
             if use_initial:
-                all_x += derived["sr_i"].dropna().tolist()
-                all_y += derived["nd_i"].dropna().tolist()
+                xs_data = derived["sr_i"].dropna().tolist()
+                ys_data = derived["nd_i"].dropna().tolist()
             else:
-                all_x += pd.to_numeric(df[sr_col], errors="coerce").dropna().tolist()
-                all_y += pd.to_numeric(df[nd_col], errors="coerce").dropna().tolist()
-        if all_x and all_y:
-            x_min, x_max = min(all_x), max(all_x)
-            y_min, y_max = min(all_y), max(all_y)
-            x_pad = max((x_max - x_min) * 0.10, 0.001)
-            y_pad = max((y_max - y_min) * 0.10, 0.00005)
-            ax.set_xlim(x_min - x_pad, x_max + x_pad)
-            ax.set_ylim(y_min - y_pad, y_max + y_pad)
+                xs_data = pd.to_numeric(df[sr_col],
+                                        errors="coerce").dropna().tolist()
+                ys_data = pd.to_numeric(df[nd_col],
+                                        errors="coerce").dropna().tolist()
+        ax.set_xlim(*_widen(SR_ND_WINDOW[0], xs_data, 0.0004))
+        ax.set_ylim(*_widen(SR_ND_WINDOW[1], ys_data, 0.00004))
 
         # Secondary axes — εSr (top) and εNd (right)
         if self.eps_axes_chk.isChecked():
@@ -756,6 +768,76 @@ class IsotopesView(QWidget):
         else:
             self.summary_label.setText("")
 
+    def _draw_sr_nd_background(self, ax) -> None:
+        """Reference fields, the array band and the two marker lines.
+
+        Everything here sits below the samples: the point of the plot is
+        the data, and a filled field drawn over it would hide points.
+        """
+        # Fields first, as plain white outlines.  The source fills and
+        # hatches them, which is legible on paper but turns busy once a
+        # dataset is drawn on top, so only the boundary is kept.
+        for fld in SR_ND_FIELDS:
+            cb = self.res_checks.get(fld.name)
+            if cb is not None and not cb.isChecked():
+                continue
+            if fld.is_drawn:
+                # No legend entry: the field carries its name on the plot,
+                # and the legend belongs to the user's own groups.
+                ax.fill(
+                    [v[0] for v in fld.vertices],
+                    [v[1] for v in fld.vertices],
+                    facecolor="white", edgecolor="#333", linewidth=0.8,
+                    zorder=2,
+                )
+
+        # The rules go over the fields: a white field would otherwise
+        # break the line it is meant to sit on.
+        ax.axhline(ND_CHUR, color="#888", linewidth=0.8, zorder=3)
+        ax.axvline(BSE_SR_87_86, color="#888", linewidth=0.8, zorder=3)
+
+        if self.mantle_array_chk.isChecked():
+            for (x0, y0), (x1, y1) in MANTLE_ARRAY:
+                ax.plot([x0, x1], [y0, y1], color="#555", linewidth=1.0,
+                        zorder=3)
+            lx, ly = MANTLE_ARRAY_LABEL
+            ax.text(lx, ly, "Mantle array", fontsize=8.5, style="italic",
+                    color="#333", ha="center", va="center",
+                    rotation=self._array_angle(ax), rotation_mode="anchor",
+                    zorder=4,
+                    bbox=dict(facecolor="white", edgecolor="none",
+                              alpha=0.8, pad=1.0))
+
+        for fld in SR_ND_FIELDS:
+            cb = self.res_checks.get(fld.name)
+            if cb is not None and not cb.isChecked():
+                continue
+            ax.text(fld.label[0], fld.label[1], fld.name, fontsize=8.5,
+                    fontweight="bold", color="#222", ha="center",
+                    va="center", zorder=4,
+                    bbox=dict(facecolor="white", edgecolor="none",
+                              alpha=0.8, pad=0.4))
+
+    @staticmethod
+    def _array_angle(ax) -> float:
+        """Screen angle of the array band, so the label lies along it."""
+        (x0, y0), (x1, y1) = MANTLE_ARRAY[0]
+        (ax0, ax1), (ay0, ay1) = ax.get_xlim(), ax.get_ylim()
+        if ax1 == ax0 or ay1 == ay0:
+            return 0.0
+        bbox = ax.get_window_extent()
+        dx = (x1 - x0) / (ax1 - ax0) * max(bbox.width, 1.0)
+        dy = (y1 - y0) / (ay1 - ay0) * max(bbox.height, 1.0)
+        return float(np.degrees(np.arctan2(dy, dx)))
+
+    def _draw_pb_background(self, ax, y_iso: str) -> None:
+        """The NHRL, drawn right across whatever the axes now show."""
+        if not self.nhrl_chk.isChecked():
+            return
+        xs = np.linspace(*ax.get_xlim(), 100)
+        ax.plot(xs, nhrl(xs, y_iso), color="#b3261e", linewidth=1.2,
+                zorder=2, label="NHRL (Hart 1984)")
+
     # ------------------- Pb
     def _plot_pb(self, df: pd.DataFrame, *, y_iso: str) -> None:
         x_col = self.pb206_combo.currentData()
@@ -791,15 +873,29 @@ class IsotopesView(QWidget):
                        linewidths=0.5, zorder=5)
             any_data = True
 
-        # NHRL on 208/204 only
-        if y_iso == "208" and self.nhrl_chk.isChecked():
-            slope, intercept = NHRL_208_206
-            x_lo, x_hi = ax.get_xlim() if any_data else (17.0, 21.0)
-            # If no data yet, use a sensible default range
-            xs = np.linspace(x_lo, x_hi, 50)
-            ax.plot(xs, slope * xs + intercept,
-                    color="#444", linewidth=1.4, linestyle="--",
-                    alpha=0.9, label="NHRL (Hart 1984)", zorder=2)
+        # Pb ratios span a narrow range, and nothing fixed is drawn here
+        # but the NHRL, so the axes follow the data.  The published frame
+        # is only the fallback for an empty panel.
+        wx, wy = pb_window(y_iso)
+        if any_data:
+            xs_data = pd.to_numeric(df[x_col],
+                                    errors="coerce").dropna().tolist()
+            ys_data = pd.to_numeric(df[y_col],
+                                    errors="coerce").dropna().tolist()
+            x_lo, x_hi = _around(xs_data, wx, 0.05)
+            ax.set_xlim(x_lo, x_hi)
+            # Keep the NHRL on screen.  It is the only reference the
+            # panel carries, and a suite that sits well off it would
+            # otherwise push it out of view — losing exactly the
+            # comparison the line is there to make.
+            if self.nhrl_chk.isChecked():
+                ys_data = ys_data + [nhrl(x_lo, y_iso), nhrl(x_hi, y_iso)]
+            ax.set_ylim(*_around(ys_data, wy, 0.02))
+        else:
+            ax.set_xlim(*wx)
+            ax.set_ylim(*wy)
+
+        self._draw_pb_background(ax, y_iso)
 
         # Axes
         sup = {"207": "²⁰⁷Pb/²⁰⁴Pb", "208": "²⁰⁸Pb/²⁰⁴Pb"}[y_iso]
@@ -956,9 +1052,13 @@ class IsotopesView(QWidget):
             if i >= 0:
                 self.age_source.setCurrentIndex(i)
         ws.restore_spin(self.age_value, state.get("age_value"))
-        for name, cb in self.res_checks.items():
-            val = state.get("reservoirs", {}).get(name)
-            if val is not None:
+        saved = state.get("reservoirs", {}) or {}
+        # A session written before the fields were renamed to match the
+        # figure (EM1/EM2 → EMI/EMII) still carries the old keys.
+        for key, val in saved.items():
+            fld = resolve_field(key)
+            cb = self.res_checks.get(fld.name) if fld else None
+            if cb is not None and val is not None:
                 cb.setChecked(bool(val))
         ws.restore_check(self.mantle_array_chk, state.get("mantle_array"))
         ws.restore_check(self.nhrl_chk, state.get("nhrl"))
