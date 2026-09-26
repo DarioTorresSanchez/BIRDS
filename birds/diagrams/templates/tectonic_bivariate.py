@@ -12,20 +12,101 @@ import pandas as pd
 from .base import Diagram, resolve_column
 
 
+#: 1 wt.% TiO2 = 5993.4 ppm Ti, from the mass ratio 47.867 / 79.866.
+#: Was 5995 in four places, which is 0.03 % high — harmless on a plot,
+#: but a constant with a known value has no reason to be approximate.
+TIO2_WT_TO_TI_PPM = 5993.4
+
+
 # ---------------------------------------------------------------------------
 # Pearce (2008) — mafic crustal input and melting depth proxies
 # ---------------------------------------------------------------------------
+#
+# Both panels of Pearce (2008) Fig. 2, measured from the published
+# figure.  Its axes were calibrated on their own decade marks, the
+# array bounds fitted by RANSAC over the drawn lines, and the three
+# reference markers located: they land on the Sun & McDonough (1989)
+# values the paper cites, to better than 1 % in Th/Yb and TiO2/Yb,
+# which is what fixes the calibration.
+#
+# NOTE the y axis of panel (b): Pearce plots **TiO2 in wt.% over Yb in
+# ppm**, not Ti in ppm over Yb.  The two differ by a factor of 5993,
+# so field boundaries taken from one and applied to the other are
+# meaningless.  This module had the ppm form with boundaries that
+# belonged to neither.
+
+#: Sun & McDonough (1989) reservoirs, the ones Pearce plots.  Trace
+#: elements in ppm; Ti in ppm, converted to TiO2 wt.% where needed.
+SUN_MCDONOUGH_1989 = {
+    "N-MORB": {"Nb": 2.33, "Th": 0.12, "Yb": 3.05, "Ti": 7600.0},
+    "E-MORB": {"Nb": 8.30, "Th": 0.60, "Yb": 2.37, "Ti": 6000.0},
+    "OIB":    {"Nb": 48.0, "Th": 4.00, "Yb": 2.16, "Ti": 17200.0},
+}
+
+
+def _ratio_point(name, y_kind):
+    r = SUN_MCDONOUGH_1989[name]
+    x = r["Nb"] / r["Yb"]
+    if y_kind == "Th":
+        return x, r["Th"] / r["Yb"]
+    return x, (r["Ti"] / TIO2_WT_TO_TI_PPM) / r["Yb"]
+
+
+# --- panel (a): Th/Yb vs Nb/Yb ---------------------------------------
+#
+# The MORB-OIB array is a band of constant Th/Nb: fitting the drawn
+# bounds with a free slope gives 1.03 and 1.06 in log-log, and forcing
+# the slope to 1 costs almost nothing (mean residual 0.049 against
+# 0.046 dex, and 0.052 against 0.037).  A constant ratio is also what
+# the diagram means, Th/Nb being the crustal-input proxy.
+MORB_OIB_ARRAY_TH_NB = (0.043, 0.096)
+
+#: Pearce filters out crustal contamination at Th/Nb > 0.2 (pp. 30, 41).
+CRUSTAL_CONTAMINATION_TH_NB = 0.2
+
+# --- panel (b): TiO2/Yb vs Nb/Yb -------------------------------------
+#
+# Three near-parallel bounds, each fitted as TiO2/Yb = a (Nb/Yb)^b.
+# The slopes agree to within 0.006, so the arrays are parallel bands.
+MORB_ARRAY_TIO2_YB = ((0.2820, 0.0433), (0.6293, 0.0489))
+OIB_ARRAY_TIO2_YB = ((0.6293, 0.0489), (2.2711, 0.0435))
+
+#: Tholeiitic / alkalic divide inside the OIB array; it spans the array
+#: from (8.5, 2.49) down to (18.2, 0.73).  Fitted residual 0.002 dex.
+OIB_THOLEIITIC_ALKALIC = (82.575, -1.6318)
+
+#: N-MORB / E-MORB divide, "the C1 chondrite value" (Fig. 2 caption).
+N_E_MORB_NB_YB = 1.45
+
+_ARRAY_LINE = dict(color="#444", linewidth=1.0, alpha=0.9, zorder=1)
+
+
+def _power(coefs, xs):
+    a, b = coefs
+    return a * np.asarray(xs, dtype=float) ** b
+
+
+def _mark_reservoirs(ax, y_kind):
+    for name in SUN_MCDONOUGH_1989:
+        x, y = _ratio_point(name, y_kind)
+        ax.scatter([x], [y], marker="s", s=34, c="black", zorder=4)
+        ax.annotate(name, (x, y), xytext=(7, -3),
+                    textcoords="offset points", fontsize=8, zorder=4)
+
 
 class Pearce2008ThYbNbYb(Diagram):
     key = "pearce2008_thyb_nbyb"
     title = "Th/Yb vs Nb/Yb — Pearce (2008)"
-    citation = ("Pearce (2008). MORB-OIB array bounded by Th/Nb ≈ 0.07 "
-                "(lower) and 0.32 (upper). Samples plotting above the array "
-                "carry a crustal / subduction component.")
+    citation = ("Pearce (2008) Lithos 100, 14-48, Fig. 2a.  The MORB-OIB "
+                "array is a band of constant Th/Nb, measured at 0.043 to "
+                "0.096; a sample above it carries crustal input, by "
+                "subduction, contamination or recycling.  Pearce filters "
+                "out significant contamination at Th/Nb > 0.2.  Reference "
+                "compositions are Sun & McDonough (1989).")
     x_label = "Nb/Yb"
     y_label = "Th/Yb"
     x_range = (0.1, 100.0)
-    y_range = (0.01, 100.0)
+    y_range = (0.01, 10.0)
     log_x = True
     log_y = True
 
@@ -40,78 +121,93 @@ class Pearce2008ThYbNbYb(Diagram):
                 pd.to_numeric(df[th], errors="coerce") / yb_s)
 
     def _draw_background(self, ax, options):
-        xs = np.array([0.1, 100.0])
-        ax.fill_between(xs, 0.07 * xs, 0.32 * xs,
-                        color="#888", alpha=0.10, zorder=0,
-                        label="_MORB–OIB array")
-        ax.plot(xs, 0.07 * xs, color="#444", linewidth=1.0)
-        ax.plot(xs, 0.32 * xs, color="#444", linewidth=1.0)
-        # Reference compositions
-        for name, x, y in (
-            ("N-MORB", 0.76, 0.04),
-            ("E-MORB", 2.70, 0.20),
-            ("OIB", 22.0, 1.85),
-            ("Bulk CC", 16.1, 5.6),
-        ):
-            ax.scatter([x], [y], marker="*", s=130, c="white",
-                       edgecolors="black", linewidths=1.0, zorder=3)
-            ax.annotate(name, (x, y), xytext=(6, 6),
-                        textcoords="offset points", fontsize=8)
-        ax.text(20, 0.45, "MORB–OIB array", fontsize=9,
-                style="italic", color="#333")
-        ax.text(0.4, 8, "Volcanic-arc / crustal input",
+        xs = np.array(self.x_range)
+        low, high = MORB_OIB_ARRAY_TH_NB
+        ax.fill_between(xs, low * xs, high * xs, color="#888", alpha=0.15,
+                        zorder=0)
+        for ratio in (low, high):
+            ax.plot(xs, ratio * xs, **_ARRAY_LINE)
+        ax.plot(xs, CRUSTAL_CONTAMINATION_TH_NB * xs, color="#b13a3a",
+                linewidth=1.0, linestyle="--", alpha=0.8, zorder=1)
+        ax.text(2.2, 2.2 * CRUSTAL_CONTAMINATION_TH_NB * 1.45,
+                "Th/Nb = 0.2", fontsize=7.5, color="#b13a3a",
+                ha="center")
+        _mark_reservoirs(ax, "Th")
+        ax.text(25, 25 * (low * high) ** 0.5, "MORB-OIB array",
                 fontsize=9, style="italic", color="#333", ha="center")
+        ax.text(0.5, 3.0, "volcanic arc / crustal input",
+                fontsize=9, style="italic", color="#333")
 
 
 class Pearce2008TiYbNbYb(Diagram):
     key = "pearce2008_tiyb_nbyb"
-    title = "Ti/Yb vs Nb/Yb — Pearce (2008)"
-    citation = ("Pearce (2008). High Ti/Yb (>≈5000) indicates residual "
-                "garnet in the source ⇒ OIB / deep melting; flat MORB array "
-                "below indicates spinel-facies melting.")
+    title = "TiO$_2$/Yb vs Nb/Yb — Pearce (2008)"
+    citation = ("Pearce (2008) Lithos 100, 14-48, Fig. 2b.  TiO2 in wt.% "
+                "over Yb in ppm, as the paper plots it — not Ti in ppm, "
+                "which differs by a factor of 5993 and would put every "
+                "boundary in the wrong place.  High TiO2/Yb means garnet "
+                "in the residue, so deep melting: the OIB array sits "
+                "above the shallow-melting MORB array.  Bounds measured "
+                "from the figure; the N-MORB / E-MORB divide at "
+                "Nb/Yb = 1.45 is the C1 chondrite value the caption "
+                "states.  Reference compositions are Sun & McDonough "
+                "(1989).")
     x_label = "Nb/Yb"
-    y_label = "Ti/Yb (ppm/ppm)"
+    y_label = "TiO$_2$/Yb  (wt.% / ppm)"
     x_range = (0.1, 100.0)
-    y_range = (1000, 30000)
+    y_range = (0.1, 10.0)
     log_x = True
     log_y = True
 
     def _compute_xy(self, df):
         nb = resolve_column(df, ["Nb"])
         yb = resolve_column(df, ["Yb"])
+        tio2 = resolve_column(df, ["TiO2"])
         ti_el = resolve_column(df, ["Ti"])
-        ti_ox = resolve_column(df, ["TiO2"])
-        if not (nb and yb and (ti_el or ti_ox)):
+        if not (nb and yb and (tio2 or ti_el)):
             return None, None
         yb_s = pd.to_numeric(df[yb], errors="coerce")
-        if ti_el:
-            ti_ppm = pd.to_numeric(df[ti_el], errors="coerce")
+        if tio2:
+            tio2_wt = pd.to_numeric(df[tio2], errors="coerce")
         else:
-            ti_ppm = pd.to_numeric(df[ti_ox], errors="coerce") * 5995
+            tio2_wt = (pd.to_numeric(df[ti_el], errors="coerce")
+                       / TIO2_WT_TO_TI_PPM)
         return (pd.to_numeric(df[nb], errors="coerce") / yb_s,
-                ti_ppm / yb_s)
+                tio2_wt / yb_s)
 
     def _draw_background(self, ax, options):
-        # MORB field ~ Ti/Yb 2000-4500
-        ax.axhspan(2000, 4500, color="#88c0d0", alpha=0.12, zorder=0)
-        # OIB field above ~5000
-        xs = np.array([0.1, 100.0])
-        ax.fill_between(xs, 5000, 30000, color="#d08770", alpha=0.08, zorder=0)
-        # Discriminant boundary at Ti/Yb ≈ 5000 (Pearce 2008 figure)
-        ax.axhline(5000, color="#b13a3a", linewidth=1.2, linestyle="--")
-        for name, x, y in (
-            ("N-MORB", 0.76, 2495),
-            ("E-MORB", 2.70, 2530),
-            ("OIB", 22.0, 7970),
-        ):
-            ax.scatter([x], [y], marker="*", s=130, c="white",
-                       edgecolors="black", linewidths=1.0, zorder=3)
-            ax.annotate(name, (x, y), xytext=(6, 6),
-                        textcoords="offset points", fontsize=8)
-        ax.text(15, 12000, "OIB array (garnet residue)",
-                fontsize=9, style="italic", color="#333")
-        ax.text(15, 2700, "MORB array (spinel facies)",
-                fontsize=9, style="italic", color="#333")
+        xs = np.logspace(np.log10(self.x_range[0]),
+                         np.log10(self.x_range[1]), 200)
+        morb_lo, morb_hi = MORB_ARRAY_TIO2_YB
+        _oib_lo, oib_hi = OIB_ARRAY_TIO2_YB
+        ax.fill_between(xs, _power(morb_lo, xs), _power(morb_hi, xs),
+                        color="#888", alpha=0.18, zorder=0)
+        for coefs in (morb_lo, morb_hi, oib_hi):
+            ax.plot(xs, _power(coefs, xs), **_ARRAY_LINE)
+
+        # Tholeiitic / alkalic divide, drawn only where it crosses the
+        # OIB array, which is the only place the paper draws it.
+        th_alk = _power(OIB_THOLEIITIC_ALKALIC, xs)
+        inside = (th_alk >= _power(morb_hi, xs)) & (th_alk <= _power(oib_hi, xs))
+        ax.plot(xs[inside], th_alk[inside], color="#444", linewidth=1.0,
+                linestyle="--", zorder=1)
+        ax.text(9.0, 2.9, "Th", fontsize=8, color="#333", ha="right")
+        ax.text(20.0, 2.9, "Alk", fontsize=8, color="#333")
+
+        # N-MORB / E-MORB divide, within the MORB array only.
+        ax.plot([N_E_MORB_NB_YB, N_E_MORB_NB_YB],
+                [_power(morb_lo, N_E_MORB_NB_YB) * 0.75,
+                 _power(morb_hi, N_E_MORB_NB_YB)],
+                color="#444", linewidth=1.0, linestyle="--", zorder=1)
+        ax.text(N_E_MORB_NB_YB * 0.85, 0.185, "N", fontsize=8, color="#333",
+                ha="right")
+        ax.text(N_E_MORB_NB_YB * 1.15, 0.185, "E", fontsize=8, color="#333")
+
+        _mark_reservoirs(ax, "Ti")
+        ax.text(0.5, 1.5, "OIB array\n(deep melting)", fontsize=9,
+                style="italic", color="#333")
+        ax.text(30, 0.42, "MORB array\n(shallow melting)", fontsize=9,
+                style="italic", color="#333", ha="center")
 
 
 # ---------------------------------------------------------------------------
@@ -143,7 +239,7 @@ class PearceGale1977(Diagram):
         if ti_el:
             ti_ppm = pd.to_numeric(df[ti_el], errors="coerce")
         else:
-            ti_ppm = pd.to_numeric(df[ti_ox], errors="coerce") * 5995
+            ti_ppm = pd.to_numeric(df[ti_ox], errors="coerce") * TIO2_WT_TO_TI_PPM
         return (pd.to_numeric(df[zr], errors="coerce") / y_s, ti_ppm / y_s)
 
     def _draw_background(self, ax, options):
@@ -182,7 +278,7 @@ class Shervais1982TiV(Diagram):
         if ti_el:
             ti_ppm = pd.to_numeric(df[ti_el], errors="coerce")
         else:
-            ti_ppm = pd.to_numeric(df[ti_ox], errors="coerce") * 5995
+            ti_ppm = pd.to_numeric(df[ti_ox], errors="coerce") * TIO2_WT_TO_TI_PPM
         return (ti_ppm / 1000.0, pd.to_numeric(df[v], errors="coerce"))
 
     def _draw_background(self, ax, options):
@@ -231,7 +327,7 @@ class PearceCann1973ZrTi(Diagram):
         if ti_el:
             ti_ppm = pd.to_numeric(df[ti_el], errors="coerce")
         else:
-            ti_ppm = pd.to_numeric(df[ti_ox], errors="coerce") * 5995
+            ti_ppm = pd.to_numeric(df[ti_ox], errors="coerce") * TIO2_WT_TO_TI_PPM
         return pd.to_numeric(df[zr], errors="coerce"), ti_ppm
 
     def _draw_background(self, ax, options):
@@ -575,80 +671,169 @@ class Saccani2015CeDyYb(Diagram):
 
 
 # ---------------------------------------------------------------------------
-# Yang et al. (2019) — high-Mg source proxy
-# FCMS and FCKANTMS are oxide-based proxies for mantle vs. lithospheric
-# source of high-Mg melts. Reference: Yang, Wang, Castillo (2019), Lithos.
+# Yang et al. (2019) — major-element log-ratios as a source-lithology proxy
 # ---------------------------------------------------------------------------
+#
+# Equations transcribed from Table 1 of Yang, Li, Jiang, Xu, Guo, Li &
+# Zhang (2019), J. Geophys. Res. Solid Earth 124, 3429-3480,
+# doi:10.1029/2018JB016145.  All oxides in wt.%.
+#
+# FCMS and FCKANTMS are *residuals*: the measured ln(FeO/CaO) minus the
+# value a lherzolite melt of the same ln(MgO/SiO2) would have.  A melt
+# of primitive-mantle-like lherzolite therefore sits at zero - the
+# paper reports 0.00 +/- 0.08 - and a melt of a mafic (pyroxenite or
+# hornblendite) source sits above it.  They are dimensionless numbers
+# of order 0.1, not oxide sums of order 10.
+#
+# This module previously computed both as plain linear combinations of
+# oxide wt.%, e.g. "FCMS = SiO2 + 0.99 K2O - 1.32 Al2O3 - 0.78 MgO",
+# on axes running to +/- 20.  Neither expression appears in the paper,
+# and neither is a log-ratio.  It also plotted FCMS against FCKANTMS,
+# which the paper notes are near-equivalent ("FCMS is very close to
+# FCKANTMS"), so that pair carries almost no discrimination.  The axes
+# used here are the ones the paper recommends.
+# It also cited the wrong journal and authors.
+
+#: Equation (1): ln(FeO/CaO) of a lherzolite melt, as a cubic in
+#: ln(MgO/SiO2).  Highest power first.
+YANG_LHERZOLITE_TREND = (0.058, 0.636, 1.850, 1.170)
+
+#: Equation (7): the same trend recalibrated for FCKANT.
+YANG_FCKANT_TREND = (0.062, 0.641, 1.871, 1.201)
+
+#: Constant of equation (8).
+YANG_FCKANTMS_CONSTANT = 1.473
+
+#: Coefficients of the three log-ratio corrections in equations (6)/(8).
+YANG_K_AL, YANG_TI_NA, YANG_NA_K_TI = 0.08, 0.052, 0.036
+
+
+def _ln_ratio(df, num, den):
+    a = resolve_column(df, [num])
+    b = resolve_column(df, [den])
+    if a is None or b is None:
+        return None
+    x = pd.to_numeric(df[a], errors="coerce")
+    y = pd.to_numeric(df[b], errors="coerce")
+    return np.log(x.where(x > 0) / y.where(y > 0))
+
+
+def _yang_feo_cao(df):
+    """ln(FeO/CaO), all iron as FeO — the convention of the
+    experimental melts these parameters were calibrated on."""
+    from ...preprocess import get_feot
+    cao = resolve_column(df, ["CaO"])
+    if cao is None:
+        return None
+    canon = {}
+    for name in ("FeO", "Fe2O3", "FeOt", "Fe2O3t"):
+        col = resolve_column(df, [name])
+        if col is not None:
+            canon[name] = pd.to_numeric(df[col], errors="coerce")
+    if not canon:
+        return None
+    feot = get_feot(pd.DataFrame(canon, index=df.index))
+    if feot is None:
+        return None
+    ca = pd.to_numeric(df[cao], errors="coerce")
+    return np.log(feot.where(feot > 0) / ca.where(ca > 0))
+
+
+def _cubic(coefs, x):
+    a, b, c, d = coefs
+    return a * x ** 3 + b * x ** 2 + c * x + d
+
 
 def _yang_fcms(df):
-    """FCMS = SiO2 + K2O × 0.99 − Al2O3 × 1.32 − MgO × 0.78."""
-    si = resolve_column(df, ["SiO2"])
-    k = resolve_column(df, ["K2O"])
-    al = resolve_column(df, ["Al2O3"])
-    mg = resolve_column(df, ["MgO"])
-    if not (si and k and al and mg):
+    """FCMS, equation (2) of Table 1."""
+    fc = _yang_feo_cao(df)
+    ms = _ln_ratio(df, "MgO", "SiO2")
+    if fc is None or ms is None:
         return None
-    return (pd.to_numeric(df[si], errors="coerce")
-            + 0.99 * pd.to_numeric(df[k], errors="coerce")
-            - 1.32 * pd.to_numeric(df[al], errors="coerce")
-            - 0.78 * pd.to_numeric(df[mg], errors="coerce"))
+    return fc - _cubic(YANG_LHERZOLITE_TREND, ms)
 
 
 def _yang_fckantms(df):
-    """FCKANTMS = K2O × 1.32 + Na2O × 0.49 + Al2O3 × 0.10
-                 + TiO2 × 0.95 − CaO × 0.18 − MgO × 0.32 − SiO2 × 0.04.
-
-    Approximation of the linear combination published by Yang et al.
-    (2019) for distinguishing peridotite-derived vs pyroxenite-/
-    carbonatite-influenced sources.
-    """
-    parts = {n: resolve_column(df, [n]) for n in
-             ("K2O", "Na2O", "Al2O3", "TiO2", "CaO", "MgO", "SiO2")}
-    if any(v is None for v in parts.values()):
+    """FCKANTMS, equation (8) of Table 1."""
+    fc = _yang_feo_cao(df)
+    ms = _ln_ratio(df, "MgO", "SiO2")
+    k_al = _ln_ratio(df, "K2O", "Al2O3")
+    ti_na = _ln_ratio(df, "TiO2", "Na2O")
+    na_k = _ln_ratio(df, "Na2O", "K2O")
+    na_ti = _ln_ratio(df, "Na2O", "TiO2")
+    if any(v is None for v in (fc, ms, k_al, ti_na, na_k, na_ti)):
         return None
-    return (1.32 * pd.to_numeric(df[parts["K2O"]],   errors="coerce")
-            + 0.49 * pd.to_numeric(df[parts["Na2O"]],  errors="coerce")
-            + 0.10 * pd.to_numeric(df[parts["Al2O3"]], errors="coerce")
-            + 0.95 * pd.to_numeric(df[parts["TiO2"]],  errors="coerce")
-            - 0.18 * pd.to_numeric(df[parts["CaO"]],   errors="coerce")
-            - 0.32 * pd.to_numeric(df[parts["MgO"]],   errors="coerce")
-            - 0.04 * pd.to_numeric(df[parts["SiO2"]],  errors="coerce"))
+    a, b, c, _d = YANG_FCKANT_TREND
+    return (fc
+            - YANG_K_AL * k_al
+            - YANG_TI_NA * ti_na
+            - YANG_NA_K_TI * na_k * na_ti
+            - a * ms ** 3 - b * ms ** 2 - c * ms
+            - YANG_FCKANTMS_CONSTANT)
+
+
+def _yang_silica_index(df):
+    """ln(SiO2 / (CaO + Na2O + TiO2)), the x axis of Figure 7b."""
+    si = resolve_column(df, ["SiO2"])
+    parts = [resolve_column(df, [n]) for n in ("CaO", "Na2O", "TiO2")]
+    if si is None or any(p is None for p in parts):
+        return None
+    total = sum(pd.to_numeric(df[p], errors="coerce") for p in parts)
+    sio2 = pd.to_numeric(df[si], errors="coerce")
+    return np.log(sio2.where(sio2 > 0) / total.where(total > 0))
+
+
+# Boundaries, verbatim from the Figure 7 caption.  X is the silica
+# index, Y is FCKANTMS.
+YANG_TRANSITIONAL_UPPER = ((-0.5, -0.2), (1.0, 0.37), (1.5, 0.37))
+YANG_PERIDOTITE_EVOLVED = ((-0.4, -0.75), (1.05, 0.15), (1.3, 0.35),
+                           (2.8, 1.75))
+YANG_PERIDOTITE_PRIMARY = ((-0.4, -1.45), (1.05, 0.05), (1.3, 0.15),
+                           (2.9, 1.7))
 
 
 class Yang2019FCKANTMS(Diagram):
-    """FCMS vs FCKANTMS — Yang et al. (2019) source proxy for high-Mg
-    igneous rocks (peridotite vs pyroxenite / metasomatised lithospheric
-    mantle).
-    """
+    """FCKANTMS vs ln(SiO2/(CaO+Na2O+TiO2)) — Yang et al. (2019)."""
+
     key = "yang_2019_fckantms"
-    title = "FCMS vs FCKANTMS — Yang et al. (2019)"
-    citation = ("Yang, Wang & Castillo (2019), Lithos. Two oxide-based "
-                "linear combinations (FCMS and FCKANTMS) that proxy the "
-                "source of high-Mg / picritic to ultramafic melts. "
-                "Peridotite (asthenospheric) melts cluster at FCMS > 5 "
-                "and FCKANTMS < 4; pyroxenite / metasomatised lithospheric "
-                "sources plot at lower FCMS and higher FCKANTMS.")
-    x_label = "FCMS"
+    title = ("FCKANTMS vs ln(SiO$_2$/(CaO+Na$_2$O+TiO$_2$)) — "
+             "Yang et al. (2019)")
+    citation = ("Yang et al. (2019) JGR Solid Earth 124, 3429-3480, "
+                "Fig. 7b.  FCKANTMS is equation (8) of their Table 1: "
+                "the measured ln(FeO/CaO) minus what a lherzolite melt "
+                "of the same ln(MgO/SiO2) would have, after correcting "
+                "for melting degree and pressure.  A peridotite melt "
+                "sits at 0.00 ± 0.08; a melt above the Mg#-labelled "
+                "boundaries cannot come from normal peridotite or "
+                "harzburgite.  All iron as FeO.  Boundary coordinates "
+                "verbatim from the figure caption.")
+    x_label = "ln(SiO$_2$ / (CaO + Na$_2$O + TiO$_2$))"
     y_label = "FCKANTMS"
-    x_range = (-20, 30)
-    y_range = (-5, 25)
+    x_range = (-0.5, 4.5)
+    y_range = (-2.0, 2.0)
 
     def _compute_xy(self, df):
-        fcms = _yang_fcms(df)
-        fck  = _yang_fckantms(df)
-        if fcms is None or fck is None:
+        x = _yang_silica_index(df)
+        y = _yang_fckantms(df)
+        if x is None or y is None:
             return None, None
-        return fcms, fck
+        return x, y
 
     def _draw_background(self, ax, options):
-        # Approximate fields (Yang et al. 2019 fig. 7)
-        ax.fill_between([5, 30], [-5, -5], [4, 4], color="#88c0d0",
-                        alpha=0.15, zorder=0)
-        ax.text(15, 0.5, "Peridotite-derived\n(asthenospheric)",
-                fontsize=9, style="italic", color="#333", ha="center")
-        ax.fill_between([-20, 5], [4, 4], [25, 25], color="#d08770",
-                        alpha=0.12, zorder=0)
-        ax.text(-7, 15, "Pyroxenite /\nmetasomatised\nlithosphere",
-                fontsize=9, style="italic", color="#333", ha="center")
-        ax.axhline(4, color="#444", lw=0.8, ls="--")
-        ax.axvline(5, color="#444", lw=0.8, ls="--")
+        for poly, style, label, offset in (
+            (YANG_PERIDOTITE_EVOLVED, dict(color="#444", lw=1.1, ls="--"),
+             "Mg# = 0.5–0.6", (5, 4)),
+            (YANG_PERIDOTITE_PRIMARY, dict(color="#444", lw=1.1, ls="--"),
+             "Mg# = 0.7", (5, -10)),
+            (YANG_TRANSITIONAL_UPPER,
+             dict(color="#2a9d5c", lw=1.1, ls="--"), "transitional", (5, -3)),
+        ):
+            ax.plot([q[0] for q in poly], [q[1] for q in poly], **style)
+            ax.annotate(label, poly[-1], xytext=offset,
+                        textcoords="offset points", fontsize=7.5,
+                        color=style["color"])
+        ax.axhline(0.0, color="#888", lw=0.7, zorder=0)
+        ax.text(0.1, 1.6, "mafic lithology", fontsize=9, style="italic",
+                color="#333")
+        ax.text(2.7, -1.6, "peridotite / harzburgite", fontsize=9,
+                style="italic", color="#333", ha="center")
