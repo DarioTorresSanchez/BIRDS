@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
+from matplotlib.path import Path
+
 from .base import Diagram, resolve_column
+from .ib1971 import _IRVINE_BARAGAR_1971 as _IB1971_BOUNDARY
 
 
 # ---------------------------------------------------------------------------
@@ -30,37 +34,165 @@ _VOLCANIC_FIELDS = {
                                  (53, 9.3), (48.4, 11.5)],
     "Tephriphonolite":          [(48.4, 11.5), (53, 9.3),
                                  (57.6, 11.7), (52.5, 14)],
+    # Open at the top, where the frame closes it.  Every entry here is
+    # drawn as a *closed* outline, so the vertex list walks out to
+    # (63, 14.5) and straight back before tracing the left side: that
+    # retraced segment is invisible, whereas ordering the four points
+    # around the field would draw a line right across its top.  The
+    # closing edge (50, 15.083) → (57.6, 11.7) is collinear with the
+    # real boundary to within 0.03 wt.%, so it hides under it.
     "Phonolite":                [(57.6,11.7),(63,14.5),
                                  (57.6,11.7),(52.5,14),(50,15.083)],
 
 }
 
+# Foidite occupies the whole upper-left region.  It needs no outline of
+# its own — every edge it has is already drawn by Tephrite/Basanite,
+# Phonotephrite, Tephriphonolite, Phonolite and Picrobasalt, and the
+# rest is the frame — but it still needs its name.
+_FOIDITE_LABEL = (39.0, 12.5)
+
+
+# ---------------------------------------------------------------------------
+# Naming a composition
+# ---------------------------------------------------------------------------
+#
+# The outlines above are what gets drawn, and they are also what decides
+# the name: the classification regions are built *from* them, so a name
+# can never drift away from the picture.  Ten of the fourteen close on
+# their own and are used as they stand.  The other four stop at the
+# frame rather than closing, and Foidite has no outline at all, so those
+# five are given an explicit closed form here.
+#
+# The domain runs a little past the published frame (16 wt.% alkalis) so
+# that a rare ultra-alkaline analysis still gets named rather than
+# silently dropped.
+
+CLASSIFY_SIO2_RANGE = (30.0, 100.0)
+CLASSIFY_ALKALI_MAX = 20.0
+
+
+def _x_on(p, q, y: float) -> float:
+    """x where the line through *p* and *q* reaches height *y*."""
+    (x0, y0), (x1, y1) = p, q
+    return x0 + (y - y0) * (x1 - x0) / (y1 - y0)
+
+
+def _y_on(p, q, x: float) -> float:
+    (x0, y0), (x1, y1) = p, q
+    return y0 + (x - x0) * (y1 - y0) / (x1 - x0)
+
+
+# Where the Foidite / Phonolite line leaves the top of the domain, and
+# where the Phonolite / Trachyte line crosses the SiO2 = 69 edge of the
+# Trachyte field.  Both are read off the stored vertices, not retyped.
+_X_FOIDITE_TOP = _x_on((52.5, 14), (50, 15.083), CLASSIFY_ALKALI_MAX)
+_Y_TRACHYTE_69 = _y_on((57.6, 11.7), (61, 13.5), 69.0)
+
+_VOLCANIC_CLOSURES = {
+    # No outline of its own; bounded by its neighbours and the frame.
+    "Foidite": [(CLASSIFY_SIO2_RANGE[0], 0), (41, 0), (41, 7), (45, 9.4),
+                (48.4, 11.5), (52.5, 14), (_X_FOIDITE_TOP,
+                                           CLASSIFY_ALKALI_MAX),
+                (CLASSIFY_SIO2_RANGE[0], CLASSIFY_ALKALI_MAX)],
+    # Drawn as the single dacite boundary; open right and up.
+    "Rhyolite": [(77, 0), (CLASSIFY_SIO2_RANGE[1], 0),
+                 (CLASSIFY_SIO2_RANGE[1], CLASSIFY_ALKALI_MAX),
+                 (69, CLASSIFY_ALKALI_MAX), (69, 8)],
+    # Drawn as the SiO2 = 69 segment; closes against the phonolite line.
+    "Trachyte /\nTrachydacite": [(63, 7), (69, 8), (69, _Y_TRACHYTE_69),
+                                 (57.6, 11.7)],
+    # Drawn with a retraced edge; the closed form drops it.
+    "Phonolite": [(52.5, 14), (57.6, 11.7), (69, _Y_TRACHYTE_69),
+                  (69, CLASSIFY_ALKALI_MAX),
+                  (_X_FOIDITE_TOP, CLASSIFY_ALKALI_MAX)],
+}
+
+#: Fields the TAS names only in pairs, because what separates them is
+#: normative and not an axis of this plane.  Same treatment as komatiite
+#: vs meimechite in :mod:`birds.diagrams.templates.highmg_tas`: without
+#: the extra number, say both names rather than pick one.
+# Keyed on the *cleaned* name — several outlines carry a newline for
+# layout, and matching on the raw key silently misses them.
+_VOLCANIC_SPLITS = {
+    "Tephrite / Basanite": ("normative_ol", 10.0, "Tephrite", "Basanite"),
+    "Trachyte / Trachydacite": ("normative_q", 20.0,
+                                "Trachyte", "Trachydacite"),
+}
+
+
+def _volcanic_regions():
+    """name → closed vertex list, built once from the drawn outlines."""
+    out = dict(_VOLCANIC_CLOSURES)
+    for name, verts in _VOLCANIC_FIELDS.items():
+        out.setdefault(name, list(verts))
+    return out
+
+
+# Built once: fifteen small paths, and ``contains_points`` is vectorised.
+_VOLCANIC_PATHS = tuple(
+    (name.replace("\n", " "), Path(verts))
+    for name, verts in _volcanic_regions().items()
+)
+
+
+def _classify_points(points, *, normative_ol, normative_q):
+    """Name a sequence of (SiO2, alkalis) pairs.
+
+    A composition sitting exactly on a boundary is given the name of the
+    first field that claims it, in the order the outlines are declared —
+    the IUGS scheme does not assign boundaries either way, so any
+    consistent rule will do, and a stated one beats an accidental one.
+    """
+    pts = np.asarray(points, dtype=float).reshape(-1, 2)
+    names = [""] * len(pts)
+    finite = np.isfinite(pts).all(axis=1)
+    for clean, path in _VOLCANIC_PATHS:
+        inside = np.zeros(len(pts), dtype=bool)
+        if finite.any():
+            inside[finite] = path.contains_points(pts[finite])
+        split = _VOLCANIC_SPLITS.get(clean)
+        for i in np.flatnonzero(inside):
+            if names[i]:
+                continue
+            if split is None:
+                names[i] = clean
+                continue
+            which, limit, below, above = split
+            value = (normative_ol if which == "normative_ol"
+                     else normative_q)[i]
+            if value is None or not np.isfinite(value):
+                names[i] = clean
+            else:
+                names[i] = below if value < limit else above
+    return names
+
 
 # Irvine & Baragar (1971) alkaline / sub-alkaline boundary on the TAS
-# plane. Coordinates from Rollinson & Pease (2021), Fig. 3.3 — same list
-# used by the standalone ``ib1971`` diagram so we stay self-consistent.
-_IB1971_BOUNDARY = [
-    (39.2, 0.0), (40.0, 0.4), (43.2, 2.0), (45.0, 2.8), (48.0, 4.0),
-    (50.0, 4.75), (53.7, 6.0), (55.0, 6.4), (60.0, 8.0), (65.0, 8.8),
-    (77.4, 10.0),
-]
+# plane.  Imported rather than copied: this file used to carry its own
+# list, which had drifted to (65.0, 8.8) and (77.4, 10.0) against the
+# published (65.0, 9.6) and (66.4, 10.0) while a comment claimed the two
+# were the same.  The error reached 1 wt.% alkalis near SiO2 66, enough
+# to call an alkaline trachyte sub-alkaline.  See the import above.
 
 
 def _draw_ib_boundary(ax, x_max: float = 78.0) -> None:
     """Draw the Irvine & Baragar (1971) alkaline / sub-alkaline curve on
-    top of an existing TAS axis, plus the two side labels.  Extends the
-    last segment horizontally to the right edge so the curve doesn't
-    stop short inside the Rhyolite / Granite field.
+    top of an existing TAS axis, plus the two side labels.
+
+    The published curve stops at SiO2 = 66.4.  It is carried flat to the
+    right edge so the high-silica half of the plot is not left without a
+    boundary, but that tail is an extrapolation and is drawn faded to
+    say so — Irvine and Baragar did not put a line there.
     """
     xs = [p[0] for p in _IB1971_BOUNDARY]
     ys = [p[1] for p in _IB1971_BOUNDARY]
-    # Extend the curve flat to the right edge of the panel.
-    if xs[-1] < x_max:
-        xs.append(x_max)
-        ys.append(ys[-1])
     ax.plot(xs, ys, color="#1f3a93", linewidth=1.4, linestyle="--",
             alpha=0.85, zorder=2,
             label="Irvine & Baragar (1971)")
+    if xs[-1] < x_max:
+        ax.plot([xs[-1], x_max], [ys[-1], ys[-1]], color="#1f3a93",
+                linewidth=1.4, linestyle="--", alpha=0.35, zorder=2)
     # Tiny italic labels on either side of the curve.  Positioned at
     # SiO2 ≈ 70 where the curve is roughly flat — high-Si rocks land
     # cleanly above (alkaline) or below (sub-alkaline).
@@ -82,7 +214,6 @@ class TASVolcanic(Diagram):
     y_range = (0, 16)
     field_polygons = _VOLCANIC_FIELDS
     field_label_pos = {
-        "Foidite":         (39, 12.5),
         "Phonolite":       (56.5, 14),       # centred in the new pentagon
         "Picrobasalt":     (43, 1.5),
         "Basalt":          (48.5, 2.5),
@@ -112,7 +243,63 @@ class TASVolcanic(Diagram):
 
     def _draw_background(self, ax, options) -> None:
         super()._draw_background(ax, options)
+        ax.text(*_FOIDITE_LABEL, "Foidite", ha="center", va="center",
+                fontsize=self.field_label_fontsize, color="#333",
+                alpha=0.95, zorder=2)
         _draw_ib_boundary(ax, x_max=self.x_range[1])
+
+    # ------------------------------------------------------------------
+    # Classification
+    # ------------------------------------------------------------------
+    @staticmethod
+    def classify(sio2: float, alkalis: float, *,
+                 normative_ol: float | None = None,
+                 normative_q: float | None = None) -> str:
+        """Name one composition from its SiO2 and Na2O + K2O.
+
+        Both are wt.% and must already be recalculated to 100 %
+        anhydrous, as the IUGS scheme requires — the same condition the
+        diagram itself carries.
+
+        ``normative_ol`` and ``normative_q`` resolve the two pairs the
+        TAS plane cannot separate on its own.  Without them the pair is
+        returned whole, which is more useful than guessing a half of it.
+        Returns ``""`` for a composition off the diagram.
+        """
+        names = _classify_points([(sio2, alkalis)],
+                                 normative_ol=[normative_ol],
+                                 normative_q=[normative_q])
+        return names[0]
+
+    @staticmethod
+    def classify_frame(df: pd.DataFrame) -> pd.Series:
+        """Name every row of *df*, as a Series aligned to its index.
+
+        Reads SiO2, Na2O and K2O, and uses the normative ``Ol`` and
+        ``Q`` columns of a CIPW norm when they are present.  A row
+        missing an input, or falling off the diagram, gets ``""``.
+        """
+        si = resolve_column(df, ["SiO2"])
+        na = resolve_column(df, ["Na2O"])
+        k = resolve_column(df, ["K2O"])
+        if not (si and na and k):
+            return pd.Series([""] * len(df), index=df.index, dtype="object")
+        x = pd.to_numeric(df[si], errors="coerce")
+        y = (pd.to_numeric(df[na], errors="coerce")
+             + pd.to_numeric(df[k], errors="coerce"))
+
+        def optional(*aliases):
+            col = resolve_column(df, list(aliases))
+            if col is None:
+                return [None] * len(df)
+            return pd.to_numeric(df[col], errors="coerce").tolist()
+
+        names = _classify_points(
+            list(zip(x.tolist(), y.tolist())),
+            normative_ol=optional("Ol", "norm_Ol", "Olivine"),
+            normative_q=optional("Q", "norm_Q", "Quartz"),
+        )
+        return pd.Series(names, index=df.index, dtype="object")
 
 
 # ---------------------------------------------------------------------------
@@ -153,18 +340,18 @@ class TASPlutonic(Diagram):
     field_polygons = _PLUTONIC_FIELDS
     field_label_pos = {
         "Foidolite":      (40, 12.5),
-        "Foid syenite":   (56.5, 15),
-        "Peridotgabbro":  (40, 1.5),
+        "Foid\nSyenite":   (56.5, 15),
+        "Peridot\ngabbro":  (40, 1.5),
         "Gabbro":         (48.5, 2.5),
         "Diorite":        (60, 3.0),
         "Granodiorite":   (70, 3.5),
         "Granite":        (80, 5.0),
-        "Monzogabbro":    (47, 6.5),
-        "Monzodiorite":   (52, 7.2),
+        "Monzo\n-gabbro":   (47, 6.5),
+        "Monzo\ndiorite":   (52, 7.2),
         "Monzonite":      (58, 8.5),
         "Syenite":        (65, 12),
         "Quartz\nMonzonite": (66, 8.5),
-        "Foid gabbro":    (43, 7.0),
+        "Foid\ngabbro":    (43, 7.0),
         "Foid\nMonzodiorite": (49, 10),
         "Foid\nMonzosyenite": (53, 12),
     }
