@@ -1,0 +1,337 @@
+# Diagram provenance and verification status
+
+Where every diagram boundary in BIRDS comes from, and how far it has been
+checked against the source. Written 2026-09-25.
+
+A boundary is one of three kinds of thing, and each needs a different
+kind of check:
+
+| Kind | What it is | How to verify |
+|---|---|---|
+| **Rule** | A definition, e.g. A/CNK = 1 | Nothing to verify — the rule *is* the boundary |
+| **Equation / table** | Published coefficients or vertex list | Compare the numbers with the paper |
+| **Drawn envelope** | A hand-drawn field with no equation | Measure the published figure |
+
+Tracing an equation off a redrawing of it replaces an exact value with a
+worse one, so the third method is used only where the first two do not
+apply. This was the lesson of the Pb NHRL: the drawn line in the source
+figure sits 5–7 px off Hart's published equation, which is the
+redrawing's error, not the equation's.
+
+The catalogue holds **47 unique diagrams**. The menus list 62 entries,
+but all 15 plutonic tectonic-discrimination entries re-use volcanic keys.
+
+---
+
+## Summary
+
+| Status | Count |
+|---|---|
+| Verified against the source | 28 |
+| **Known wrong — fix first** | **0** |
+| Drawn envelope, not yet measured | 19 |
+
+One caveat remains inside the verified set: the Butler & Woronow field
+boundaries disagree with their own equations. See below.
+
+Every entry that this triage first called "known wrong" turned out to be
+sound once it was checked properly — both TAS diagrams and the Verma
+major-element set. The two retractions below record why, because each
+came from a different bad method and both are easy to repeat.
+
+---
+
+## Verified (28)
+
+**Measured from the published figure**, with the measurement pinned as
+tests and the method recorded in each module's *Provenance* section:
+
+- `hastie_2007_thco` — Hastie et al. (2007) Th–Co
+- `winchester_floyd_1977` — Winchester & Floyd (1977)
+- `hanski` — Hanski et al. (2001) high-Mg, including the olivine projection
+- `highmg_tas` — Le Maitre (2002) high-Mg subdivision
+- `barker_anaborn` — Barker (1979) An–Ab–Or
+
+**Coefficients checked number-by-number against the source PDF.** Every
+coefficient and intercept was matched against every decimal appearing
+anywhere in the paper; the hit rate is given per set:
+
+| Diagram | Coefficients | Field boundaries |
+|---|---|---|
+| `verma_agrawal_2011` | 50/50 (100 %) | 25/25 (100 %) |
+| `verma_verma_2013_imint` | 78/80 (98 %) | 23/25 (92 %) |
+| `verma_verma_2013_trace` | 79/80 (99 %) | 25/25 (100 %) |
+| `verma_2012_acid` | 105/110 (95 %) | 23/25 (92 %) |
+| `verma_2013_acid_macid` | 97/98 (99 %) | 23/24 (96 %) |
+| `verma_2013_acid_mtacid` | 57/58 (98 %) | 16/25 (64 %) |
+| `verma_2013_acid_tacid` | 77/78 (99 %) | 20/25 (80 %) |
+
+The few misses are consistent with rounding in the PDF's text layer, not
+with different numbers. `verma_2013_acid_mtacid`'s boundary geometry is
+the weakest of the set and is worth a second look.
+
+**Rule, nothing to verify:**
+
+- `maniar_piccolli` — A/CNK = 1 and A/NK = 1 (Shand's definition)
+
+**Checked vertex-by-vertex against the published coordinate table**
+(Le Bas et al. 1986, as tabulated in Rollinson & Pease 2021 Fig. 3.1b):
+
+- `tas_volcanic`, `tas_plutonic`
+
+---
+
+## Retracted findings
+
+### ~~`verma_verma_2013_major` — coefficients are not published~~ — RETRACTED
+
+**This entry was wrong too**, and wrong for a specific, repeatable
+reason: the check matched the code against numbers extracted from the
+PDF's *text layer*, and equations (1)–(10) of that paper are set as
+embedded objects that never reach it. Absence from the text layer was
+taken as evidence of a mismatch. It is evidence of nothing.
+
+Read off the rendered pages instead, and diffed value by value,
+**102 of the 110 coefficients were already exact**. The eight that
+differed were truncations of the final digits, not different numbers:
+
+```
+DF1_IACA_CROI_COL  MnO     -0.21204   ->  -0.212024
+DF1_IA_CROI_COL    Na2O    -0.827429  ->  -0.8274299
+DF1_IA_CROI_COL    K2O     -0.488469  ->  -0.4884699
+DF2_IA_CROI_COL    TiO2    -0.736653  ->  -0.736658
+DF2_IA_CROI_COL    Al2O3   -0.078809  ->  -0.0788099
+DF2_IA_CROI_COL    CaO      0.681694  ->   0.6816946
+DF2_IA_CROI_COL    Na2O    -1.32843   ->  -1.3284307
+DF2_IA_CROI_COL    K2O      0.77094   ->   0.7709408
+```
+
+All eight are now the published values, and
+`tests/test_verma_coefficients.py` pins all 110 so they stay that way.
+
+**No sample was ever misclassified.** On a typical andesite the
+truncations shifted a discriminant score by at most 1 × 10⁻⁴, on axes
+that span −8 to +8 — six millionths of the range.
+
+Two things in the module were genuinely wrong and are fixed: the
+citation named the wrong authors, title and page range, and the
+docstring claimed that "small numerical edits don't change the overall
+topology". For a discriminant function that is false — the
+coefficients *are* the boundary — and it is exactly the sort of licence
+that lets a wrong digit survive review.
+
+**Second lesson for this triage:** a negative result from text
+extraction is not a finding. Confirm it by rendering the page.
+
+### ~~`tas_volcanic` / `tas_plutonic` — malformed polygons~~ — RETRACTED
+
+**This entry was wrong.** It was written from the shape of the data
+structure without rendering the diagram, and every geometric complaint
+in it was a false alarm. Checked against Rollinson & Pease (2021)
+Fig. 3.1b — which tabulates Le Bas et al. (1986)'s plotting coordinates
+vertex by vertex — **the TAS boundaries are correct**:
+
+- The two-point entries are deliberate boundary *segments*. Fields are
+  drawn as closed but **unfilled** outlines, so a field the frame bounds
+  on one side needs only the edges the frame does not supply.
+- `(63, 14.5)` is not an invented vertex: it is the published ray
+  through `(57.6, 11.7)` and `(61, 13.5)` carried out to the frame.
+  Slope 0.5294 gives 14.56 at SiO₂ = 63.
+- The Phonolite "spur" exists in the vertex list but cannot be seen:
+  `(50, 15.083)`, `(52.5, 14)` and `(57.6, 11.7)` are collinear to
+  within 0.03 wt.%, so the closing edge hides under the real boundary.
+- The foidite/phonolite line measured off Fig. 3.1b has slope −0.388
+  against the code's −0.433; both leave the frame at SiO₂ ≈ 48, well
+  inside the reading precision of a scanned figure.
+
+What was genuinely wrong was one **missing label**, now fixed:
+`Foidite`'s outline is drawn in full by its neighbours and the frame,
+but its name never reached the plot because the label override was
+keyed on a name no polygon used. Five plutonic label overrides had the
+same defect (`Foid syenite` vs `Foid\nSyenite`, and four more), so those
+labels fell back to polygon centroids.
+
+`tests/test_tas.py` now pins every vertex to the published list.
+
+`tas_volcanic` now also names compositions. `TASVolcanic.classify()`
+takes SiO₂ and Na₂O + K₂O and returns the IUGS name;
+`classify_frame()` does a whole table at once. The classification
+regions are built **from the drawn outlines**, so a name cannot drift
+away from the picture: eleven of the fourteen close on their own and
+are reused verbatim, and only Rhyolite, Trachyte/Trachydacite,
+Phonolite and Foidite get an explicit closed form, because those are
+the ones the frame bounds. A test walks a 20 000-point grid and
+asserts the regions tile the plane with no gap and no overlap, and a
+second test asserts that every field label sits inside the field it
+names — the labels were placed by eye and the regions derived by rule,
+so agreeing is a real check rather than a tautology.
+
+Tephrite/Basanite and Trachyte/Trachydacite are separated by normative
+olivine and quartz, which are not axes of this plane. Pass
+`normative_ol` / `normative_q` to split them; without those, the pair
+is returned whole, the same convention `highmg_tas` uses for komatiite
+versus meimechite.
+
+`tas_plutonic` still has no `classify()`. Its outlines do not tile —
+`Foid Monzodiorite` and `Foid Monzosyenite` are drawn as single
+boundary segments, and several fields are open at the frame — and
+Middlemost (1994) is **not** among the sources on disk, so the
+closures cannot be derived from anything. Guessing them is exactly the
+mistake this document exists to prevent. This needs the published
+figure before it can be done.
+
+**Lesson for the rest of this triage:** a diagram must be *rendered*
+before its geometry is called wrong. Three of the four defects listed
+above came from reading tuples instead of looking at the output.
+
+---
+
+## Equation or table — now checked (9)
+
+All nine are settled. Rollinson & Pease (2021) prints the plotting
+coordinates in its figure captions, tabulates the haplogranite minima
+outright in Table 3.10, and gives the oceanic-basalt discriminant
+functions in Appendix 5.1, so none of this needed measuring.
+
+**Verified unchanged** — the code already carried the published numbers
+exactly:
+
+| Diagram | Source |
+|---|---|
+| `ib1971` | Fig. 3.3 caption — Irvine & Baragar, Kuno, MacDonald |
+| `jensen` | Fig. 3.8b caption — the tholeiitic/calc-alkalic boundary |
+| `afm` | Fig. 3.18b caption — the boundary the book recommends |
+| `haplogranite` | Table 3.10, the eight water-saturated points |
+| `shervais_1982_TiV` | Ti/V rays are arithmetic, and the arithmetic is right |
+
+`afm` also draws an Irvine & Baragar (1971) overlay whose coordinates
+the caption does not print; that one curve is still unverified.
+`haplogranite` keeps one determination per pressure out of the twelve
+water-saturated rows in Table 3.10 — a curation choice, now documented.
+
+**Corrected**:
+
+* **`k2o_sio2`** drew one of Rickwood's three bands, as a single line,
+  with its first point rounded from 1.38 to 1.4, and called it the
+  band's midpoint; it was the upper bound. The Le Maitre vertical at
+  SiO₂ = 48 was missing too. All three bands are now drawn as bands,
+  from the coordinates the Fig. 3.4 caption prints.
+* **`frost`** had the Fe-index boundary right — it is the published
+  `0.46 + 0.005·SiO₂` — and ASI, AI and FSSI are definitional. Its
+  three MALI boundaries were straight lines between invented endpoints;
+  the published ones are curves. Measured from Fig. 3.9b and replaced.
+* **`pearce_1976_DF`** and **`butler_woronow_DF`** were the real find.
+  Both are **DF1–DF2 binary diagrams** with three fields around a
+  central point, and both were implemented as one-dimensional strip
+  charts, which cannot make a three-way split at all. The coefficients
+  matched nothing: the Pearce function carried an `Fe2O3t` term the
+  published equation does not have, dropped its `MnO` term, and added
+  an intercept; none of its seven coefficients was right. Butler &
+  Woronow divided TiO₂ by SiO₂ and Zr and Y by Sr, where the published
+  axes divide Zr, Y and Sr by Ti, and its "intercept" of −1.840 is in
+  fact the published Sr coefficient of DF2. Both now use Appendix 5.1.
+
+  Three reference basalts — N-MORB, OIB and IAB — put through the
+  rebuilt Pearce function land in their own fields, which checks the
+  equations, the boundary geometry and the implementation at once.
+
+### One open question
+
+The book's Butler & Woronow panel disagrees with the book's own
+equations. Reference basalts come out about 13 DF2 units below the
+printed field boundaries, and no change of units closes the gap — a
+denominator rescaling moves DF1 and DF2 together, and these move apart.
+Their relative arrangement is right (MORB left, OIB lower right, IAB
+upper right), so the equations look sound and the offset sits in the
+boundary coordinates. The diagram now says so on screen, and the axes
+follow the data instead of the published frame so nothing is hidden.
+Settling it needs Vermeesch (2006a) itself.
+
+### Also found along the way
+
+`tas.py` kept its own copy of the Irvine & Baragar curve, which had
+drifted to (65.0, 8.8) and (77.4, 10.0) against the published (65.0,
+9.6) and (66.4, 10.0) — while a comment claimed the two lists were the
+same. The error reached 1 wt.% alkalis near SiO₂ 66, enough to call an
+alkaline trachyte sub-alkaline. It now imports the list instead of
+copying it. The tail beyond SiO₂ 66.4 is an extrapolation and is drawn
+faded to say so.
+
+`Ti` was converted from TiO₂ with 5995 ppm per wt.% in four places;
+the mass ratio gives 5993.4. Now a named constant, shared.
+
+## Drawn envelope — three done, 19 to go
+
+### Done (3)
+
+**`pearce2008_thyb_nbyb` and `pearce2008_tiyb_nbyb`** — measured from
+Pearce (2008) Fig. 2, the figure the paper calls "the two diagrams that
+form the basis for this paper". The calibration is fixed by locating
+the three Sun & McDonough (1989) markers the paper plots: they come out
+within 1 % of the published ratios in Th/Yb and TiO₂/Yb.
+
+Both panels were wrong before:
+
+* The **Th/Yb array** was bounded at Th/Nb 0.07 and 0.32. Measured, it
+  is **0.043 to 0.096** — and with the old bounds N-MORB (Th/Nb 0.0515)
+  plotted *below* the MORB–OIB array it is supposed to sit in. Fitting
+  the drawn bounds with a free slope gives 1.03 and 1.06 in log-log, so
+  a constant-ratio band is right, which is also what Th/Nb being the
+  crustal-input proxy implies. Pearce's own contamination filter,
+  Th/Nb > 0.2, is now drawn too.
+* The **second panel's y axis was the wrong quantity**. Pearce plots
+  **TiO₂ in wt.% over Yb in ppm**; the module computed Ti in ppm over
+  Yb, which differs by a factor of 5993. Its "MORB field" at Ti/Yb
+  2000–4500 and "OIB above 5000" belonged to neither convention, and
+  were flat where the published arrays rise. The three bounds are now
+  fitted as TiO₂/Yb = a·(Nb/Yb)^b, with exponents agreeing to 0.006 —
+  parallel bands. The tholeiitic/alkalic divide inside the OIB array
+  and the N/E-MORB divide at Nb/Yb = 1.45 (the C1 chondrite value the
+  caption states) are drawn as published.
+
+**`yang_2019_fckantms`** — the source turned out to be the unidentified
+`Using_Major_Element_Logratios_…pdf` already in the folder: Yang, Li,
+Jiang, Xu, Guo, Li & Zhang (2019), *JGR Solid Earth* 124, 3429–3480.
+Its Table 1 prints all eight equations, so nothing needed measuring.
+
+This one was invented outright. FCMS and FCKANTMS are **log-ratio
+residuals** — the measured ln(FeO/CaO) minus what a lherzolite melt of
+the same ln(MgO/SiO₂) would have — so a peridotite melt sits at
+0.00 ± 0.08 and a mafic-source melt above it. The module computed them
+as plain sums of oxide wt.%, `FCMS = SiO₂ + 0.99·K₂O − 1.32·Al₂O₃ −
+0.78·MgO`, on axes running to ±20. Neither expression is in the paper
+and neither is a log-ratio. It also plotted FCMS against FCKANTMS,
+which the paper notes are near-equivalent, so the pair carried almost
+no discrimination; and it cited the wrong journal and authors.
+
+Rebuilt on equations (2) and (8) as printed, plotted on the axes the
+paper recommends — FCKANTMS against ln(SiO₂/(CaO+Na₂O+TiO₂)), its
+Fig. 7b — with the three boundary polylines the caption gives as
+coordinates. An internal check holds: equation (8)'s constant, 1.473,
+equals equation (6)'s 0.271 plus equation (7)'s 1.201.
+
+### Still to measure (19)
+
+- `saccani2015_nb_th`, `saccani2015_dy_yb`, `saccani2015_ce_dy_yb`
+- `pearce_gale_1977`, `pearce_cann_1973_ZrTi`
+- `defant_drummond_YSrY`, `defant_drummond_YbLaYb`
+- `pearce1984_YbTa`, `pearce1984_YNb`, `pearce1984_YbTaRb`,
+  `pearce1984_YNbRb`
+- `vermeesch_NaNbSr`, `vermeesch_SiTiSr`, `vermeesch_EuLuSr`,
+  `vermeesch_VTiSc`, `vermeesch_SmTiV`
+- `wood_1980_ThHfTa`, `cabanis_lecolle_1989`, `harris_1986_HfRbTa`
+
+None of their sources is on disk.
+
+## Method
+
+The coefficient check is reproducible: extract every decimal number from
+the source PDF with PyMuPDF, then ask whether each coefficient in the
+code matches one of them to 5 × 10⁻⁶. A control run on a hand-read
+equation (Eq. 6, page 934) matched all eleven of its values, so the
+method does not produce false negatives through text-extraction damage.
+
+Comparing a set against the wrong paper gives 0 %, which is how the acid
+and basic sets first appeared to fail — they were checked against the
+intermediate-magma paper by mistake. Each set must be matched to its own
+source before the number means anything.
