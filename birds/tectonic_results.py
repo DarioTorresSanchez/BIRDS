@@ -24,8 +24,10 @@ import pandas as pd
 
 from .diagrams.templates.base import resolve_column
 from .diagrams.templates.major_df import (
-    _butler_woronow_df,
-    _pearce_1976_df,
+    butler_woronow_df1,
+    butler_woronow_df2,
+    pearce_1976_df1,
+    pearce_1976_df2,
 )
 from .diagrams.templates.tectonic_bivariate import (
     _NMORB_SUN,
@@ -262,15 +264,19 @@ DISCRIMINATORS: List[Discriminator] = [
                               if (_to_numeric(df, "Yb") is not None
                                   and _to_numeric(df, "Ta") is not None)
                               else None),
-    # ----- Single-axis DFs ----------------------------------------------
-    Discriminator("dfsingle.pearce_1976",
-                  "DF — Pearce 1976 (MORB ↔ non-oceanic)",
-                  "Single-axis DFs (majors / immobile traces)",
-                  _pearce_1976_df),
-    Discriminator("dfsingle.butler_woronow",
-                  "DF — Butler & Woronow (TiO₂-Zr-Y-Sr)",
-                  "Single-axis DFs (majors / immobile traces)",
-                  _butler_woronow_df),
+    # ----- Oceanic-basalt DFs (Vermeesch 2006a) -------------------------
+    # Two axes each: these are DF1-DF2 binary diagrams, not single-axis
+    # scores, so both axes are needed to place a sample.
+    Discriminator("df.pearce_1976.df1", "DF1 — Pearce 1976 (IAB-MORB-OIB)",
+                  "Oceanic-basalt DFs (Vermeesch 2006a)", pearce_1976_df1),
+    Discriminator("df.pearce_1976.df2", "DF2 — Pearce 1976 (IAB-MORB-OIB)",
+                  "Oceanic-basalt DFs (Vermeesch 2006a)", pearce_1976_df2),
+    Discriminator("df.butler_woronow.df1", "DF1 — Butler & Woronow (Zr-Y-Sr-Ti)",
+                  "Oceanic-basalt DFs (Vermeesch 2006a)",
+                  butler_woronow_df1),
+    Discriminator("df.butler_woronow.df2", "DF2 — Butler & Woronow (Zr-Y-Sr-Ti)",
+                  "Oceanic-basalt DFs (Vermeesch 2006a)",
+                  butler_woronow_df2),
 ]
 
 # Verma multi-panel DFs (5 / 5 / 5 / 3 / 4 / 4 = 26 DFs)

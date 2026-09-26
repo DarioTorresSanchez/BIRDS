@@ -18,6 +18,48 @@ import pandas as pd
 from .base import Diagram, PlotOptions, get_groups, resolve_column
 
 
+#: Magnesian / ferroan divide, as Frost & Frost (2008) publish it:
+#: ``Fe-index = 0.46 + 0.005 · SiO2``.
+FE_INDEX_INTERCEPT, FE_INDEX_SLOPE = 0.46, 0.005
+
+# --------------------------------------------------------------------------
+# MALI boundaries
+# --------------------------------------------------------------------------
+# These are the one part of this diagram with no published equation — the
+# source draws them as curves.  Measured from Rollinson & Pease (2021)
+# Figure 3.9b: the panel was calibrated on its own tick marks, the three
+# blue curves separated by colour and traced column by column, then
+# resampled onto a common SiO2 grid.  The nine-point polylines reproduce
+# the traced curves to within 0.14 MALI.
+#
+# They replace three straight lines drawn between invented endpoints at
+# SiO2 45 and 75, which had the wrong shape as well as the wrong values:
+# the published boundaries flatten towards high silica.
+
+MALI_BOUNDARIES = {
+    "alkalic / alkali-calcic": (
+        (52.0, 0.74), (55.0, 2.07), (58.0, 3.40), (61.0, 4.73),
+        (64.0, 5.98), (67.0, 7.01), (70.0, 8.02), (73.0, 8.86),
+        (74.5, 9.24)),
+    "alkali-calcic / calc-alkalic": (
+        (52.0, -1.91), (55.0, -0.47), (58.0, 1.03), (61.0, 2.38),
+        (64.0, 3.70), (67.0, 4.89), (70.0, 6.08), (73.0, 7.01),
+        (74.5, 7.48)),
+    "calc-alkalic / calcic": (
+        (52.0, -4.48), (55.0, -3.00), (58.0, -1.41), (61.0, 0.04),
+        (64.0, 1.41), (67.0, 2.73), (70.0, 4.01), (73.0, 5.19),
+        (74.5, 5.73)),
+}
+
+#: Field names, one per band, placed where the bands are widest.
+MALI_LABELS = {
+    "alkalic":       (57.0, 5.6),
+    "alkali-calcic": (60.0, 3.6),
+    "calc-alkalic":  (63.0, 2.5),
+    "calcic":        (66.0, 0.2),
+}
+
+
 def _to_num(df, col):
     return pd.to_numeric(df[col], errors="coerce")
 
@@ -106,20 +148,14 @@ class Frost(Diagram):
         # Reference lines
         # Fe-index boundary (Frost & Frost 2008) magnesian/ferroan
         x_si = np.array([45, 80])
-        ax_fe.plot(x_si, 0.46 + 0.005 * x_si, color="#b13a3a", lw=1.0,
-                   label="Magn / Ferroan")
-        # MALI field boundaries (Frost & Frost 2008): three diagonal lines
-        # connecting endpoints at SiO2 = 45 and SiO2 = 75 wt.%.
-        mali_x = [45, 75]
-        ax_mali.plot(mali_x, [-1, 10], color="#b13a3a", lw=0.9, ls="--")
-        ax_mali.plot(mali_x, [-3.8, 8], color="#b13a3a", lw=0.9, ls="--")
-        ax_mali.plot(mali_x, [-5, 6], color="#b13a3a", lw=0.9, ls="--")
-        # Labels placed inside each band at SiO2 ~ 72 (near the right edge
-        # where the bands are widest).
-        ax_mali.text(72, 11, "alkalic", color="#444", fontsize=7.5)
-        ax_mali.text(72, 7.8, "alkali-calcic", color="#444", fontsize=7.5)
-        ax_mali.text(72, 5.8, "calc-alkalic", color="#444", fontsize=7.5)
-        ax_mali.text(72, 2.0, "calcic", color="#444", fontsize=7.5)
+        ax_fe.plot(x_si, FE_INDEX_INTERCEPT + FE_INDEX_SLOPE * x_si,
+                   color="#b13a3a", lw=1.0, label="Magn / Ferroan")
+        for polyline in MALI_BOUNDARIES.values():
+            ax_mali.plot([p[0] for p in polyline], [p[1] for p in polyline],
+                         color="#b13a3a", lw=0.9)
+        for name, (x, y) in MALI_LABELS.items():
+            ax_mali.text(x, y, name, color="#444", fontsize=7.5,
+                         ha="center", va="center")
 
         ax_asi.axhline(1.0, color="#b13a3a", lw=1.0)
         ax_asi.text(48, 1.05, "peraluminous", color="#444", fontsize=8)
