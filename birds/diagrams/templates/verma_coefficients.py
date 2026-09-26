@@ -15,11 +15,22 @@ Conventions:
   figures plot **DFa vs DFb** for two different pairs at a time so the
   user can read the discrimination visually.
 
-If you need the absolute, paper-verbatim coefficients (4-decimal
-precision), please cross-check against the supplementary tables of
-each paper. The values here follow the published sign pattern and
-order; small numerical edits don't change the overall topology of the
-discrimination fields.
+Every coefficient here is the published one, digit for digit, and
+``tests/test_verma_coefficients.py`` pins them so they stay that way.
+
+Do not "round" one. A discriminant function has no separate boundary
+to fall back on: the coefficients *are* the boundary, so editing one
+moves the field it divides. An earlier note in this file said that
+small numerical edits leave the topology alone; that is false, and it
+is the kind of claim that lets a wrong digit survive a review.
+
+Checking a set against its source means matching it to *that* paper —
+the intermediate, basic-ultrabasic and acid equations look alike and
+comparing one against another's PDF returns a flat zero, which reads
+like a catastrophic mismatch and is nothing of the sort. Nor can the
+match be done on the PDF text layer alone: several of these equations
+are embedded as objects and never appear in the extracted text, so
+absence there is no evidence at all. Render the page and read it.
 """
 
 from __future__ import annotations
@@ -42,11 +53,11 @@ class DFCoefSet:
 
 # ---------------------------------------------------------------------------
 # Verma & Verma (2013) — Intermediate magmas, three sets of multidimensional
-# discriminant-function diagrams.  Reference: Verma S.K. & Verma S.P. (2013)
-# "Identification of paleotectonic settings of intermediate magmas through
-# discriminant-function diagrams based on log-ratio transformations of
-# major-element and immobile element compositions", Turkish J Earth Sci 22,
-# 931-948.
+# discriminant-function diagrams.  Reference: Verma S.P. & Verma S.K. (2013)
+# "First 15 probability-based multidimensional tectonic discrimination
+# diagrams for intermediate magmas and their robustness against
+# postemplacement compositional changes and petrogenetic processes",
+# Turkish J Earth Sci 22(6), 931-995, doi:10.3906/yer-1204-6.
 #
 # Each set provides 5 panels of 3-way (ternary) discrimination, with the
 # canonical (-8, +8) × (-8, +8) DF1-DF2 frame and straight boundaries
@@ -73,14 +84,16 @@ _VV13_PARTS_MAJ = ("TiO2", "Al2O3", "Fe2O3", "FeO", "MnO",
                    "MgO", "CaO", "Na2O", "K2O", "P2O5")
 
 # Verma & Verma (2013) Eqs (1)–(10) — Set 1 (majors), denominator SiO2_adj.
-# Coefficients transcribed verbatim from Table on pp. 933-935 of the paper
-# (PDF pages 4-6). Order matches _VV13_PARTS_MAJ above.
+# The equations run across journal pages 933-935; they are set as embedded
+# objects, so they were read off the rendered pages rather than from the
+# PDF text layer, and all 110 values were then diffed against the code.
+# Order matches _VV13_PARTS_MAJ above.
 VV13_MAJOR: Dict[str, DFCoefSet] = {
     # ----- (a) IA+CA · CR+OI · Col  — Eqs (1), (2) ------------------------
     "DF1_IACA_CROI_COL": DFCoefSet(
         parts=_VV13_PARTS_MAJ, denominator="SiO2",
         intercept=-11.43097347,
-        coefs=(-2.45605,  1.11985, -2.22475,  2.48861, -0.21204,
+        coefs=(-2.45605,  1.11985, -2.22475,  2.48861, -0.212024,
                -0.06661,  1.29066, -0.28377, -0.40211,  0.030635),
     ),
     "DF2_IACA_CROI_COL": DFCoefSet(
@@ -120,13 +133,13 @@ VV13_MAJOR: Dict[str, DFCoefSet] = {
         parts=_VV13_PARTS_MAJ, denominator="SiO2",
         intercept=-7.894955173,
         coefs=(-2.43565,  1.53913, -1.51665,  1.45582,  0.4961937,
-               -0.050128, 1.258138, -0.827429, -0.488469, 0.1123605),
+               -0.050128, 1.258138, -0.8274299, -0.4884699, 0.1123605),
     ),
     "DF2_IA_CROI_COL": DFCoefSet(
         parts=_VV13_PARTS_MAJ, denominator="SiO2",
         intercept=-15.24062267,
-        coefs=(-0.736653, -0.078809, 0.065533, -1.130176, -2.130889,
-                0.245709,  0.681694, -1.328430,  0.770940, 0.295664),
+        coefs=(-0.736658, -0.0788099, 0.065533, -1.130176, -2.130889,
+                0.245709,  0.6816946, -1.3284307, 0.7709408, 0.295664),
     ),
     # ----- (e) CA · CR+OI · Col  — Eqs (9), (10) -------------------------
     "DF1_CA_CROI_COL": DFCoefSet(
