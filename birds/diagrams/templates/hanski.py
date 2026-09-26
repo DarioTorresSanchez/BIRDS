@@ -11,6 +11,11 @@ Al-depleted (left) and an Al-undepleted (right) half.
     Al-depleted komatiite | Al-undepleted komatiite
     Boninite                            below the bottom line
 
+The axes are *not* raw oxides — the brackets mark them as projected
+from olivine, which is what lets the diagram classify rocks that have
+accumulated or lost olivine.  See :func:`mole_proportions` and
+:meth:`HanskiHighMg._compute_xy`.
+
 Provenance of the boundaries
 ----------------------------
 Measured from the published figure.  The axes were calibrated on their
@@ -23,28 +28,21 @@ four of the five boundaries and 2.4 px for the lowest one.
 The four sub-horizontal boundaries turn out to be very nearly parallel:
 a joint fit with a single shared slope gives 0.0407 with a mean
 residual of 0.37 px, and intercepts of 0.0000, 0.0097, 0.0198 and
-0.0897.  That is close enough to a family of lines of slope 0.04
-through 0, 0.01, 0.02 and 0.09 that the published definition is
-probably exactly that.  The individually fitted values are kept here
-because they are what was measured; if the paper states round numbers,
-swapping them in moves every boundary by under a pixel.
-
-.. warning::
-   The **axis projection is unverified**.  ``[Al2O3]`` and ``[TiO2]``
-   are bracketed in the source because they are olivine-projected
-   quantities, not raw oxides, and the projection currently
-   implemented below is demonstrably wrong: its denominator goes
-   negative for every komatiite and meimechite, which are exactly the
-   rocks this diagram classifies, so the plotted points land outside
-   the diagram entirely.  The boundaries are right; what is plotted
-   against them is not, until the projection is taken from the paper.
-   See :meth:`HanskiHighMg._compute_xy`.
+0.0897.  The paper states that construction explicitly — komatiites
+and boninites are separated by "a line projecting to the origin and
+therefore having a constant Al2O3/TiO2 ratio", and the lines above it
+"were drawn parallel to the komatiite–boninite boundary" (p. 865).
+The measurements agree: the lowest line's fitted intercept is 0.00004,
+and the four slopes scatter by under 0.0004.  The individually fitted
+values are kept here because they are what was measured.
 """
 
 from __future__ import annotations
 
 import pandas as pd
 
+from ...cipw import MW_OXIDE
+from ...preprocess import get_feot
 from .base import Diagram, PlotOptions, resolve_column
 
 
@@ -87,17 +85,105 @@ _LABELS: tuple = (
 _LINE = dict(color="#444", linewidth=0.9, alpha=0.9, zorder=1)
 
 
+# --------------------------------------------------------------------------
+# The olivine projection
+# --------------------------------------------------------------------------
+
+#: Mole proportion of MgO + FeO in olivine.  Normalised to unity,
+#: (Mg,Fe)2SiO4 is two parts (Mg,Fe)O to one part SiO2, so the mafic
+#: pair accounts for 2/3 of it.  This is the point projected from, and
+#: the number the paper's denominator subtracts from.
+OLIVINE_MAFIC_FRACTION = 2.0 / 3.0
+
+#: Oxides entering the mole-proportion sum.  Iron appears once, as FeO:
+#: the paper takes all of it as ferrous.
+PROJECTION_OXIDES: tuple = (
+    "SiO2", "TiO2", "Al2O3", "FeO", "MnO", "MgO", "CaO", "Na2O", "K2O",
+    "P2O5", "Cr2O3", "NiO",
+)
+
+#: Oxides whose absence would throw the sum off by more than a per cent
+#: or two.  Every whole-rock major-element analysis reports them; the
+#: remaining oxides above are used when present and skipped when not.
+#: Iron is required too, but is resolved separately.
+_REQUIRED_OXIDES: tuple = ("SiO2", "TiO2", "Al2O3", "MgO", "CaO")
+
+#: Iron columns under the exact spellings :func:`get_feot` expects,
+#: each with the lab conventions that mean the same thing.
+_IRON_SOURCES: dict = {
+    "FeO":    ("FeO",),
+    "Fe2O3":  ("Fe2O3",),
+    "FeOt":   ("FeOt", "FeO_T", "FeO*", "FeO(T)", "FeOtot", "FeO_tot"),
+    "Fe2O3t": ("Fe2O3t", "Fe2O3_T", "Fe2O3*", "Fe2O3(T)"),
+}
+
+
+def _iron_as_feo(df: pd.DataFrame):
+    """Total iron as FeO in wt %, or ``None`` if no iron is reported.
+
+    Delegates to :func:`birds.preprocess.get_feot`, which combines
+    every available iron source row by row, after renaming the columns
+    to the exact spellings it matches on.
+    """
+    canonical = {}
+    for name, aliases in _IRON_SOURCES.items():
+        col = resolve_column(df, aliases)
+        if col is not None:
+            canonical[name] = pd.to_numeric(df[col], errors="coerce")
+    if not canonical:
+        return None
+    return get_feot(pd.DataFrame(canonical, index=df.index))
+
+
+def mole_proportions(df: pd.DataFrame):
+    """Major oxides as mole proportions normalised to unity.
+
+    All iron is taken as ferrous, as the paper specifies.  Volatiles
+    are not oxides of the projection and are excluded, so the result is
+    the anhydrous composition whether or not LOI was reported.
+
+    Returns ``None`` when a required oxide or all iron is missing —
+    guessing a zero for an unreported oxide would shift the whole
+    normalisation and move every point on the diagram.
+    """
+    canonical = {}
+    for oxide in PROJECTION_OXIDES:
+        if oxide == "FeO":
+            continue
+        col = resolve_column(df, [oxide])
+        if col is not None:
+            canonical[oxide] = pd.to_numeric(df[col], errors="coerce")
+    if any(oxide not in canonical for oxide in _REQUIRED_OXIDES):
+        return None
+    feot = _iron_as_feo(df)
+    if feot is None:
+        return None
+    canonical["FeO"] = feot
+
+    moles = pd.DataFrame(
+        {oxide: series / MW_OXIDE[oxide]
+         for oxide, series in canonical.items()},
+        index=df.index,
+    )
+    total = moles.sum(axis=1, skipna=True)
+    return moles.div(total.where(total > 0), axis=0)
+
+
 class HanskiHighMg(Diagram):
     key = "hanski"
     title = "Hanski high-Mg plot – [Al$_2$O$_3$] vs [TiO$_2$]"
-    citation = ("Hanski, E., Walker, R.J., Huhma, H. & Suominen, I. "
-                "(2001).  High-Mg classification projected from olivine, "
-                "all Fe as ferrous.  Boundaries measured from the "
-                "published figure.  WARNING: the olivine projection used "
-                "for the axes is unverified and currently returns "
-                "negative values for komatiites — treat plotted "
-                "positions as provisional until it is taken from the "
-                "paper.")
+    citation = ("Hanski, E., Huhma, H., Rastas, P. & Kamenetsky, V.S. "
+                "(2001) The Palaeoproterozoic komatiite–picrite "
+                "association of Finnish Lapland.  Journal of Petrology "
+                "42(5), 855-876; projection after Hanski (1992).  "
+                "[Al₂O₃] and [TiO₂] are mole proportions normalised to "
+                "unity and projected from olivine: [X] = X / (2/3 − MgO "
+                "− FeO), all iron as ferrous.  Compositions on one "
+                "olivine control line share a single point, so the "
+                "diagram classifies a rock series rather than a rock — "
+                "komatiite and komatiitic basalt are not separated here "
+                "and have to be told apart on MgO.  Boundaries measured "
+                "from the published figure.")
     x_label = "[Al$_2$O$_3$]"
     y_label = "[TiO$_2$]"
     x_range = (0.0, 0.25)
@@ -105,29 +191,26 @@ class HanskiHighMg(Diagram):
     field_label_fontsize = 7.0
 
     def _compute_xy(self, df):
-        """Olivine-projected [Al2O3] and [TiO2].
+        """Olivine-projected [Al2O3] and [TiO2], after Hanski (1992).
 
-        .. warning::
-           This projection is **not** verified against Hanski et al.
-           The denominator ``2/3 − MgO − FeO`` (in moles) is negative
-           for any rock with more than roughly 25 wt % MgO, which puts
-           every komatiite and meimechite off the diagram with a sign
-           flip rather than merely in the wrong field.  It is left in
-           place so the view still renders, but the numbers it produces
-           should not be read as compositions.
+        The analysis is converted to mole proportions normalised to
+        unity, all iron as ferrous, and each of Al2O3 and TiO2 divided
+        by ``2/3 − MgO − FeO``.  Dividing by the distance to olivine is
+        what makes the result invariant: adding or removing olivine
+        scales the numerator and the denominator by the same factor, so
+        a whole olivine control line collapses onto one point.
         """
-        al = _to_mol(df, ["Al2O3"], 101.96)
-        ti = _to_mol(df, ["TiO2"], 79.90)
-        mg = _to_mol(df, ["MgO"], 40.30)
-        fe = _to_mol(df, ["FeO"], 71.85)
-        if fe is None:
-            fe2o3 = _to_mol(df, ["Fe2O3", "Fe2O3T", "Fe2O3t"], 159.69)
-            if fe2o3 is not None:
-                fe = 2 * fe2o3
-        if any(v is None for v in (al, ti, mg, fe)):
+        mol = mole_proportions(df)
+        if mol is None:
             return None, None
-        denom = (2.0 / 3.0) - mg - fe
-        return al / denom, ti / denom
+        denom = OLIVINE_MAFIC_FRACTION - mol["MgO"] - mol["FeO"]
+        # No rock is more olivine-rich than olivine itself, so the
+        # denominator only reaches zero at the projection point, where
+        # the composition has no position on the diagram.  NaN keeps
+        # such a sample out of the plot and out of the plotted count,
+        # rather than flipping its sign onto the far side.
+        denom = denom.where(denom > 1e-9)
+        return mol["Al2O3"] / denom, mol["TiO2"] / denom
 
     def _draw_background(self, ax, options: PlotOptions) -> None:
         for (x0, y0), (x1, y1) in _BOUNDARIES:
@@ -136,10 +219,3 @@ class HanskiHighMg(Diagram):
             ax.text(x, y, name, ha="center", va="center",
                     fontsize=self.field_label_fontsize, color="#333",
                     alpha=0.95, zorder=2, linespacing=1.2)
-
-
-def _to_mol(df, candidates, mw):
-    col = resolve_column(df, candidates)
-    if col is None:
-        return None
-    return pd.to_numeric(df[col], errors="coerce") / mw
