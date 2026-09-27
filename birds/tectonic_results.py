@@ -37,7 +37,11 @@ from .diagrams.templates.tectonic_bivariate import (
 from .diagrams.templates.verma_coefficients import (
     DFCoefSet,
     V12_ACID,
+    V13A_MACID,
+    V13A_MTACID,
+    V13A_TACID,
     VA11,
+    VV13_IMINT,
     VV13_MAJOR,
     VV13_TRACE,
 )
@@ -45,6 +49,17 @@ from .diagrams.templates.verma_multidim import (
     _apply_df as _verma_apply_df,
     _logratios_for_coef as _verma_logratios,
 )
+from .verma_probability import (
+    CENTROIDS as _VERMA_CENTROIDS,
+    PANEL_GROUPS as _VERMA_PANEL_GROUPS,
+    panel_probabilities as _verma_panel_probabilities,
+)
+
+
+def _verma_panel_groups(centroid_key: str):
+    """``(panel, groups)`` for one set, in the panels' published order."""
+    return [(panel, _VERMA_PANEL_GROUPS[panel])
+            for panel in _VERMA_CENTROIDS[centroid_key]]
 
 
 # ---------------------------------------------------------------------------
@@ -195,6 +210,42 @@ def _verma_pairs(table: Mapping[str, DFCoefSet], category: str,
     return out
 
 
+def _verma_probabilities(centroid_key: str, category: str,
+                         prefix: str) -> List[Discriminator]:
+    """One Discriminator per (panel, tectonic setting), in percent.
+
+    Verma & Agrawal (2011) eqs (1)-(12): the posterior probability that
+    a sample belongs to each of the three settings a panel separates,
+    from its distance to each group centroid.  The paper assigns the
+    sample to whichever setting scores highest, so these columns are
+    read together; 33.3 % is the by-chance level.
+
+    Each of a panel's three columns rebuilds that panel's log-ratios and
+    DF scores.  Caching them across the three would save two thirds of
+    the work, but the obvious cache -- a dict keyed on ``id(df)`` --
+    is unsound, because CPython reuses an id once the object behind it
+    is collected, and the next table to land on that id would be served
+    another table's probabilities.  The work saved is a handful of
+    vectorised multiplies, so it is simply repeated.
+    """
+    out: List[Discriminator] = []
+    for panel, groups in _verma_panel_groups(centroid_key):
+        for group in groups:
+            def _fn(df: pd.DataFrame, _group=group,
+                    _panel=panel) -> Optional[pd.Series]:
+                got = _verma_panel_probabilities(df, centroid_key, _panel)
+                return None if got is None else got[_group]
+
+            pretty = panel.replace("_", "-")
+            out.append(Discriminator(
+                key=f"{prefix}.p.{panel.lower()}.{group.lower()}",
+                label=f"P({group}) % ({pretty})",
+                category=category,
+                compute=_fn,
+            ))
+    return out
+
+
 DISCRIMINATORS: List[Discriminator] = [
     # ----- Bivariate ratios (Pearce 2008) -------------------------------
     Discriminator("pearce2008.th_yb", "Th/Yb",
@@ -280,18 +331,34 @@ DISCRIMINATORS: List[Discriminator] = [
 ]
 
 # Verma multi-panel DFs (5 / 5 / 5 / 3 / 4 / 4 = 26 DFs)
-DISCRIMINATORS += _verma_pairs(
-    VA11,        "Verma & Agrawal (2011) — mafic immobile traces",
-    "va11")
-DISCRIMINATORS += _verma_pairs(
-    VV13_MAJOR,  "Verma & Verma (2013) — intermediate majors",
-    "vv13_maj")
-DISCRIMINATORS += _verma_pairs(
-    VV13_TRACE,  "Verma & Verma (2013) — intermediate immobile traces",
-    "vv13_tr")
-DISCRIMINATORS += _verma_pairs(
-    V12_ACID,    "Verma et al. (2012) — acid rocks",
-    "v12_acid")
+#: Every Verma set: the coefficient table, the label its category uses
+#: and the key prefix.  The centroid key is how
+#: :mod:`birds.verma_probability` names the same set, or ``None`` where
+#: the paper publishes no centroids to measure distances from.
+_VERMA_SETS = (
+    (VA11, "Verma & Agrawal (2011) — mafic immobile traces",
+     "va11", "VA11"),
+    (VV13_MAJOR, "Verma & Verma (2013) — intermediate majors",
+     "vv13_maj", "VV13_MAJOR"),
+    (VV13_IMINT, "Verma & Verma (2013) — intermediate immobile majors+traces",
+     "vv13_imint", "VV13_IMINT"),
+    (VV13_TRACE, "Verma & Verma (2013) — intermediate immobile traces",
+     "vv13_tr", "VV13_TRACE"),
+    (V12_ACID, "Verma et al. (2012) — acid rocks",
+     "v12_acid", None),
+    (V13A_MACID, "Verma et al. (2013) — acid majors",
+     "v13a_macid", "V13A_MACID"),
+    (V13A_MTACID, "Verma et al. (2013) — acid immobile majors+traces",
+     "v13a_mtacid", "V13A_MTACID"),
+    (V13A_TACID, "Verma et al. (2013) — acid immobile traces",
+     "v13a_tacid", "V13A_TACID"),
+)
+
+for _table, _category, _prefix, _centroid_key in _VERMA_SETS:
+    DISCRIMINATORS += _verma_pairs(_table, _category, _prefix)
+    if _centroid_key is not None:
+        DISCRIMINATORS += _verma_probabilities(
+            _centroid_key, f"{_category} — probability (%)", _prefix)
 
 
 # ---------------------------------------------------------------------------
