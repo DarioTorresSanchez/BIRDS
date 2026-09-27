@@ -52,23 +52,109 @@ tests and the method recorded in each module's *Provenance* section:
 - `highmg_tas` — Le Maitre (2002) high-Mg subdivision
 - `barker_anaborn` — Barker (1979) An–Ab–Or
 
-**Coefficients checked number-by-number against the source PDF.** Every
-coefficient and intercept was matched against every decimal appearing
-anywhere in the paper; the hit rate is given per set:
+**Coefficients checked against the group centroids each paper prints.**
+These papers publish, per panel, the group centroid in DF1–DF2 space and,
+separately, the group mean log-ratios. The DF is linear in the
+log-ratios, so evaluating it at a group's means must return that group's
+published centroid. `tests/test_verma_centroids.py` asserts that for 60
+centroids across six sets; `verma_agrawal_2011` prints boundaries rather
+than centroids, so there its group means are required to fall in their
+own fields instead.
 
-| Diagram | Coefficients | Field boundaries |
+That check found **ten wrong coefficients** across four sets, listed
+below, and every one is now corrected and pinned.
+
+| Diagram | Wrong coefficients found | Now |
 |---|---|---|
-| `verma_agrawal_2011` | 50/50 (100 %) | 25/25 (100 %) |
-| `verma_verma_2013_imint` | 78/80 (98 %) | 23/25 (92 %) |
-| `verma_verma_2013_trace` | 79/80 (99 %) | 25/25 (100 %) |
-| `verma_2012_acid` | 105/110 (95 %) | 23/25 (92 %) |
-| `verma_2013_acid_macid` | 97/98 (99 %) | 23/24 (96 %) |
-| `verma_2013_acid_mtacid` | 57/58 (98 %) | 16/25 (64 %) |
-| `verma_2013_acid_tacid` | 77/78 (99 %) | 20/25 (80 %) |
+| `verma_agrawal_2011` | none | 16/16 group means in their own field |
+| `verma_verma_2013_major` | none | 10/10 centroids, residual ≤ 0.008 |
+| `verma_verma_2013_imint` | none | 10/10 centroids, residual ≤ 0.042 |
+| `verma_verma_2013_trace` | none | 10/10 centroids, residual ≤ 0.009 |
+| `verma_2012_acid` | 7 of 110 | pinned digit-by-digit (no centroids published) |
+| `verma_2013_acid_macid` | 2 of 98 | centroids match, less the CR column (below) |
+| `verma_2013_acid_mtacid` | 1 of 58 | 10/10 centroids |
+| `verma_2013_acid_tacid` | 1 of 78 | 10/10 centroids |
 
-The few misses are consistent with rounding in the PDF's text layer, not
-with different numbers. `verma_2013_acid_mtacid`'s boundary geometry is
-the weakest of the set and is worth a second look.
+### Why the previous pass missed them
+
+The earlier method matched every stored coefficient against every
+decimal appearing *anywhere* in the paper and reported hit rates of
+95–100 %. It recorded the handful of misses and dismissed them as
+"consistent with rounding in the PDF's text layer". They were not
+rounding; they were the errors. `verma_2012_acid` was scored 105/110
+and actually had seven wrong values, including an Al₂O₃ coefficient
+stored as +1.361050 where the paper prints −0.954629.
+
+Two failures compounded:
+
+1. **Presence is not position.** A coefficient in the wrong slot, or
+   with a transposed digit that happens to appear elsewhere in a long
+   supplementary table, scores as a hit.
+2. **A miss was treated as noise.** Every one of them was a real defect.
+   A check that reports misses and then explains them away is not a
+   check.
+
+Matching against the paper's *output* — its centroids — has neither
+weakness: a coefficient in the wrong slot, of the wrong sign or off by a
+digit all move the centroid, and the discrepancy localises the term.
+
+### Two departures from the printed sources
+
+- **`verma_2013_acid_mtacid`, eq (16), Nb.** Printed +0.382, used as
+  −0.382. As printed, the three Fig. 3c centroids come out ~5 units
+  below where the same paper's caption puts them, while eq (15) matches
+  that caption's DF1 to 0.03; the implied single-term correction is
+  −0.766, −0.768, −0.765 across the three groups (sd 0.001), which is a
+  change of sign, not of magnitude. Independently, the triple point is
+  the circumcentre of the three centroids in LDA canonical space: as
+  printed it lands 5.06 away from the published one, with the sign
+  flipped, 0.04. Full reasoning sits at the coefficient.
+- **`verma_2013_acid_macid`, Supplementary Table 5, CR column.** Not a
+  code change — that column of the paper is unusable. Its ln-ratios
+  contradict the concentrations printed beside them in the same table
+  (ln(Fe₂O₃/SiO₂) given as −1.693 where 1.10 wt.% over ~70 wt.% SiO₂
+  needs ≈ −4.2), and the values line up one row below where they belong,
+  so the column appears to have slipped in typesetting. The CR-bearing
+  panels are therefore verified against the printed equations only.
+
+### Posterior probabilities
+
+The statistics table reports, per panel, the probability of each of the
+three tectonic settings, following Verma & Agrawal (2011) eqs (1)–(12):
+the distance from the sample to each group centroid, `exp(−d²/2)`, then
+normalised. Every later paper in the family refers back to that one for
+the calculation. 33.3 % is the by-chance level, and a boundary between
+two fields is where those two reach 50 %.
+
+The model is checked against figures it never saw. Equal probability for
+three groups means equal distance to three centroids, so each panel's
+triple point has to be the **circumcentre** of its centroids — and the
+triple points come from the figure captions, the centroids from
+elsewhere in the same papers. They agree to 0.000–0.009 on the three
+intermediate sets, and each group comes out at exactly 33.3 % there. For
+`verma_agrawal_2011`, whose centroids are derived from its Table 2 group
+means because its Table A4 sits in a supplement not to hand, the
+agreement is 0.001–0.012 — which validates the derivation, since the
+triple points play no part in it. The 2013 acid sets, whose centroids
+are printed to one or two decimals, agree to 0.13.
+
+`verma_2012_acid` publishes neither centroids nor group means, so it
+reports DF values only.
+
+### Units
+
+Three sets divide ppm trace elements by a wt.% major oxide:
+`verma_agrawal_2011` (Nb, V, Y, Zr / TiO₂), `verma_verma_2013_imint`
+(Nb, Ni, V, Y, Zr / TiO₂) and `verma_2013_acid_mtacid` (Nb, Y, Zr /
+TiO₂). All three papers say to convert first — "all trace element data
+(μg·g⁻¹) in these equations were first converted to wt.% before
+calculating the trace to major element log-ratios".
+
+That conversion used to live on the diagram classes, so the statistics
+tables, which reach the same coefficient sets by a different route,
+reported values 20 to 56 units out on axes that span ±8. It now lives on
+`DFCoefSet.ppm_parts`, which both paths read, and a test asserts the two
+paths return the same number.
 
 **Rule, nothing to verify:**
 
