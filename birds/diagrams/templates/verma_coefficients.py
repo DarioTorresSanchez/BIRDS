@@ -648,11 +648,11 @@ VA11_FIELDS: Dict[str, Dict] = {
 # ---------------------------------------------------------------------------
 # Verma et al. (2012) — Acid (granitic / felsic) rocks, 5 triplet panels
 # ---------------------------------------------------------------------------
-# Canonical equations from Verma S.K., Pandarinath K. & Rivera-Gomez M.A.
-# (2012) "Statistical evaluation of tectonomagmatic discrimination diagrams
-# for granitic rocks and proposal of new discriminant-function-based
-# multidimensional diagrams for acid magmas", International Geology Review
-# 54(3), 325-347. Table 3 (pp. 335-336), Eqs (1)–(10).
+# Canonical equations from Verma S.K., Pandarinath K. & Verma S.P. (2012)
+# "Statistical evaluation of tectonomagmatic discrimination diagrams for
+# granitic rocks and proposal of new discriminant-function-based
+# multi-dimensional diagrams for acid rocks", International Geology Review
+# 54(3), 325-347, doi:10.1080/00206814.2010.543784.  Table 3 (pp. 335-336).
 #
 # Acid rocks are not produced in significant amounts in MORB or OIB
 # settings, so the discrimination distinguishes only 4 tectonic groups:
@@ -681,20 +681,20 @@ V12_ACID: Dict[str, DFCoefSet] = {
     "DF2_IACA_CR_COL": DFCoefSet(
         parts=_VV13_PARTS_MAJ, denominator="SiO2",
         intercept=6.691035,
-        coefs=(0.472355, 1.36105, 0.109516, 0.699238, 0.739533,
+        coefs=(0.472353, -0.954629, 0.109516, 0.699238, 0.739533,
               -0.027717, -0.244687, 0.231677, 0.173552, -0.353797),
     ),
     # ----- (B) IA · CA · CR  — Eqs (3), (4) ------------------------------
     "DF1_IA_CA_CR": DFCoefSet(
         parts=_VV13_PARTS_MAJ, denominator="SiO2",
         intercept=6.2573,
-        coefs=(-0.4786, -0.0871,  2.7433, -1.0665, -0.1389,
+        coefs=(-0.4786, -0.0871,  2.7433, -1.0663, -0.1389,
                -0.1907, -0.8516, -0.7139,  1.7166,  0.3386),
     ),
     "DF2_IA_CA_CR": DFCoefSet(
         parts=_VV13_PARTS_MAJ, denominator="SiO2",
         intercept=0.9984,
-        coefs=(-0.3204, -1.7185, -3.2046, 1.1210,  0.2170,
+        coefs=(-0.3204, -1.7585, -3.2046, 1.1210,  0.2170,
                -0.0745,  1.2505,  1.3142,  1.6616,  0.0186),
     ),
     # ----- (C) IA · CA · Col  — Eqs (5), (6) -----------------------------
@@ -720,15 +720,15 @@ V12_ACID: Dict[str, DFCoefSet] = {
     "DF2_IA_CR_COL": DFCoefSet(
         parts=_VV13_PARTS_MAJ, denominator="SiO2",
         intercept=6.5170,
-        coefs=(0.2786,  -1.0544,  0.8267,  0.3032, -0.4084,
+        coefs=(0.2786,  -1.0544,  0.8267,  0.3032,  0.4084,
               -0.0905, -0.3260,  0.1518,  0.6698, -0.2261),
     ),
     # ----- (E) CA · CR · Col  — Eqs (9), (10) ----------------------------
     "DF1_CA_CR_COL": DFCoefSet(
         parts=_VV13_PARTS_MAJ, denominator="SiO2",
         intercept=8.2616,
-        coefs=(0.0645,  -1.7943,  0.0264,  0.6385,  0.3407,
-              -0.0720, -0.3265,  0.1063,  1.8098, -0.0358),
+        coefs=(0.0645,  -1.7943,  0.5264,  0.6385,  0.3407,
+              -0.0720, -0.3265,  0.1063,  1.8098, -0.0338),
     ),
     "DF2_CA_CR_COL": DFCoefSet(
         parts=_VV13_PARTS_MAJ, denominator="SiO2",
@@ -832,8 +832,9 @@ V13A_MACID: Dict[str, DFCoefSet] = {
     "DF2_IACA_CROI_COL": DFCoefSet(
         parts=_V13A_ALL10, denominator="SiO2",
         intercept=2.54,
+        # Na2O is 0.212 in eq (2); it was transcribed as 0.12 here.
         coefs=(1.09,  -1.65,  -1.19,  1.03,   0.82,
-               0.026, 0.023,  0.12,   0.085, -0.85),
+               0.026, 0.023,  0.212,  0.085, -0.85),
     ),
     # ----- (b) IA · CA · CR+OI  — Eqs (3), (4)  [no Al2O3] ----------------
     "DF1_IA_CA_CROI": DFCoefSet(
@@ -845,7 +846,9 @@ V13A_MACID: Dict[str, DFCoefSet] = {
     "DF2_IA_CA_CROI": DFCoefSet(
         parts=_V13A_NO_AL, denominator="SiO2",
         intercept=-2.98,
-        coefs=(-0.045, 5.10, -5.15, 1.16, -0.453,
+        # MgO is -0.253 in eq (4); it was transcribed as -0.453, most
+        # likely by eye-skip to the CaO value -0.451 printed beside it.
+        coefs=(-0.045, 5.10, -5.15, 1.16, -0.253,
                -0.451, -2.45, -1.40, 0.0017),
     ),
     # ----- (c) IA · CA · Col  — Eqs (5), (6)  [no CaO] --------------------
@@ -970,7 +973,8 @@ V13A_MTACID: Dict[str, DFCoefSet] = {
     "DF1_IA_CA_CROI": DFCoefSet(
         parts=_V13A_MT_ALL5, denominator="TiO2",
         intercept=4.70,
-        coefs=(-0.0018, -0.025, 1.06, -0.53, 0.301),
+        # MgO is -0.018 in eq (13); it was transcribed as -0.0018 here.
+        coefs=(-0.018, -0.025, 1.06, -0.53, 0.301),
     ),
     "DF2_IA_CA_CROI": DFCoefSet(
         parts=_V13A_MT_ALL5, denominator="TiO2",
@@ -983,10 +987,34 @@ V13A_MTACID: Dict[str, DFCoefSet] = {
         intercept=3.99,
         coefs=(0.248, 1.18, -0.86, 0.136),
     ),
+    # The Nb coefficient is printed as +0.382 in Supplementary Table 9
+    # eq (16); it is used here with the sign corrected.  This is the
+    # only coefficient in this module that departs from its source, so
+    # the evidence is set out in full:
+    #
+    #  * As printed, the three group centroids of Fig. 3c come out at
+    #    DF2 = -5.59, -5.94, -3.87.  The Fig. 3 caption puts them at
+    #    +0.39, -0.69, +0.43.  DF1 from eq (15) reproduces the same
+    #    caption's DF1 to within 0.03, so the caption is sound and the
+    #    disagreement is confined to DF2.
+    #  * Attributing the gap to any single term requires the implied
+    #    correction to be equal for all three groups.  For Nb it is
+    #    -0.766, -0.768, -0.765 (sd 0.001); for every other term the
+    #    spread is 100x larger.  So the defect is the Nb term, and it
+    #    is a change of sign, not of magnitude.
+    #  * Independent confirmation: in LDA canonical space the triple
+    #    point is the circumcentre of the three centroids.  Printed, it
+    #    lands 5.06 away from the published (-0.18, 0.93); with the
+    #    sign flipped, 0.04 away.  That datum took no part in the fit.
+    #
+    # The magnitude is kept at the printed 0.382.  A least-squares fit
+    # prefers 0.384, but the centroids are published to two decimals
+    # and that difference is inside their rounding; a dropped minus is
+    # the smaller and likelier typographic slip.
     "DF2_IA_CA_COL": DFCoefSet(
         parts=_V13A_MT_NO_MGO, denominator="TiO2",
         intercept=7.28,
-        coefs=(1.13, 0.382, 1.13, 0.68),
+        coefs=(1.13, -0.382, 1.13, 0.68),
     ),
     # ----- (d) IA · CR+OI · Col  — Eqs (17), (18) ------------------------
     "DF1_IA_CROI_COL": DFCoefSet(
@@ -1085,7 +1113,8 @@ V13A_TACID: Dict[str, DFCoefSet] = {
     "DF1_IACA_CROI_COL": DFCoefSet(
         parts=_V13A_T_ALL7, denominator="Yb",
         intercept=-9.50,
-        coefs=(-4.99, 7.81, -4.43, 0.82, 0.063, 0.64, -0.57),
+        # Sm is -4.33 in eq (21); it was transcribed as -4.43 here.
+        coefs=(-4.99, 7.81, -4.33, 0.82, 0.063, 0.64, -0.57),
     ),
     "DF2_IACA_CROI_COL": DFCoefSet(
         parts=_V13A_T_ALL7, denominator="Yb",
