@@ -35,7 +35,7 @@ absence there is no evidence at all. Render the page and read it.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Dict, Tuple
 
 
@@ -44,11 +44,46 @@ class DFCoefSet:
     """One discriminant function.
 
     ``DF = intercept + Σ coefs[i] * ln(parts[i] / denominator)``
+
+    ``ppm_parts`` names the parts reported in ppm while the denominator
+    is a wt.% oxide.  Those parts are divided by 10 000 before the
+    log-ratio is taken, because the published equations were fitted
+    with both terms in the *same* unit: "all trace element data
+    (μg.g-1) in these equations were first converted to wt.% before
+    calculating the trace to major element log-ratios" (Verma 2012,
+    acid magmas), and likewise "trace element data were expressed in
+    the same unit (wt.%) as the major element (TiO2)adj" (Verma &
+    Verma 2013, intermediate magmas).
+
+    This is not a cosmetic detail.  Feeding ppm over wt.% offsets the
+    function by ``Σ coefs * ln(10000)`` — about +40 for the four
+    Verma & Agrawal (2011) terms, on axes that span ±8.  Every sample
+    then lands far outside the diagram.  The unit belongs to the
+    coefficient set, not to whatever code happens to evaluate it: it
+    lived on the diagram classes before, so the statistics tables —
+    which evaluate the same sets by a different route — silently
+    reported those +40 values.
     """
     parts: Tuple[str, ...]
     denominator: str
     intercept: float
     coefs: Tuple[float, ...]
+    ppm_parts: Tuple[str, ...] = ()
+
+
+def _traces_in_ppm(table: Dict[str, DFCoefSet],
+                   *names: str) -> Dict[str, DFCoefSet]:
+    """Tag *names* as ppm parts throughout *table*.
+
+    Applied to the table as a whole rather than written into each
+    entry, so the published coefficients above stay verbatim and the
+    unit cannot drift between one function of a set and the next.
+    """
+    return {
+        key: replace(coef,
+                     ppm_parts=tuple(n for n in names if n in coef.parts))
+        for key, coef in table.items()
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -285,6 +320,11 @@ VV13_IMINT: Dict[str, DFCoefSet] = {
                -1.6407186, 0.068523, -1.772088),
     ),
 }
+
+# MgO and P2O5 are already wt.%; the five traces are not.  Section 3.2:
+# "for all trace to major element loge-ratios, trace element data were
+# expressed in the same unit (wt.%) as the major element (TiO2)adj".
+VV13_IMINT = _traces_in_ppm(VV13_IMINT, "Nb", "Ni", "V", "Y", "Zr")
 
 
 # ---------------------------------------------------------------------------
@@ -545,6 +585,12 @@ VA11: Dict[str, DFCoefSet] = {
         coefs=(1.7478, -0.0421, 3.5301, -1.4503),
     ),
 }
+
+# Table 2 of Verma & Agrawal (2011) reports (TiO2)adj *and* the traces in
+# ug/g, so every published ln-ratio is a ratio of like units.  Reading its
+# mean ln(Nb/(TiO2)adj) = -8.18 for IAB back against (TiO2)adj = 9310 ug/g
+# recovers Nb = 2.6 ug/g; treating TiO2 as wt.% would demand ln = +1.03.
+VA11 = _traces_in_ppm(VA11, "Nb", "V", "Y", "Zr")
 
 
 # ---------------------------------------------------------------------------
@@ -965,6 +1011,11 @@ V13A_MTACID: Dict[str, DFCoefSet] = {
         coefs=(-0.341, -1.11, -0.75, 0.271, -0.377),
     ),
 }
+
+# Same rule for the acid set: "all trace element data (ug.g-1) in these
+# equations were first converted to wt.% before calculating the trace to
+# major element log-ratios".
+V13A_MTACID = _traces_in_ppm(V13A_MTACID, "Nb", "Y", "Zr")
 
 
 # ---------------------------------------------------------------------------

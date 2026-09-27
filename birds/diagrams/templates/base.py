@@ -391,7 +391,8 @@ def _positive_numeric(series: pd.Series) -> pd.Series:
 
 def build_logratios(df: pd.DataFrame, parts: Sequence[str],
                     denominator: str,
-                    aliases: Optional[Dict[str, Iterable[str]]] = None
+                    aliases: Optional[Dict[str, Iterable[str]]] = None,
+                    scale: Optional[Dict[str, float]] = None
                     ) -> Optional[pd.DataFrame]:
     """Return a DataFrame of ``ln(part_i / denominator)`` for every part.
 
@@ -402,6 +403,13 @@ def build_logratios(df: pd.DataFrame, parts: Sequence[str],
 
     aliases maps a canonical part name to extra column names that should
     be accepted (e.g. ``"FeOt"`` → ``["FeO_T", "FeO*", "FeO(T)"]``).
+
+    scale maps a canonical part name to a divisor applied before the
+    ratio, for the case where a part and the denominator are reported
+    in different units — a trace element in ppm over a major oxide in
+    wt.%, say, which needs ``1e4``. A log-ratio of unlike units is off
+    by ``ln(divisor)`` per term, which is a large constant, not a
+    rounding difference.
     """
     if df is None or df.empty:
         return None
@@ -415,9 +423,13 @@ def build_logratios(df: pd.DataFrame, parts: Sequence[str],
         cols[name] = actual
 
     den = _positive_numeric(df[cols[denominator]])
+    factors = scale or {}
     out = pd.DataFrame(index=df.index)
     for name in parts:
         num = _positive_numeric(df[cols[name]])
+        divisor = factors.get(name)
+        if divisor:
+            num = num / divisor
         out[name] = np.log(num / den)
     return out
 

@@ -98,9 +98,18 @@ def _apply_df(lr: pd.DataFrame, coef: DFCoefSet) -> pd.Series:
     return out
 
 
+#: ppm -> wt.%, for the sets whose traces sit over a major oxide.
+PPM_PER_WT_PERCENT = 10_000.0
+
+
 def _logratios_for_coef(df: pd.DataFrame, coef: DFCoefSet,
                         aliases=None) -> Optional[pd.DataFrame]:
-    """Return ``ln(parts/denominator)`` for a single DFCoefSet."""
+    """Return ``ln(parts/denominator)`` for a single DFCoefSet.
+
+    This is the one place the Verma log-ratios are built, so the unit
+    handling declared by ``coef.ppm_parts`` reaches the diagrams and
+    the statistics tables alike.
+    """
     # FeOt needs computation if not present directly
     if "FeOt" in coef.parts and resolve_column(df, _MAJOR_ALIASES["FeOt"]) is None:
         feo = feot_from_oxides(df)
@@ -108,8 +117,10 @@ def _logratios_for_coef(df: pd.DataFrame, coef: DFCoefSet,
             return None
         df = df.copy()
         df["FeOt"] = feo
+    scale = {name: PPM_PER_WT_PERCENT for name in coef.ppm_parts}
     return build_logratios(df, coef.parts, coef.denominator,
-                           aliases=aliases or _MAJOR_ALIASES)
+                           aliases=aliases or _MAJOR_ALIASES,
+                           scale=scale)
 
 
 # ---------------------------------------------------------------------------
@@ -576,51 +587,15 @@ class VermaAgrawal2011(_TripletDF):
         ("CRB_OIB_MORB",    "CRB",  "OIB",     "MORB"),
     )
 
-    # Trace-element parts in ppm; the denominator TiO2 stays in wt%, so
-    # we scale numerators by 1/10 000 (ppm → wt%) to keep both sides in
-    # the same unit.  Mathematically equivalent to expressing both in
-    # µg/g as the paper does.
-    _PPM_TO_WTPCT = {"Nb", "V", "Y", "Zr"}
+    # Nb, V, Y and Zr come in ppm and the denominator TiO2 in wt%; the
+    # conversion is declared on the coefficient set itself, so the
+    # statistics tables get it too.  See DFCoefSet.ppm_parts.
 
     # Lock the axes to the canonical (-8, +8) frame published in
     # Figure 1; disable the parent class's auto-rescale that used to
     # kick in when the buggy coefficients drove samples off the panel.
     def _maybe_rescale_panel(self, spec, df):
         return spec
-
-    def _compute_xy_for_panel(self, panel, df):
-        df1 = self.coef_table.get(f"DF1_{panel.key}")
-        df2 = self.coef_table.get(f"DF2_{panel.key}")
-        if df1 is None or df2 is None:
-            return None, None
-        lr = self._va11_logratios(df, df1)
-        if lr is None:
-            return None, None
-        return _apply_df(lr, df1), _apply_df(lr, df2)
-
-    @classmethod
-    def _va11_logratios(cls, df, coef):
-        if df is None or df.empty:
-            return None
-        parts = list(coef.parts)
-        denom = coef.denominator
-        cols = {}
-        for name in parts + [denom]:
-            actual = resolve_column(df, _MAJOR_ALIASES.get(name, (name,)))
-            if actual is None:
-                return None
-            cols[name] = actual
-        den = pd.to_numeric(df[cols[denom]], errors="coerce")
-        den = den.where(den > 0)
-        out = pd.DataFrame(index=df.index)
-        for name in parts:
-            num = pd.to_numeric(df[cols[name]], errors="coerce")
-            if name in cls._PPM_TO_WTPCT:
-                num = num / 10_000.0
-            num = num.where(num > 0)
-            with np.errstate(invalid="ignore", divide="ignore"):
-                out[name] = np.log(num / den)
-        return out
 
     # ------------------------------------------------------------------
     # Canonical field rendering (Figure 1 of Verma & Agrawal 2011)
@@ -925,9 +900,9 @@ class VermaVerma2013ImMint(_TripletDF):
     coef_table = VV13_IMINT
     triplet_panels = _VV13_TRIPLET_PANELS
 
-    # Trace-element parts that need ppm → wt% conversion.  MgO and P2O5 are
-    # already in wt% so they stay as-is.
-    _PPM_TO_WTPCT = {"Nb", "Ni", "V", "Y", "Zr"}
+    # Nb, Ni, V, Y and Zr need the ppm -> wt% conversion; MgO and P2O5
+    # are already wt%.  Declared on the coefficient set itself — see
+    # DFCoefSet.ppm_parts.
 
     # Lock the axes to the canonical (-8, +8) frame published in Figure 2.
     def _maybe_rescale_panel(self, spec, df):
@@ -991,41 +966,6 @@ class VermaVerma2013ImMint(_TripletDF):
                     color="#1c2237", linewidth=1.2, zorder=1)
         ax.plot(triple[0], triple[1], marker="o", markersize=4,
                 color="#1c2237", zorder=3)
-
-    def _compute_xy_for_panel(self, panel, df):
-        df1 = self.coef_table.get(f"DF1_{panel.key}")
-        df2 = self.coef_table.get(f"DF2_{panel.key}")
-        if df1 is None or df2 is None:
-            return None, None
-        lr = self._imint_logratios(df, df1)
-        if lr is None:
-            return None, None
-        return _apply_df(lr, df1), _apply_df(lr, df2)
-
-    @classmethod
-    def _imint_logratios(cls, df, coef):
-        """Build log-ratios for Set 2 with the trace-ppm → wt% conversion."""
-        if df is None or df.empty:
-            return None
-        parts = list(coef.parts)
-        denom = coef.denominator  # "TiO2"
-        cols = {}
-        for name in parts + [denom]:
-            actual = resolve_column(df, _MAJOR_ALIASES.get(name, (name,)))
-            if actual is None:
-                return None
-            cols[name] = actual
-        den = pd.to_numeric(df[cols[denom]], errors="coerce")
-        den = den.where(den > 0)
-        out = pd.DataFrame(index=df.index)
-        for name in parts:
-            num = pd.to_numeric(df[cols[name]], errors="coerce")
-            if name in cls._PPM_TO_WTPCT:
-                num = num / 10_000.0
-            num = num.where(num > 0)
-            with np.errstate(invalid="ignore", divide="ignore"):
-                out[name] = np.log(num / den)
-        return out
 
 
 class VermaVerma2013Trace(_TripletDF):
@@ -1373,8 +1313,9 @@ class Verma2013AcidImMt(_TripletDF):
         ("CA_CROI_COL",   "CA",    "CR+OI", "Col"),
     )
 
-    # Trace elements requiring ppm → wt% conversion before the log-ratio.
-    _PPM_TO_WTPCT = {"Nb", "Y", "Zr"}
+    # Nb, Y and Zr need the ppm -> wt% conversion; MgO and P2O5 are
+    # already wt%.  Declared on the coefficient set — see
+    # DFCoefSet.ppm_parts.
 
     # Axes fixed at (-8, +8) per Figure 3.
     def _maybe_rescale_panel(self, spec, df):
@@ -1387,45 +1328,6 @@ class Verma2013AcidImMt(_TripletDF):
         "Col":    "#DFEBFB",
         "IA+CA":  "#FFD8B5",
     }
-
-    def _compute_xy_for_panel(self, panel, df):
-        df1 = self.coef_table.get(f"DF1_{panel.key}")
-        df2 = self.coef_table.get(f"DF2_{panel.key}")
-        if df1 is None or df2 is None:
-            return None, None
-        lr = self._mtacid_logratios(df, df1)
-        if lr is None:
-            return None, None
-        return _apply_df(lr, df1), _apply_df(lr, df2)
-
-    @classmethod
-    def _mtacid_logratios(cls, df, coef):
-        """Build log-ratios with trace ppm → wt% conversion.
-
-        Mirrors VermaVerma2013ImMint._imint_logratios but with the
-        ``_PPM_TO_WTPCT`` set of this class.
-        """
-        if df is None or df.empty:
-            return None
-        parts = list(coef.parts)
-        denom = coef.denominator
-        cols = {}
-        for name in parts + [denom]:
-            actual = resolve_column(df, _MAJOR_ALIASES.get(name, (name,)))
-            if actual is None:
-                return None
-            cols[name] = actual
-        den = pd.to_numeric(df[cols[denom]], errors="coerce")
-        den = den.where(den > 0)
-        out = pd.DataFrame(index=df.index)
-        for name in parts:
-            num = pd.to_numeric(df[cols[name]], errors="coerce")
-            if name in cls._PPM_TO_WTPCT:
-                num = num / 10_000.0
-            num = num.where(num > 0)
-            with np.errstate(invalid="ignore", divide="ignore"):
-                out[name] = np.log(num / den)
-        return out
 
     def _draw_panel_background(self, ax, panel, options):
         """Canonical Figure 3 geometry from :data:`V13A_MTACID_FIELDS`."""
