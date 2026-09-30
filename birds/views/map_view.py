@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
+    QApplication,
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
@@ -92,6 +93,84 @@ _BASEMAPS = (
     "Light grayscale (CartoDB Positron)",
     "None",
 )
+
+#: Seconds to wait for a whole basemap before giving up on it.
+#:
+#: contextily fetches tiles one at a time through ``requests.get`` with
+#: no timeout at all (``contextily.tile._retryer``), and ``add_basemap``
+#: does not forward ``n_connections`` or ``max_retries``, so there is no
+#: way to bound it from the outside.  Called straight from the redraw,
+#: as it used to be, a slow provider takes the whole interface with it:
+#: measured on one 30 km extent, Esri returned in 3.5 s while CartoDB
+#: Positron took 1204 s -- twenty minutes of frozen window with no
+#: feedback and no way to cancel.
+BASEMAP_TIMEOUT_S = 25.0
+
+#: Per-socket timeout while tiles are being fetched, so an abandoned
+#: fetch eventually dies instead of holding a thread for ever.
+_TILE_SOCKET_TIMEOUT_S = 8.0
+
+#: Tiles fetched at once.  contextily defaults to 1, which is what makes
+#: a slow provider so slow; a handful of connections is well within what
+#: these tile servers allow.
+_TILE_CONNECTIONS = 8
+
+
+def _fetch_basemap(bounds, provider, timeout_s: float = BASEMAP_TIMEOUT_S,
+                   on_tick=None):
+    """Download basemap tiles for *bounds*, or give up after *timeout_s*.
+
+    Returns ``(image, extent)`` ready for ``imshow``, or ``None`` when
+    the tiles did not arrive in time or the provider refused them.
+
+    The download runs on a worker thread purely so it can be abandoned:
+    a Python thread cannot be killed, and ``requests.get`` without a
+    timeout would otherwise hold the caller for as long as the server
+    feels like it.  Nothing touches matplotlib here -- ``bounds2img``
+    returns a plain array, and the caller draws it on the GUI thread,
+    where all the other artists are made.
+
+    The thread is a daemon, which is the point of not using
+    ``ThreadPoolExecutor``: its workers are not daemons, so an
+    abandoned fetch would keep the interpreter from exiting and closing
+    the app would hang on the download we just walked away from.  The
+    socket timeout bounds each tile as well, so the orphan unwinds on
+    its own instead of sitting there for the life of the process.
+    """
+    import socket
+    import threading
+    import time
+
+    west, south, east, north = bounds
+    outcome: dict = {}
+
+    def _work():
+        previous = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(_TILE_SOCKET_TIMEOUT_S)
+        try:
+            outcome["tiles"] = _cx.bounds2img(
+                west, south, east, north, zoom="auto", source=provider,
+                ll=False, n_connections=_TILE_CONNECTIONS, max_retries=1,
+            )
+        except Exception:                                  # noqa: BLE001
+            # No internet, blocked CDN, provider out of tiles at this
+            # zoom.  Left as a miss; the caller says so on the figure.
+            pass
+        finally:
+            socket.setdefaulttimeout(previous)
+
+    worker = threading.Thread(target=_work, name="birds-basemap",
+                              daemon=True)
+    worker.start()
+    if on_tick is None:
+        worker.join(timeout_s)
+    else:
+        # Wait in slices so the caller can keep its window painting.
+        deadline = time.monotonic() + timeout_s
+        while worker.is_alive() and time.monotonic() < deadline:
+            worker.join(0.05)
+            on_tick()
+    return outcome.get("tiles")
 
 
 # ---------------------------------------------------------------------------
@@ -597,6 +676,9 @@ class MapView(QWidget):
         self.update_plot()
 
     def update_plot(self) -> None:
+        if getattr(self, "_fetching_basemap", False):
+            # Re-entered from the event pump during a tile download.
+            return
         df = self.data.df
         fig = self.canvas.figure
         fig.clear()
@@ -699,20 +781,48 @@ class MapView(QWidget):
         basemap_name = self.basemap_combo.currentText()
         provider = _basemap_provider(basemap_name)
         if provider is not None:
+            # The axes are already Web Mercator -- the view projects the
+            # coordinates itself -- so the tiles need no warping and we
+            # can imshow them straight, which keeps every matplotlib call
+            # on this thread while the download happens off it.
+            left, right = ax.get_xlim()
+            bottom, top = ax.get_ylim()
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            # Pumping events keeps the window painting instead of going
+            # grey, but it also lets the user press Update again and
+            # re-enter this method; the flag turns that into a no-op.
+            self._fetching_basemap = True
             try:
-                _cx.add_basemap(
-                    ax, source=provider, crs="EPSG:3857",
-                    attribution_size=7, alpha=self.basemap_alpha.value(),
-                )
-            except Exception as exc:                       # noqa: BLE001
-                # No internet, blocked CDN, etc. — just skip the basemap
+                fetched = _fetch_basemap(
+                    (left, bottom, right, top), provider,
+                    on_tick=QApplication.processEvents)
+            finally:
+                self._fetching_basemap = False
+                QApplication.restoreOverrideCursor()
+            if fetched is None:
                 ax.text(
-                    0.5, 0.97, f"⚠  Basemap unavailable ({type(exc).__name__})",
+                    0.5, 0.97,
+                    f"⚠  Basemap unavailable — {basemap_name} did not "
+                    f"respond within {BASEMAP_TIMEOUT_S:.0f} s",
                     transform=ax.transAxes, ha="center", va="top",
                     fontsize=8, color="#a04c2e",
                     bbox=dict(facecolor="white", edgecolor="#a04c2e",
                               alpha=0.85, pad=2),
                 )
+            else:
+                image, extent = fetched
+                ax.imshow(image, extent=extent, interpolation="bilinear",
+                          alpha=self.basemap_alpha.value(), zorder=0)
+                # imshow retargets the view at the tile mosaic, which is
+                # always a little larger than what was asked for.
+                ax.set_xlim(left, right)
+                ax.set_ylim(bottom, top)
+                attribution = (provider.get("attribution")
+                               if hasattr(provider, "get") else None)
+                if attribution:
+                    ax.text(0.005, 0.005, attribution,
+                            transform=ax.transAxes, ha="left", va="bottom",
+                            fontsize=7, color="#333", alpha=0.85, zorder=6)
 
         # Grid (lat/lon ticks in degrees on a Web-Mercator axes) -----------
         self._tick_in_degrees(ax)
