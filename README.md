@@ -478,8 +478,21 @@ under testing. Known limitations worth stating plainly:
   original papers. Pattern *shapes* are robust; verify the absolute
   normalised level against the source before publishing. The module
   carries the same warning in its docstring.
-- Validation against certified reference materials (USGS BHVO-2, BCR-2,
-  AGV-2) has not yet been carried out.
+- Validation against USGS reference materials BHVO-2, BCR-2 and AGV-2
+  runs in `tests/test_usgs_reference_materials.py`, using the values in
+  the USGS Reference Material Information Sheets (June 2022), which take
+  them from Jochum *et al.* (2016). Those sheets state that the USGS has
+  not published a metrologically traceable characterisation of these
+  materials, so they are community consensus values rather than
+  certificates. AGV-2 is used for classification and the norm only: its
+  tectonic setting is itself disputed, since Guano Valley lies in the
+  extensional northern Basin and Range while its trace signature is
+  arc-like.
+- Nothing yet stops a Verma diagram being used outside the rock type it
+  was built for. Those papers require the type to be fixed first, with
+  SINCLAS or IgRoCS; fed a basalt, the intermediate-magma set returns a
+  confident arc answer with no warning. See the last test in the file
+  above.
 - The Map view needs `contextily`; `pyproj` and `mgrs` are optional and only
   affect coordinate-format parsing.
 
