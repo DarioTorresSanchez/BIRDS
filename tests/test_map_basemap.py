@@ -26,6 +26,7 @@ from birds.views.map_view import (
     BASEMAP_TIMEOUT_S,
     _TILE_CONNECTIONS,
     _fetch_basemap,
+    silence_joblib_cache_noise,
 )
 
 
@@ -127,24 +128,79 @@ class TestTheWaitDoesNotFreezeTheWindow:
 
 class TestTheAbandonedFetch:
 
-    def test_the_worker_cannot_keep_the_app_from_closing(
-            self, silent_tile_server):
-        """The thread outlives the deadline by design -- a Python thread
-        cannot be killed -- so it has to be a daemon.
+    def test_the_worker_is_a_daemon(self, silent_tile_server, monkeypatch):
+        """Past the deadline the thread is still running -- a Python
+        thread cannot be killed -- so it has to be a daemon.
 
         This is why the fetch does not use ThreadPoolExecutor, whose
         workers are not daemons: an abandoned download would hold the
         interpreter open and closing the app would hang on it.
+
+        Asserted on the thread as it is created rather than by hunting
+        for a survivor afterwards.  Whether one survives depends on how
+        fast the fetch happens to fail, which made that version of this
+        test flaky.
         """
-        # By identity, not by name: an earlier test in this file leaves
-        # its own orphan behind, and they all share the one name.
-        before = {id(t) for t in threading.enumerate()}
+        created = []
+        real_thread = threading.Thread
+
+        def record(*args, **kwargs):
+            thread = real_thread(*args, **kwargs)
+            created.append(thread)
+            return thread
+
+        monkeypatch.setattr(threading, "Thread", record)
         _fetch_basemap(BOUNDS, silent_tile_server, timeout_s=0.5)
-        orphans = [t for t in threading.enumerate()
-                   if id(t) not in before and t.name == "birds-basemap"]
-        assert orphans, "expected the fetch to still be running"
-        assert all(t.daemon for t in orphans), (
-            "a non-daemon orphan would block interpreter exit")
+
+        ours = [t for t in created if t.name == "birds-basemap"]
+        assert len(ours) == 1, f"expected one worker, got {len(ours)}"
+        assert ours[0].daemon, (
+            "a non-daemon worker would block interpreter exit")
+
+
+class TestTheJoblibNoise:
+    """contextily memoises its tile fetcher with joblib, which now and
+    then decides the cached function is not the one it cached and says
+    so at length in the terminal.
+
+    joblib's own answer to that mismatch is to drop the entry and call
+    the function again -- one tile re-downloaded -- so nothing reaches
+    the map wrong.  The view filters the message because it reads like a
+    crash, not because it matters.
+
+    Each test reinstalls the filter inside its own ``catch_warnings``
+    block: pytest resets the global filters around every test, so the
+    one the module installs at import is long gone by now.
+    """
+
+    MESSAGE = ("Possible name collisions between functions '_fetch_tile' "
+               "(/x/contextily/tile.py:-1) and '_fetch_tile' "
+               "(/x/contextily/tile.py:327)")
+
+    @staticmethod
+    def _collision():
+        return pytest.importorskip("joblib.memory").JobLibCollisionWarning
+
+    def _caught(self, message, category):
+        import warnings
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            silence_joblib_cache_noise()
+            warnings.warn(message, category, stacklevel=2)
+        return caught
+
+    def test_the_collision_message_is_filtered(self):
+        assert self._caught(self.MESSAGE, self._collision()) == []
+
+    def test_other_joblib_warnings_still_get_through(self):
+        """Filtered on the message as well as the category, so this is
+        not a blanket mute of everything joblib has to say."""
+        assert len(self._caught("the cache directory changed",
+                                self._collision())) == 1
+
+    def test_the_same_words_in_another_category_get_through(self):
+        """And not a substring match against any warning at all."""
+        assert len(self._caught(self.MESSAGE, UserWarning)) == 1
 
 
 class TestSettings:

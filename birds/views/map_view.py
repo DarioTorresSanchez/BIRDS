@@ -17,6 +17,7 @@ Why matplotlib (and not Folium / Leaflet)?
 
 from __future__ import annotations
 
+import warnings as _warnings
 from typing import Optional, Tuple
 
 import numpy as np
@@ -73,6 +74,51 @@ try:
 except ImportError:                                          # pragma: no cover
     _cx = None
     _HAS_CTX = False
+
+
+def silence_joblib_cache_noise() -> None:
+    """Hide one joblib message that contextily's tile cache produces.
+
+    contextily memoises its tile fetcher with joblib, and joblib now and
+    then decides the cached function is not the one it cached::
+
+        Possible name collisions between functions '_fetch_tile'
+        (contextily/tile.py:-1) and '_fetch_tile' (contextily/tile.py:327)
+
+    The -1 is joblib failing to read the function's source line when it
+    wrote the cache entry, so the comparison against the real line 327
+    cannot match.
+
+    It is cosmetic.  joblib's own answer to a mismatch is to drop the
+    entry and call the function again, which here costs one re-downloaded
+    tile; nothing reaches the map wrong.  But it lands in the terminal as
+    a wall of library traceback that reads like a crash, so it is
+    filtered rather than left to alarm people.
+
+    Filtered on joblib's own category *and* the message, so every other
+    joblib warning still gets through.  Not on ``module``: that argument
+    matches the module a warning is attributed to, which depends on the
+    stacklevel joblib passes, and getting it wrong filters nothing while
+    looking like it works.
+
+    A function rather than a bare call at import so it can be tested --
+    warnings filters are global state that pytest resets around every
+    test -- and called once below rather than around each fetch, since
+    the fetch runs on a worker thread and toggling a global filter there
+    would race with the GUI thread.
+    """
+    try:
+        from joblib.memory import JobLibCollisionWarning as collision
+    except Exception:                                      # pragma: no cover
+        return
+    _warnings.filterwarnings(
+        "ignore", message=".*[Nn]ame collisions between functions.*",
+        category=collision,
+    )
+
+
+if _HAS_CTX:
+    silence_joblib_cache_noise()
 
 
 # Friendly labels → contextily provider object
