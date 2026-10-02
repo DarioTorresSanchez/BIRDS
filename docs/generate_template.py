@@ -41,7 +41,7 @@ from __future__ import annotations
 import csv
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import List, Sequence
 
 from openpyxl import Workbook
 from openpyxl.styles import (

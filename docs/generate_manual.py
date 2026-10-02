@@ -10,7 +10,6 @@ from pathlib import Path
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.oxml.ns import qn
 from docx.shared import Inches, Pt, RGBColor
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import LETTER
@@ -23,8 +22,6 @@ from reportlab.platypus import (
     Preformatted,
     SimpleDocTemplate,
     Spacer,
-    Table,
-    TableStyle,
 )
 
 from manual_content import SECTIONS, SUBTITLE, TITLE
