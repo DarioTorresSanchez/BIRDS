@@ -114,6 +114,15 @@ including what is still unverified.
 
 #### Interface
 
+- **Samples off the frame were counted as plotted.** Thirty-two of the
+  52 templates fix their limits to the frame their source figure is
+  drawn on — the TAS is 35–78 wt.% SiO₂ by 0–16 wt.% alkalis, the Verma
+  panels run −8 to +8 — and matplotlib clips anything beyond. The tally
+  under the canvas counted those samples as plotted, so "n = 12" could
+  mean eleven points on screen with no way to find the twelfth. They
+  are now a category of their own, clickable like the others to list
+  which ones. The frames are untouched: widening one would move
+  boundaries that are only defined inside it.
 - **The Map view froze** on a slow basemap. contextily fetches tiles one
   at a time through `requests.get` with no timeout, from the redraw, on
   the GUI thread; one measured CartoDB Positron fetch took 1204 s
@@ -164,9 +173,10 @@ including what is still unverified.
   have not been checked page by page against the original papers.
   Pattern shapes are robust; verify the absolute normalised level
   before publishing.
-- **Fixed-range diagrams clip.** `x_range` / `y_range` set the limits
-  hard, so a sample outside the window is drawn but invisible while the
-  counter still reports it as plotted.
+- **Fixed-range diagrams still clip**, by design: a sample outside the
+  frame is drawn and then clipped away. It is now reported rather than
+  silently counted as plotted (see *Fixed*), but there is no marker at
+  the edge to say which direction it went.
 
 ## [0.1.0-alpha] – 2026-08-20
 

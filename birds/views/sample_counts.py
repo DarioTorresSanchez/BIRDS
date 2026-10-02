@@ -1,13 +1,21 @@
 """Per-diagram sample accounting — "why isn't my sample showing?".
 
-Every diagram silently drops samples for three quite different reasons,
+Every diagram silently drops samples for four quite different reasons,
 and until now the user had no way to tell them apart:
 
 * an **active filter** removed the row (rock-type filter, Verma's
   compositional pre-filter, …);
 * the group was **hidden** with its visibility checkbox in Edit plot;
 * the sample simply **lacks the elements** the diagram needs, so its
-  x/y came out non-finite.
+  x/y came out non-finite;
+* the sample plots **outside the published frame**.  Twenty-four of the
+  52 templates fix their limits to the frame their source figure is
+  drawn on -- the TAS is 35-78 wt.% SiO2 by 0-16 wt.% alkalis, the
+  Verma panels are -8 to +8 -- and a sample beyond that is drawn but
+  clipped away.  It used to be counted as plotted, which is the worst
+  of both: invisible on the figure and accounted for as if it were
+  there.  The frame itself stays as published; widening it would move
+  boundaries that are only defined inside it.
 
 :func:`count_samples` measures all three and :class:`CountLabel` shows
 the tally under the canvas, colour-coded so a large silent drop is
@@ -40,12 +48,13 @@ class CountReport:
     filtered: int = 0     # rows dropped by an active filter
     hidden: int = 0       # rows in groups toggled invisible
     missing: int = 0      # rows kept + visible but lacking the elements
+    offframe: int = 0     # rows with real coordinates outside the frame
 
     names: dict = field(default_factory=dict)   # category -> [sample names]
 
     @property
     def dropped(self) -> int:
-        return self.filtered + self.hidden + self.missing
+        return self.filtered + self.hidden + self.missing + self.offframe
 
     def names_for(self, category: str) -> list:
         return list(self.names.get(category, ()))
@@ -69,6 +78,9 @@ class CountReport:
         if self.missing:
             parts.append(self._link(
                 "missing", f"{self.missing} missing data", "#a04c2e"))
+        if self.offframe:
+            parts.append(self._link(
+                "offframe", f"{self.offframe} off the frame", "#7a4ea0"))
         body = "  ·  ".join(parts)
         if self.plotted == 0 and self.total:
             body += ("  <span style='color:#a04c2e;'>— nothing to show; "
@@ -188,10 +200,18 @@ def count_for_diagram(diagram, source_df, filtered_df, plot_style):
     """
     xs, ys, single = diagram_coords(diagram, filtered_df)
     if single:
-        return count_samples(source_df, filtered_df, xs, ys, plot_style)
+        return count_samples(source_df, filtered_df, xs, ys, plot_style,
+                             getattr(diagram, "x_range", None),
+                             getattr(diagram, "y_range", None))
     pxs, pys, countable = panel_coords(diagram, filtered_df)
     if countable:
-        return count_samples(source_df, filtered_df, pxs, pys, plot_style)
+        # Panels carry their own limits; the tally follows the first
+        # one, which is the panel its coordinates came from.
+        panels = getattr(diagram, "panels", None) or ()
+        first = panels[0] if panels else None
+        return count_samples(source_df, filtered_df, pxs, pys, plot_style,
+                             getattr(first, "x_range", None),
+                             getattr(first, "y_range", None))
     rep = CountReport(total=len(source_df) if source_df is not None else 0)
     if filtered_df is None or filtered_df.empty:
         rep.filtered = rep.total
@@ -210,12 +230,28 @@ def count_for_diagram(diagram, source_df, filtered_df, plot_style):
     return rep
 
 
+def _within(values: pd.Series, limits) -> pd.Series:
+    """Mask of the values inside *limits*, or all True when unbounded.
+
+    The limits are taken as given and sorted, because a template may
+    run its axis backwards -- Hastie's Th-Co diagram goes from 70 down
+    to 0 -- and a literal ``lo <= v <= hi`` would then exclude
+    everything.
+    """
+    if not limits:
+        return pd.Series(True, index=values.index)
+    low, high = sorted(limits)
+    return values.between(low, high)
+
+
 def count_samples(
     source_df: Optional[pd.DataFrame],
     filtered_df: Optional[pd.DataFrame],
     xs: Optional[pd.Series],
     ys: Optional[pd.Series],
     plot_style=None,
+    x_range=None,
+    y_range=None,
 ) -> CountReport:
     """Tally the fate of every sample for one diagram render.
 
@@ -250,12 +286,21 @@ def count_samples(
     xs = pd.Series(xs).reindex(filtered_df.index)
     ys = pd.Series(ys).reindex(filtered_df.index)
     finite = xs.notna() & ys.notna()
-    ok = finite & visible
+    # A sample with real coordinates that land outside the frame is
+    # drawn and then clipped, so it is absent from the figure however
+    # good its analysis was.  Separated from "plotted" rather than from
+    # "missing": the data is there, the diagram just does not reach it.
+    inside = _within(xs, x_range) & _within(ys, y_range)
+    ok = finite & visible & inside
     missing = visible & ~finite
+    offframe = visible & finite & ~inside
     rep.plotted = int(ok.sum())
     rep.missing = int(missing.sum())
+    rep.offframe = int(offframe.sum())
     rep.names["plotted"] = _names_of(filtered_df, ok.index[ok])
     rep.names["missing"] = _names_of(filtered_df, missing.index[missing])
+    rep.names["offframe"] = _names_of(filtered_df,
+                                      offframe.index[offframe])
     return rep
 
 
@@ -283,6 +328,7 @@ _CATEGORY_TITLES = {
     "filtered": "Samples removed by a filter",
     "hidden":   "Samples in hidden groups",
     "missing":  "Samples lacking the required elements",
+    "offframe": "Samples outside the diagram's frame",
 }
 
 _CATEGORY_HINTS = {
@@ -293,6 +339,10 @@ _CATEGORY_HINTS = {
                 "back on to plot them.",
     "missing":  "The diagram needs an element these samples do not carry, "
                 "or the value is blank / non-numeric.",
+    "offframe": "Their composition is fine and the coordinates are real, "
+                "but they fall outside the axes this diagram is published "
+                "on, so the canvas clips them. Read their values in the "
+                "Statistics view instead.",
 }
 
 

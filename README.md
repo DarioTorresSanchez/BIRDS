@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-2127%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-2140%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -434,6 +434,7 @@ What the suite covers, and why those things and not others:
 | **Verma probabilities** | The triple point of a panel must be the circumcentre of its three group centroids, which is where all three settings come out equally likely. The triple points come from the figure captions and the centroids from elsewhere in the same papers, so neither is checking itself |
 | **Reference materials** | USGS BHVO-2, BCR-2 and AGV-2 through the whole chain: classification, norm, chondrite-normalised pattern, and — for the two whose setting is not in dispute — tectonic discrimination |
 | **Map basemap** | The tile download gives up on its deadline and never blocks the interface, proved against a local socket that accepts connections and then says nothing, so the test does not depend on anyone's CDN |
+| **Sample accounting** | A sample outside a published frame is reported as such and not counted among the plotted, the categories stay disjoint so the total keeps adding up, and a diagram whose axis runs backwards is read in the right direction |
 
 The bibliography is tested too: citations verified against their source
 PDFs must be present, and the ones removed as wrong or orphaned must not
