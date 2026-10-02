@@ -235,52 +235,204 @@ class Vermeesch2006NaNbSr(Diagram):
         figure.tight_layout()
 
 
-_VRMS_SI_TI_SR = {
-    "IAB":  [(10, 5, 85), (25, 10, 65), (30, 15, 55), (15, 10, 75)],
-    "MORB": [(25, 25, 50), (40, 25, 35), (45, 35, 20), (30, 35, 35)],
-    "OIB":  [(45, 35, 20), (60, 25, 15), (65, 15, 20), (50, 20, 30)],
+# ---------------------------------------------------------------------------
+# Vermeesch (2006a) — the three log-ratio LDA ternaries
+# ---------------------------------------------------------------------------
+#
+# These are not diagrams with fields drawn on them.  Vermeesch runs a
+# linear discriminant analysis in log-ratio space, where the decision
+# boundaries come out straight, and then maps them back to the ternary,
+# where they come out curved: "the transformed decision boundaries are
+# no longer linear, but curved."  Tracing a polygon off the printed
+# triangle would approximate a curve that can simply be computed.
+#
+# Each boundary is a ray from the triple point, and Table 6 gives four
+# anchor points per diagram in log-ratio coordinates: node 3 is the
+# triple point, nodes 1, 2 and 4 the three ray ends.  The axes are
+# ln(B/A) and ln(C/A) with A the top apex, which is the ordinary
+# additive log-ratio, so the inverse is a softmax.
+#
+# The logarithm is natural, not base ten.  The paper writes "log"
+# throughout, but with ln a reference N-MORB, OIB and IAB land inside
+# their own published clouds on every one of the three figures, while
+# log10 bunches all three near the origin outside them.
+
+#: ``(top, left, right)`` apex labels, matching the published figures.
+#: The frame helper puts the first apex at the top.
+_LDA_SI_TI_SR_APICES = ("Ti/40", "Si/1000", "Sr")
+_LDA_EU_LU_SR_APICES = ("500 Lu", "100 Eu", "Sr")
+_LDA_TI_V_SC_APICES = ("Ti/50", "V", "5 Sc")
+
+#: Anchor points from Vermeesch (2006a) Table 6, as ``(ln(B/A),
+#: ln(C/A))``.  ``triple`` is node 3; each boundary runs from it to the
+#: node given, and separates the two fields named.
+_LDA_SI_TI_SR = {
+    "axes": ("ln(Si / 25 Ti)", "ln(40 Sr / Ti)"),
+    "triple": (-0.05, 0.39),
+    "boundaries": (
+        ((-0.2, 2.98), ("IAB", "OIB")),     # node 2
+        ((-1.26, -2.15), ("OIB", "MORB")),  # node 1
+        ((2.0, -0.77), ("MORB", "IAB")),    # node 4
+    ),
 }
 
+_LDA_EU_LU_SR = {
+    "axes": ("ln(Eu / 5 Lu)", "ln(Sr / 500 Lu)"),
+    "triple": (0.03, 1.0),
+    "boundaries": (
+        ((0.5, 2.33), ("IAB", "OIB")),      # node 2
+        ((-1.23, -1.0), ("IAB", "MORB")),   # node 1
+        ((-0.61, -5.0), ("MORB", "OIB")),   # node 4
+    ),
+}
 
-class Vermeesch2006SiTiSr(Diagram):
-    key = "vermeesch_SiTiSr"
-    title = "Si/1000 − Ti/40 − Sr — Vermeesch (2006a)"
-    citation = ("Vermeesch (2006a). Uses SiO2 (wt% → Si ppm / 1000), "
-                "Ti ppm / 40 and Sr ppm. Robust for OIB and IAB.")
+_LDA_TI_V_SC = {
+    "axes": ("ln(50 V / Ti)", "ln(250 Sc / Ti)"),
+    "triple": (0.57, -0.39),
+    "boundaries": (
+        ((1.1, 2.0), ("MORB", "IAB")),      # node 2
+        ((-2.0, -0.54), ("MORB", "OIB")),   # node 1
+        ((2.0, -1.41), ("OIB", "IAB")),     # node 4
+    ),
+}
 
-    def _abc(self, df):
-        si_ox = resolve_column(df, ["SiO2"])
-        sr = resolve_column(df, ["Sr"])
-        ti = _ti_ppm(df)
-        if not (si_ox and sr) or ti is None:
-            return None
-        si_ppm = pd.to_numeric(df[si_ox], errors="coerce") * 0.4674 * 1e4
-        return (si_ppm / 1000.0,
-                ti / 40.0,
-                pd.to_numeric(df[sr], errors="coerce"))
+#: How far along each ray to walk, in log-ratio units.  The inverse
+#: log-ratio map never leaves the simplex, so a boundary only reaches
+#: the triangle's edge in the limit; by 40 the curve is within a pixel
+#: of it at any sane figure size.
+_LDA_RAY_REACH = 40.0
+
+#: 1 wt.% oxide to ppm of the element, from the mass ratios.
+_SI_WT_TO_PPM = 4674.0
+_TI_WT_TO_PPM = 5993.4
+
+
+def _inverse_logratio(x, y):
+    """``(ln(B/A), ln(C/A))`` back to ternary ``(A, B, C)`` summing to 1.
+
+    The softmax of ``(0, x, y)``, computed against the largest exponent
+    so a boundary walked far from the triple point does not overflow.
+    """
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    top = np.maximum(np.maximum(x, y), 0.0)
+    ea, eb, ec = np.exp(-top), np.exp(x - top), np.exp(y - top)
+    total = ea + eb + ec
+    return ea / total, eb / total, ec / total
+
+
+def _lda_boundary_xy(triple, end):
+    """The ternary path of one decision boundary.
+
+    Straight in log-ratio space, curved here.  Sampled on a squared
+    parameter so the points bunch near the triple point, where the
+    curvature is, and thin out along the tail, where it is straight.
+    """
+    t = np.linspace(0.0, 1.0, 240) ** 2 * _LDA_RAY_REACH
+    direction = np.array(end, dtype=float) - np.array(triple, dtype=float)
+    norm = np.hypot(*direction)
+    if norm == 0:
+        return np.array([]), np.array([])
+    direction = direction / norm
+    xs = triple[0] + direction[0] * t
+    ys = triple[1] + direction[1] * t
+    a, b, c = _inverse_logratio(xs, ys)
+    return ternary_to_xy(pd.Series(a), pd.Series(b), pd.Series(c))
+
+
+def _lda_field_label_xy(spec, field):
+    """A point inside *field*, on the bisector of the sector it owns.
+
+    Placed by angle rather than by hand so a label cannot drift away
+    from the field it names when an anchor point is corrected.
+    """
+    triple = spec["triple"]
+    angles = []
+    for end, pair in spec["boundaries"]:
+        if field in pair:
+            angles.append(np.arctan2(end[1] - triple[1],
+                                     end[0] - triple[0]))
+    if len(angles) != 2:
+        return None
+    low, high = sorted(angles)
+    # The sector between the two rays is the one that does not contain
+    # the third; a span over pi means the field wraps the other way.
+    middle = (low + high) / 2.0
+    if high - low > np.pi:
+        middle += np.pi
+    radius = 2.2
+    a, b, c = _inverse_logratio(triple[0] + radius * np.cos(middle),
+                                triple[1] + radius * np.sin(middle))
+    x, y = ternary_to_xy(pd.Series([float(a)]), pd.Series([float(b)]),
+                         pd.Series([float(c)]))
+    return float(x.iloc[0]), float(y.iloc[0])
+
+
+def _draw_lda_boundaries(ax, spec) -> None:
+    for end, _pair in spec["boundaries"]:
+        x, y = _lda_boundary_xy(spec["triple"], end)
+        ax.plot(x, y, color="#444", linewidth=0.9, alpha=0.9, zorder=2)
+    for field in sorted({f for _e, pair in spec["boundaries"] for f in pair}):
+        placed = _lda_field_label_xy(spec, field)
+        if placed is None:
+            continue
+        ax.text(placed[0], placed[1], field, ha="center", va="center",
+                fontsize=8, color="#333", alpha=0.9, zorder=3)
+
+
+class _VermeeschLDATernary(Diagram):
+    """Shared plumbing for the three log-ratio LDA ternaries."""
+
+    spec: dict = {}
+    apices: Tuple[str, str, str] = ("", "", "")
+
+    def _abc(self, df):                                   # pragma: no cover
+        raise NotImplementedError
 
     def plot(self, figure, df, plot_style, options: PlotOptions):
         figure.clear()
         ax = figure.add_subplot(111)
-        draw_ternary_frame(ax, ("Si/1000", "Ti/40", "Sr"), options.x_axis)
-        _draw_ternary_fields(ax, _VRMS_SI_TI_SR)
+        draw_ternary_frame(ax, self.apices, options.x_axis)
+        _draw_lda_boundaries(ax, self.spec)
         _plot_ternary_data(ax, df, plot_style, self._abc)
         self._apply_legend(ax, options)
         figure.tight_layout()
 
 
-_VRMS_EU_LU_SR = {
-    "IAB":  [(5, 5, 90), (15, 10, 75), (20, 15, 65), (10, 10, 80)],
-    "MORB": [(20, 25, 55), (30, 30, 40), (35, 40, 25), (25, 35, 40)],
-    "OIB":  [(40, 30, 30), (55, 20, 25), (50, 15, 35), (35, 25, 40)],
-}
+class Vermeesch2006SiTiSr(_VermeeschLDATernary):
+    key = "vermeesch_SiTiSr"
+    title = "Si/1000 − Ti/40 − Sr — Vermeesch (2006a)"
+    citation = ("Vermeesch (2006a) Figure 42, the best of all ternary "
+                "linear discriminant analyses he tried.  Si (from SiO2) "
+                "over 1000, Ti (from TiO2) over 40 and Sr, all in ppm.  "
+                "The boundaries are an LDA in ln(Si/25Ti) — ln(40Sr/Ti) "
+                "space, mapped back here, so they curve; the anchor "
+                "points are from his Table 6.")
+    spec = _LDA_SI_TI_SR
+    apices = _LDA_SI_TI_SR_APICES
+
+    def _abc(self, df):
+        si_ox = resolve_column(df, ["SiO2"])
+        ti_ox = resolve_column(df, ["TiO2"])
+        sr = resolve_column(df, ["Sr"])
+        if not (si_ox and ti_ox and sr):
+            return None
+        si = pd.to_numeric(df[si_ox], errors="coerce") * _SI_WT_TO_PPM
+        ti = pd.to_numeric(df[ti_ox], errors="coerce") * _TI_WT_TO_PPM
+        return (ti / 40.0, si / 1000.0,
+                pd.to_numeric(df[sr], errors="coerce"))
 
 
-class Vermeesch2006EuLuSr(Diagram):
+class Vermeesch2006EuLuSr(_VermeeschLDATernary):
     key = "vermeesch_EuLuSr"
     title = "100 Eu − 500 Lu − Sr — Vermeesch (2006a)"
-    citation = ("Vermeesch (2006a). 100 × Eu, 500 × Lu and Sr (all in ppm). "
-                "REE-based ternary, complements the major-element ones.")
+    citation = ("Vermeesch (2006a) Figure 43.  100 × Eu, 500 × Lu and "
+                "Sr, all in ppm.  The boundaries are an LDA in "
+                "ln(Eu/5Lu) — ln(Sr/500Lu) space, mapped back here, so "
+                "they curve; the anchor points are from his Table 6.  "
+                "Needs Lu, which many routine analyses omit.")
+    spec = _LDA_EU_LU_SR
+    apices = _LDA_EU_LU_SR_APICES
 
     def _abc(self, df):
         eu = resolve_column(df, ["Eu"])
@@ -288,52 +440,34 @@ class Vermeesch2006EuLuSr(Diagram):
         sr = resolve_column(df, ["Sr"])
         if not (eu and lu and sr):
             return None
-        return (100.0 * pd.to_numeric(df[eu], errors="coerce"),
-                500.0 * pd.to_numeric(df[lu], errors="coerce"),
+        return (500.0 * pd.to_numeric(df[lu], errors="coerce"),
+                100.0 * pd.to_numeric(df[eu], errors="coerce"),
                 pd.to_numeric(df[sr], errors="coerce"))
 
-    def plot(self, figure, df, plot_style, options: PlotOptions):
-        figure.clear()
-        ax = figure.add_subplot(111)
-        draw_ternary_frame(ax, ("100 Eu", "500 Lu", "Sr"), options.x_axis)
-        _draw_ternary_fields(ax, _VRMS_EU_LU_SR)
-        _plot_ternary_data(ax, df, plot_style, self._abc)
-        self._apply_legend(ax, options)
-        figure.tight_layout()
 
-
-_VRMS_V_TI_SC = {
-    "IAB":  [(60, 5, 35), (80, 10, 10), (75, 5, 20), (55, 5, 40)],
-    "MORB": [(35, 30, 35), (50, 30, 20), (60, 20, 20), (45, 25, 30)],
-    "OIB":  [(20, 55, 25), (35, 55, 10), (40, 45, 15), (25, 50, 25)],
-}
-
-
-class Vermeesch2006VTiSc(Diagram):
+class Vermeesch2006VTiSc(_VermeeschLDATernary):
     key = "vermeesch_VTiSc"
     title = "V − Ti/50 − 5 Sc — Vermeesch (2006a)"
-    citation = ("Vermeesch (2006a). V, Ti ppm / 50 and 5 × Sc ppm. "
-                "Discriminates IAB from MORB and OIB through compatible-"
-                "element behaviour.")
+    citation = ("Vermeesch (2006a) Figure 44, his best ternary LDA using "
+                "only incompatible elements, which makes it the one to "
+                "reach for when alteration is a worry.  V, Ti (from "
+                "TiO2) over 50 and 5 × Sc, all in ppm.  The boundaries "
+                "are an LDA in ln(50V/Ti) — ln(250Sc/Ti) space, mapped "
+                "back here, so they curve; the anchor points are from "
+                "his Table 6.")
+    spec = _LDA_TI_V_SC
+    apices = _LDA_TI_V_SC_APICES
 
     def _abc(self, df):
         v = resolve_column(df, ["V"])
+        ti_ox = resolve_column(df, ["TiO2"])
         sc = resolve_column(df, ["Sc"])
-        ti = _ti_ppm(df)
-        if not (v and sc) or ti is None:
+        if not (v and ti_ox and sc):
             return None
-        return (pd.to_numeric(df[v], errors="coerce"),
-                ti / 50.0,
+        ti = pd.to_numeric(df[ti_ox], errors="coerce") * _TI_WT_TO_PPM
+        return (ti / 50.0,
+                pd.to_numeric(df[v], errors="coerce"),
                 5.0 * pd.to_numeric(df[sc], errors="coerce"))
-
-    def plot(self, figure, df, plot_style, options: PlotOptions):
-        figure.clear()
-        ax = figure.add_subplot(111)
-        draw_ternary_frame(ax, ("V", "Ti/50", "5 Sc"), options.x_axis)
-        _draw_ternary_fields(ax, _VRMS_V_TI_SC)
-        _plot_ternary_data(ax, df, plot_style, self._abc)
-        self._apply_legend(ax, options)
-        figure.tight_layout()
 
 
 _VRMS_SM_TI_V = {
@@ -343,6 +477,9 @@ _VRMS_SM_TI_V = {
 }
 
 
+# Still a hand-drawn envelope: Figure 46 is a QDA, whose boundaries
+# are conics in log-ratio space rather than the straight rays of
+# Table 6, so it has no anchor points to rebuild it from.
 class Vermeesch2006SmTiV(Diagram):
     key = "vermeesch_SmTiV"
     title = "50 Sm − Ti/50 − V — Vermeesch (2006a)"

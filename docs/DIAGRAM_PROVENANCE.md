@@ -367,7 +367,7 @@ faded to say so.
 `Ti` was converted from TiO₂ with 5995 ppm per wt.% in four places;
 the mass ratio gives 5993.4. Now a named constant, shared.
 
-## Drawn envelope — three done, 19 to go
+## Drawn envelope — six done, 16 to go
 
 ### Done (3)
 
@@ -417,15 +417,46 @@ Fig. 7b — with the three boundary polylines the caption gives as
 coordinates. An internal check holds: equation (8)'s constant, 1.473,
 equals equation (6)'s 0.271 plus equation (7)'s 1.201.
 
-### Still to measure (19)
+### Computed, not measured (3)
+
+`vermeesch_SiTiSr`, `vermeesch_EuLuSr` and `vermeesch_VTiSc` were drawn
+envelopes — polygons typed in ternary percent, approximating by eye
+something that can be computed exactly. They are not any more.
+
+Vermeesch runs a linear discriminant analysis in log-ratio space, where
+the decision boundaries come out straight, and maps them back to the
+ternary, where "the transformed decision boundaries are no longer
+linear, but curved". His **Table 6** gives four anchor points per
+diagram in log-ratio coordinates: node 3 is the triple point and nodes
+1, 2 and 4 the three ray ends. Both axes divide by the top apex, so the
+pair is an ordinary additive log-ratio and the inverse is a softmax.
+The boundaries are now sampled along each ray and mapped back, which is
+why they curve on screen.
+
+Three things had to be settled that the paper does not state outright:
+
+- **The logarithm is natural.** See `tests/test_vermeesch_lda_ternaries.py`,
+  whose module docstring sets out the evidence from the published
+  training clusters of Figure 42a.
+- **Which apex is which.** Figures 42b, 43b and 44b put Ti/40, 500 Lu
+  and Ti/50 at the top respectively. The previous implementation had
+  Si/1000 at the top of the Si-Ti-Sr triangle, which permutes the
+  corners and is a different diagram.
+- **Which sector is which field**, read from panel (a) of each figure.
+
+Reference N-MORB, OIB and IAB compositions now land in their own field
+on all three, nine assignments out of nine.
+
+### Still to measure (16)
 
 - `saccani2015_nb_th`, `saccani2015_dy_yb`, `saccani2015_ce_dy_yb`
 - `pearce_gale_1977`, `pearce_cann_1973_ZrTi`
 - `defant_drummond_YSrY`, `defant_drummond_YbLaYb`
 - `pearce1984_YbTa`, `pearce1984_YNb`, `pearce1984_YbTaRb`,
   `pearce1984_YNbRb`
-- `vermeesch_NaNbSr`, `vermeesch_SiTiSr`, `vermeesch_EuLuSr`,
-  `vermeesch_VTiSc`, `vermeesch_SmTiV`
+- `vermeesch_NaNbSr`, `vermeesch_SmTiV` — the two **QDA** ones, whose
+  boundaries are conics in log-ratio space rather than rays from a
+  triple point, so Table 6 has no anchor points for them
 - `wood_1980_ThHfTa`, `cabanis_lecolle_1989`, `harris_1986_HfRbTa`
 
 None of their sources is on disk.

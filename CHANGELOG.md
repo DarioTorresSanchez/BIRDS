@@ -81,6 +81,15 @@ including what is still unverified.
   against a triple point published at −12.23; all three reference
   basalts now sit within 2.4 units of it, each in its own field. This
   was the open question the diagram carried a warning about.
+- **Vermeesch's three log-ratio LDA ternaries** — Si-Ti-Sr, Eu-Lu-Sr
+  and Ti-V-Sc — were polygons typed in ternary percent, approximating
+  by eye boundaries that can be computed. They are now built from the
+  anchor points of his Table 6: an LDA is straight in log-ratio space
+  and curves when mapped back to the ternary, which is what the paper
+  says and what the printed figures show. Settled on the way: the
+  logarithm is natural, not base ten, and the Si-Ti-Sr triangle had
+  Si/1000 at the apex where Figure 42b has Ti/40. Reference N-MORB, OIB
+  and IAB now land in their own field on all three, nine out of nine.
 - **Ten Verma coefficients**, read back off the rendered pages because
   the equations are embedded objects the PDF text layer does not carry:
   seven of 110 in Verma *et al.* (2012) — including an Al₂O₃
@@ -167,10 +176,10 @@ including what is still unverified.
   the type to be fixed first, with SINCLAS or IgRoCS; fed a basalt, the
   intermediate-magma set answers arc at better than even odds with no
   warning.
-- **19 diagrams still have boundaries drawn by eye** rather than
-  measured — Saccani ×3, Pearce *et al.* (1984) ×4, Vermeesch ×5,
-  Defant & Drummond ×2, Pearce & Gale, Pearce & Cann, Wood, Cabanis &
-  Lecolle and Harris. None of their sources is on disk.
+- **16 diagrams still have boundaries drawn by eye** rather than
+  measured or computed — Saccani ×3, Pearce *et al.* (1984) ×4,
+  Vermeesch ×2 (the quadratic ones), Defant & Drummond ×2, Pearce &
+  Gale, Pearce & Cann, Wood, Cabanis & Lecolle and Harris.
 - **Ni-Cu-PGE reference values** come from the usual compilations and
   have not been checked page by page against the original papers.
   Pattern shapes are robust; verify the absolute normalised level
