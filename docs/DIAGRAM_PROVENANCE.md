@@ -321,17 +321,38 @@ water-saturated rows in Table 3.10 — a curation choice, now documented.
   rebuilt Pearce function land in their own fields, which checks the
   equations, the boundary geometry and the implementation at once.
 
-### One open question
+### ~~One open question~~ — RESOLVED
 
-The book's Butler & Woronow panel disagrees with the book's own
-equations. Reference basalts come out about 13 DF2 units below the
-printed field boundaries, and no change of units closes the gap — a
-denominator rescaling moves DF1 and DF2 together, and these move apart.
-Their relative arrangement is right (MORB left, OIB lower right, IAB
-upper right), so the equations look sound and the offset sits in the
-boundary coordinates. The diagram now says so on screen, and the axes
-follow the data instead of the published frame so nothing is hidden.
-Settling it needs Vermeesch (2006a) itself.
+Butler & Woronow's panel used to disagree with its own equations:
+reference basalts came out about 13 DF2 units below the printed field
+boundaries, and no change of units closed the gap.
+
+**Both Zr coefficients are negative.** Vermeesch (2006a) equation (7)
+reads `ld1 = -0.016 log(Zr/Ti) - 2.961 log(Y/Ti) + 1.500 log(Sr/Ti)`
+and `ld2 = -1.474 log(Zr/Ti) + ...`, and the minus signs are in the
+rendered page but not in the characters behind it — the PDF text layer
+gives back `ld1 ¼ 0:016 log Zr=Ti`. Rollinson & Pease print them
+without the sign too, which is where the stored values came from.
+
+With the signs right, a reference N-MORB moves from ld2 = −26.1 to
+−12.7 against a triple point published at −12.23. All three reference
+basalts now sit 1.8 to 2.4 units from it, each in its own field. The
+on-screen caution is gone and `tests/test_published_coordinates.py`
+pins both the signs and the distances.
+
+The boundary coordinates were right all along — they are the anchor
+points of Vermeesch's Table 6, which is also where Rollinson & Pease
+took them from.
+
+**Checked while in there, and left alone:** Vermeesch's equation (8),
+for the Pearce (1976) major-element set, prints `0.555 log(TiO2/SiO2)
++ 3.822 log(Al2O3/SiO2)` while this code pairs 0.555 with Al2O3 and
+3.822 with TiO2. The stored pairing is the one that works: it puts the
+three reference basalts in three different sectors around the published
+triple point, a mean 2.7 units away, where the paper's literal reading
+bunches all three into one sector 12.8 units off. Either the equation's
+first two coefficients or its first two element names are transposed in
+print; the anchor points settle which.
 
 ### Also found along the way
 

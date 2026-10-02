@@ -234,6 +234,7 @@ from birds.diagrams.templates.frost import (  # noqa: E402
 from birds.diagrams.templates.major_df import (  # noqa: E402
     BUTLER_WORONOW_DENOMINATOR,
     BUTLER_WORONOW_DF1,
+    BUTLER_WORONOW_FIELDS,
     BUTLER_WORONOW_DF2,
     BUTLER_WORONOW_PARTS,
     PEARCE_1976_DENOMINATOR,
@@ -359,8 +360,16 @@ class TestOceanicBasaltDiscriminants:
         assert BUTLER_WORONOW_DENOMINATOR == "Ti"
 
     def test_butler_woronow_coefficients(self):
-        assert BUTLER_WORONOW_DF1 == (0.016, -2.961, 1.500)
-        assert BUTLER_WORONOW_DF2 == (1.474, 2.143, 1.840)
+        """Both Zr terms are negative in Vermeesch's equation (7).
+
+        The sign is in the rendered page and not in the characters
+        behind it -- the PDF text layer gives back "ld1 = 0.016 log
+        Zr/Ti" -- and Rollinson & Pease print it without the minus too.
+        That one sign was the whole of the discrepancy this diagram
+        used to carry a warning about.
+        """
+        assert BUTLER_WORONOW_DF1 == (-0.016, -2.961, 1.500)
+        assert BUTLER_WORONOW_DF2 == (-1.474, 2.143, 1.840)
 
     def test_the_published_sr_coefficient_is_not_an_intercept(self):
         """1.840 was carried as an additive constant; it is the Sr
@@ -436,8 +445,25 @@ class TestOceanicBasaltDiscriminants:
         assert ax.get_ylim()[1] >= ys.max()
         fig.clf()
 
-    def test_the_known_disagreement_is_stated_on_screen(self):
-        """The book's Fig. 5.5b boundaries do not match its own
-        equations; a user must not read a field name from it unaware."""
-        citation = get_diagram("butler_woronow_DF").citation
-        assert "CAUTION" in citation
+    def test_reference_basalts_sit_at_the_published_triple_point(self):
+        """What the old CAUTION was about, now an assertion.
+
+        With the Zr signs wrong a reference N-MORB came out at
+        ld2 = -26.1 against a triple point published at -12.23.  All
+        three references should now sit within a few units of it, which
+        is where group centroids belong.
+        """
+        diagram = get_diagram("butler_woronow_DF")
+        centre_x, centre_y = BUTLER_WORONOW_FIELDS["centre"]
+        for name in ("N-MORB", "OIB", "IAB"):
+            frame = pd.DataFrame([REFERENCE_BASALTS[name]])
+            xs, ys = diagram._compute_xy(frame)
+            distance = np.hypot(float(xs.iloc[0]) - centre_x,
+                                float(ys.iloc[0]) - centre_y)
+            assert distance < 4.0, f"{name} sits {distance:.1f} away"
+
+    def test_the_caution_is_gone(self):
+        """It said the equations and the boundaries disagreed.  They
+        agree once the Zr signs are right, so leaving it would tell the
+        user not to trust a field name that is now sound."""
+        assert "CAUTION" not in get_diagram("butler_woronow_DF").citation

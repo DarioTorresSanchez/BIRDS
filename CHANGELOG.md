@@ -74,6 +74,13 @@ including what is still unverified.
   diagrams and were implemented as one-axis strip charts with
   coefficients that matched nothing in the source. Rebuilt from
   Rollinson & Pease (2021) Appendix 5.1.
+- **Butler & Woronow (1986)**: both Zr coefficients are negative in
+  Vermeesch (2006a) eq. (7), and the minus signs live in the rendered
+  page rather than in the PDF's text layer, so they were lost in
+  transcription. A reference N-MORB moves from ld2 = −26.1 to −12.7
+  against a triple point published at −12.23; all three reference
+  basalts now sit within 2.4 units of it, each in its own field. This
+  was the open question the diagram carried a warning about.
 - **Ten Verma coefficients**, read back off the rendered pages because
   the equations are embedded objects the PDF text layer does not carry:
   seven of 110 in Verma *et al.* (2012) — including an Al₂O₃
@@ -152,12 +159,6 @@ including what is still unverified.
   by any one term is −0.766, −0.768 and −0.765 across the three groups,
   and the panel's triple point moves from 5.06 away from the published
   one to 0.04. The reasoning is set out at the coefficient.
-- **Butler & Woronow (1986)** disagrees with itself: reference basalts
-  put through the printed equations land about 13 DF2 units below the
-  printed field boundaries. Their relative arrangement is right, so the
-  offset sits in the boundary coordinates. The diagram says so on
-  screen and its axes follow the data. Settling it needs Vermeesch
-  (2006a).
 - **The CR column of Verma *et al.* (2013) Supplementary Table 5** is
   unusable: its log-ratios contradict the concentrations printed beside
   them and appear to have slipped a row. The panels that use it are

@@ -51,10 +51,18 @@ PEARCE_1976_DF1 = (0.555, 3.822, 0.522, 1.293, -0.531, -0.145, -0.399)
 PEARCE_1976_DF2 = (3.796, 0.008, -2.868, 0.313, 0.650, 1.421, -3.017)
 
 #: Butler & Woronow (1986) / Vermeesch (2006a).  Every part over Ti.
+#:
+#: Both Zr coefficients are negative.  Rollinson & Pease print them
+#: without the sign, and so does the text layer of Vermeesch's own PDF,
+#: where equation (7) extracts as "ld1 ¼ 0:016 log Zr=Ti" -- the minus
+#: is in the rendered page and not in the characters behind it.  That
+#: one sign was the whole of the discrepancy this diagram carried a
+#: warning about: a reference N-MORB came out at ld2 = -26.1 against a
+#: published triple point at -12.23, and now comes out at -12.7.
 BUTLER_WORONOW_PARTS = ("Zr", "Y", "Sr")
 BUTLER_WORONOW_DENOMINATOR = "Ti"
-BUTLER_WORONOW_DF1 = (0.016, -2.961, 1.500)
-BUTLER_WORONOW_DF2 = (1.474, 2.143, 1.840)
+BUTLER_WORONOW_DF1 = (-0.016, -2.961, 1.500)
+BUTLER_WORONOW_DF2 = (-1.474, 2.143, 1.840)
 
 # ---------------------------------------------------------------------------
 # Field boundaries — Figure 5.5 caption.  Three straight boundaries run
@@ -234,20 +242,12 @@ class ButlerWoronowDF(_DFBinary):
     key = "butler_woronow_DF"
     title = "Zr − Y − Sr − Ti DF — Butler & Woronow (1986) / Vermeesch (2006a)"
     citation = ("Butler & Woronow (1986), reassessed by Vermeesch "
-                "(2006a).  DF1-DF2 from ln(Zr/Ti), ln(Y/Ti) and "
-                "ln(Sr/Ti), all in ppm.  Equations from Rollinson & "
-                "Pease (2021) Appendix 5.1; field boundaries from the "
-                "Fig. 5.5 caption.  Sr is mobile — keep this one for "
-                "unaltered rocks.  CAUTION: the book's own equations "
-                "and its figure axes disagree here.  Reference "
-                "basalts put through the printed equations land about "
-                "13 DF2 units below the printed field boundaries, and "
-                "no change of units closes the gap; their relative "
-                "arrangement (MORB left, OIB lower right, IAB upper "
-                "right) is right, so the offset sits in the boundary "
-                "coordinates rather than the axes.  Read the "
-                "separation, not the field name, until Vermeesch "
-                "(2006a) itself has been checked.")
+                "(2006a) eq. (7).  DF1-DF2 from ln(Zr/Ti), ln(Y/Ti) "
+                "and ln(Sr/Ti), all in ppm; anchor points from his "
+                "Table 6.  Sr is mobile — keep this one for unaltered "
+                "rocks.  Reference N-MORB, OIB and IAB fall 1.8 to 2.4 "
+                "units from the published triple point, each in its "
+                "own field.")
     parts = BUTLER_WORONOW_PARTS
     denominator = BUTLER_WORONOW_DENOMINATOR
     df1_coefs = BUTLER_WORONOW_DF1
