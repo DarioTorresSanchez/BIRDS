@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-1278%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-2127%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -429,6 +429,11 @@ What the suite covers, and why those things and not others:
 | **Normalisers** | Every reference resolves, all values are positive and finite, REE tables cover the lanthanides, and a name listed in two categories resolves to the richer table |
 | **GUI state** | Each test corresponds to a bug that actually shipped: stale data tables, selections outliving their dataset, tallies that ignored group visibility, misaligned below-detection masks |
 | **Sessions** | `.birds` and `.birdstyle` round-trips, including the detection limits that make the policy changeable after a reload |
+| **Published coordinates** | Vertices and boundary points pinned against the figures and tables they were measured from, so a calibrated diagram cannot drift back |
+| **Verma centroids** | Every discriminant function evaluated at its paper's own group means has to return that paper's own published centroid — 60 of them. This is what found ten wrong coefficients that a digit-by-digit check had scored 95–100 % |
+| **Verma probabilities** | The triple point of a panel must be the circumcentre of its three group centroids, which is where all three settings come out equally likely. The triple points come from the figure captions and the centroids from elsewhere in the same papers, so neither is checking itself |
+| **Reference materials** | USGS BHVO-2, BCR-2 and AGV-2 through the whole chain: classification, norm, chondrite-normalised pattern, and — for the two whose setting is not in dispute — tectonic discrimination |
+| **Map basemap** | The tile download gives up on its deadline and never blocks the interface, proved against a local socket that accepts connections and then says nothing, so the test does not depend on anyone's CDN |
 
 The bibliography is tested too: citations verified against their source
 PDFs must be present, and the ones removed as wrong or orphaned must not
@@ -471,7 +476,12 @@ BIRDS/
 ## Status
 
 **Version 0.1.0 (alpha).** The application is in active development and
-under testing. Known limitations worth stating plainly:
+under testing. [`CHANGELOG.md`](CHANGELOG.md) records what has changed
+and against which published source each diagram was checked;
+[`docs/DIAGRAM_PROVENANCE.md`](docs/DIAGRAM_PROVENANCE.md) carries the
+same thing diagram by diagram, including what is still unverified.
+
+Known limitations worth stating plainly:
 
 - The **Ni-Cu-PGE reference values** are taken from the usual literature
   compilations and have not been re-checked page by page against the
