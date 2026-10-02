@@ -121,7 +121,8 @@ including what is still unverified.
   under the canvas counted those samples as plotted, so "n = 12" could
   mean eleven points on screen with no way to find the twelfth. They
   are now a category of their own, clickable like the others to list
-  which ones. The frames are untouched: widening one would move
+  which ones, and a hollow triangle on the frame edge points the way
+  each one went. The frames are untouched: widening one would move
   boundaries that are only defined inside it.
 - **The Map view froze** on a slow basemap. contextily fetches tiles one
   at a time through `requests.get` with no timeout, from the redraw, on
@@ -173,10 +174,6 @@ including what is still unverified.
   have not been checked page by page against the original papers.
   Pattern shapes are robust; verify the absolute normalised level
   before publishing.
-- **Fixed-range diagrams still clip**, by design: a sample outside the
-  frame is drawn and then clipped away. It is now reported rather than
-  silently counted as plotted (see *Fixed*), but there is no marker at
-  the edge to say which direction it went.
 
 ## [0.1.0-alpha] – 2026-08-20
 

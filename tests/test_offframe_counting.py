@@ -180,3 +180,140 @@ class TestCoverage:
         assert report.offframe == 0, (
             "a hidden sample was counted off the frame as well")
         assert report.plotted + report.dropped == report.total
+
+
+class TestTheEdgeMarker:
+    """The tally says how many samples went off the frame; the marker on
+    the canvas says which way each one went.
+
+    Drawn as a hollow triangle pointing outward, in the group's colour,
+    so it reads as a direction rather than as a datum sitting on the
+    boundary -- a filled point there would claim a composition the
+    sample does not have.
+    """
+
+    @staticmethod
+    def _markers(ax):
+        return [line for line in ax.lines
+                if line.get_label() == "_offframe"]
+
+    @pytest.fixture
+    def tas_figure(self):
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+
+        from birds.diagrams.templates.base import PlotOptions
+
+        samples = pd.DataFrame([
+            {"Sample": "inside", "SiO2": 55.0, "Na2O": 3.0, "K2O": 2.0},
+            {"Sample": "right", "SiO2": 95.0, "Na2O": 3.0, "K2O": 2.0},
+            {"Sample": "left", "SiO2": 20.0, "Na2O": 3.0, "K2O": 2.0},
+            {"Sample": "above", "SiO2": 55.0, "Na2O": 14.0, "K2O": 10.0},
+        ])
+        figure = plt.figure()
+        get_diagram("tas_volcanic").plot(figure, samples, PlotStyle(),
+                                         PlotOptions())
+        yield figure
+        plt.close(figure)
+
+    def test_one_marker_for_each_sample_that_left(self, tas_figure):
+        assert len(self._markers(tas_figure.axes[0])) == 3
+
+    def test_each_points_the_way_its_sample_went(self, tas_figure):
+        markers = {m.get_marker() for m in self._markers(tas_figure.axes[0])}
+        assert markers == {">", "<", "^"}
+
+    def test_they_sit_on_the_frame(self, tas_figure):
+        ax = tas_figure.axes[0]
+        x_lo, x_hi = sorted(ax.get_xlim())
+        y_lo, y_hi = sorted(ax.get_ylim())
+        for marker in self._markers(ax):
+            x = marker.get_xdata()[0]
+            y = marker.get_ydata()[0]
+            assert x_lo <= x <= x_hi and y_lo <= y <= y_hi
+            assert x in (x_lo, x_hi) or y in (y_lo, y_hi)
+
+    def test_they_are_hollow(self, tas_figure):
+        """Open, so nobody reads one as a sample plotting on the edge."""
+        for marker in self._markers(tas_figure.axes[0]):
+            assert marker.get_markerfacecolor() == "none"
+
+    def test_they_stay_out_of_the_legend(self, tas_figure):
+        _handles, labels = tas_figure.axes[0].get_legend_handles_labels()
+        assert not any(label == "_offframe" for label in labels)
+
+    def test_a_reference_point_is_never_marked(self):
+        """Templates label their sample scatter with the group name and
+        leave reference compositions unlabelled, which is the whole
+        basis for telling them apart.  Marking a reference as a stray
+        sample would be a worse lie than the silence this replaces."""
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+
+        from birds.diagrams.templates.base import PlotOptions
+
+        figure = plt.figure()
+        samples = pd.DataFrame([
+            {"Sample": "x", "Th": 1.2, "Nb": 18.0, "Yb": 2.0,
+             "TiO2": 1.15, "Y": 26.0},
+        ])
+        get_diagram("pearce2008_thyb_nbyb").plot(
+            figure, samples, PlotStyle(), PlotOptions())
+        labelled = [c for c in figure.axes[0].collections
+                    if not (c.get_label() or "").startswith("_")]
+        unlabelled = [c for c in figure.axes[0].collections
+                      if (c.get_label() or "").startswith("_")]
+        assert labelled, "no sample scatter to tell apart"
+        assert unlabelled, "no reference points on this diagram any more"
+        plt.close(figure)
+
+    def test_a_multi_panel_set_marks_each_panel(self):
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+
+        from birds.diagrams.templates.base import PlotOptions
+
+        basalt = dict(SiO2=50.5, TiO2=1.15, Al2O3=15.3, Fe2O3=2.0, FeO=6.0,
+                      MnO=0.17, MgO=7.6, CaO=11.3, Na2O=2.7, K2O=0.1,
+                      P2O5=0.1, V=250.0, Y=28.0, Zr=74.0)
+        samples = pd.DataFrame([
+            {"Sample": "ordinary", "Nb": 2.33, **basalt},
+            {"Sample": "absurd", "Nb": 1e-4, **basalt},
+        ])
+        figure = plt.figure()
+        get_diagram("verma_agrawal_2011").plot(
+            figure, samples, PlotStyle(), PlotOptions())
+        marked = sum(1 for ax in figure.axes if self._markers(ax))
+        assert marked >= 3, (
+            f"only {marked} of {len(figure.axes)} panels flagged it")
+        plt.close(figure)
+
+    def test_an_unbounded_diagram_draws_none(self):
+        """Nothing can be outside an axis that was scaled to the data.
+
+        Frost's diagram is one of the 20 templates that scale to what
+        they are given, so its canvas should carry no edge markers
+        however extreme the samples are.
+        """
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+
+        from birds.diagrams.templates.base import PlotOptions
+
+        diagram = get_diagram("frost")
+        assert not diagram.x_range and not diagram.y_range, (
+            "this template gained a fixed frame; pick another")
+        samples = pd.DataFrame([
+            {"Sample": "a", "SiO2": 50.0, "FeO": 8.0, "Fe2O3": 2.0,
+             "MgO": 8.0, "CaO": 11.0, "Na2O": 2.5, "K2O": 0.5},
+            {"Sample": "b", "SiO2": 78.0, "FeO": 0.5, "Fe2O3": 0.2,
+             "MgO": 0.1, "CaO": 0.3, "Na2O": 4.5, "K2O": 5.0},
+        ])
+        figure = plt.figure()
+        diagram.plot(figure, samples, PlotStyle(), PlotOptions())
+        assert all(self._markers(ax) == [] for ax in figure.axes)
+        plt.close(figure)

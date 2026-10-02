@@ -344,6 +344,73 @@ class Diagram:
                 except Exception:
                     pass
 
+    @staticmethod
+    def _mark_offframe(ax) -> None:
+        """Flag, at the edge, every sample that plots outside the frame.
+
+        Call once the limits are final.  A sample beyond them is drawn
+        and then clipped, so without this it is simply absent, and the
+        reader cannot tell an analysis the diagram does not cover from
+        one that was never loaded.  The tally under the canvas counts
+        them; this says which way they went.
+
+        Only artists carrying a legend label are considered.  Templates
+        label their sample scatter with the group name, while reference
+        points -- the Sun & McDonough compositions on Pearce's diagrams,
+        say -- are drawn unlabelled and come back from matplotlib as
+        ``_child3``.  Marking one of those as a stray sample would be a
+        worse lie than the silence this replaces.
+
+        The marker is a hollow triangle pointing the way out, in the
+        group's own colour, so it reads as a direction rather than as a
+        datum sitting on the boundary.
+        """
+        import numpy as _np
+
+        x_lo, x_hi = sorted(ax.get_xlim())
+        y_lo, y_hi = sorted(ax.get_ylim())
+        x_span = x_hi - x_lo
+        y_span = y_hi - y_lo
+        if not (_np.isfinite(x_span) and _np.isfinite(y_span)):
+            return
+
+        for collection in list(ax.collections):
+            label = collection.get_label() or ""
+            if label.startswith("_"):
+                continue
+            offsets = collection.get_offsets()
+            if offsets is None or len(offsets) == 0:
+                continue
+            try:
+                colour = collection.get_facecolor()[0]
+            except (IndexError, TypeError):                 # pragma: no cover
+                colour = "#444444"
+
+            for x, y in _np.asarray(offsets, dtype=float):
+                if not (_np.isfinite(x) and _np.isfinite(y)):
+                    continue
+                # +1 off the low edge, -1 off the high one, 0 inside.
+                # int() first: numpy booleans refuse to be subtracted.
+                over_x = int(x < x_lo) - int(x > x_hi)
+                over_y = int(y < y_lo) - int(y > y_hi)
+                if not (over_x or over_y):
+                    continue
+                # Which edge it left by, as a fraction of the span, so
+                # the two axes are comparable whatever their units.
+                out_x = (max(x_lo - x, x - x_hi) / x_span) if (
+                    over_x and x_span > 0) else 0.0
+                out_y = (max(y_lo - y, y - y_hi) / y_span) if (
+                    over_y and y_span > 0) else 0.0
+                if out_x >= out_y:
+                    marker = "<" if over_x > 0 else ">"
+                else:
+                    marker = "v" if over_y > 0 else "^"
+                ax.plot(min(max(x, x_lo), x_hi), min(max(y, y_lo), y_hi),
+                        marker=marker, markersize=7,
+                        markerfacecolor="none", markeredgecolor=colour,
+                        markeredgewidth=1.4, linestyle="none",
+                        clip_on=False, zorder=6, label="_offframe")
+
     def _apply_axes(self, ax, options: PlotOptions) -> None:
         x_label = options.x_axis.label or self.x_label
         y_label = options.y_axis.label or self.y_label
@@ -361,6 +428,10 @@ class Diagram:
             ax.set_xscale("log")
         if self.log_y:
             ax.set_yscale("log")
+        if self.x_range or self.y_range:
+            # Only a fixed frame can leave a sample outside it; an
+            # auto-scaled axis is built around the data by definition.
+            self._mark_offframe(ax)
 
     def _apply_legend(self, ax, options: PlotOptions) -> None:
         if not options.legend.visible:
@@ -680,6 +751,8 @@ class MultiPanelDiagram(Diagram):
             t.set_fontsize(max(options.x_axis.font_size - 3, 6))
         ax.grid(True, which="major", linestyle=":", linewidth=0.4,
                 color="#bcbcbc", alpha=0.7)
+        if panel.x_range or panel.y_range:
+            Diagram._mark_offframe(ax)
 
     def _apply_shared_legend(self, figure, axes, options: PlotOptions) -> None:
         if not options.legend.visible:
