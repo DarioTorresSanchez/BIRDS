@@ -109,6 +109,23 @@ including what is still unverified.
   endpoint points into the opposite quadrant from the fields it
   divides, and a Rb–(Yb+Ta) boundary printed as ending a decade above
   the junction its two neighbours share.
+- **The three Saccani (2015) diagrams** were wrong in the same three
+  ways each. Figures 8 and 9 are chondrite-normalised — both captions
+  say so — and all three were drawn against N-MORB, a factor of 17.9 on
+  Dy and Yb, so every sample fell off the bottom-left corner of frames
+  that run to Dy_N = 25. Both had their axes swapped, and both were
+  logarithmic where the source is linear. The boundaries were invented:
+  Figure 5a's four segments had been two rays at Th_N/Nb_N = 1 and 0.1,
+  and the other two carried shaded rectangles and a hand-drawn boninite
+  blob. Saccani says he drew his lines by eye, but he printed the end
+  coordinates of every one of them on the figures, and those are what
+  the diagrams now carry.
+- **Four of the six Saccani rows in the statistics table** normalised to
+  N-MORB for the same reason. Dy_N and Yb_N were 17.9 times low and
+  (Ce/Yb)_N was 46 % high. (Dy/Yb)_N was the one row that survived,
+  within 0.15 %, because N-MORB and chondrite happen to have nearly the
+  same Dy/Yb — which is why the fault was easy to miss in the row where
+  it did not show. Every row now says which normaliser it used.
 - **Ten Verma coefficients**, read back off the rendered pages because
   the equations are embedded objects the PDF text layer does not carry:
   seven of 110 in Verma *et al.* (2012) — including an Al₂O₃
@@ -195,9 +212,18 @@ including what is still unverified.
   the type to be fixed first, with SINCLAS or IgRoCS; fed a basalt, the
   intermediate-magma set answers arc at better than even odds with no
   warning.
-- **10 diagrams still have boundaries drawn by eye** rather than
-  measured or computed — Saccani ×3, Vermeesch ×2 (the quadratic ones),
-  Defant & Drummond ×2, Pearce & Gale, Cabanis & Lecolle and Harris.
+- **7 diagrams still have boundaries drawn by eye** rather than measured
+  or computed — Vermeesch ×2 (the quadratic ones), Defant & Drummond ×2,
+  Pearce & Gale, Cabanis & Lecolle and Harris. The two Vermeesch ones
+  are blocked rather than pending: being QDA, they need per-class
+  covariance matrices that the paper does not publish.
+- **Saccani gives two rules for boninite against island-arc tholeiite**
+  and they do not agree everywhere. The vertical at Dy_N = 8.5 cuts the
+  line of Figure 9 at Yb_N = 10, so either side of that crossing a band
+  of samples is called differently — a unit of Dy_N at the foot of the
+  frame, one and a half at the top. The diagram draws the line, which is
+  what Figure 9 is; both rules are quoted on it so that a sample landing
+  in the band is visibly a case with two answers.
 - **Ni-Cu-PGE reference values** come from the usual compilations and
   have not been checked page by page against the original papers.
   Pattern shapes are robust; verify the absolute normalised level

@@ -498,17 +498,113 @@ usefully, asserts that the boundaries sharing a field actually meet.
 That junction check is exactly what the second error breaks, and it
 would have caught it in the original.
 
-### Still to measure (10)
+## Saccani (2015) — three diagrams, every coordinate printed
 
-- `saccani2015_nb_th`, `saccani2015_dy_yb`, `saccani2015_ce_dy_yb`
-- `pearce_gale_1977`
-- `defant_drummond_YSrY`, `defant_drummond_YbLaYb`
-- `vermeesch_NaNbSr`, `vermeesch_SmTiV` — the two **QDA** ones, whose
-  boundaries are conics in log-ratio space rather than rays from a
-  triple point, so Table 6 has no anchor points for them
-- `cabanis_lecolle_1989`, `harris_1986_HfRbTa`
+`Sacanni_2014.pdf` — Saccani, E. (2015) *Geoscience Frontiers* **6**,
+481–501. Keys `saccani2015_nb_th`, `saccani2015_ce_dy_yb`,
+`saccani2015_dy_yb`.
 
-None of their sources is on disk.
+Section 7 says the boundaries of Figures 5, 8 and 9 "were drawn by eye
+in order to obtain the best discrimination between different basaltic
+types", so there is no analysis to reproduce. But every line has its end
+coordinates printed on the figure itself, in brackets beside an arrow
+pointing at the end they belong to. Those are what the three diagrams
+carry; nothing here is measured off a figure.
+
+**Figure 5a**, Th_N vs Nb_N, N-MORB-normalised (Sun & McDonough 1989),
+log–log, 0.01–100 by 0.01–1000. Four segments:
+
+| From | To | What it bounds |
+| --- | --- | --- |
+| PM `(0.306, 0.708)` | `(100, 1000)` | MORB–OIB array below, volcanic arc array above |
+| `(0.01, 0.1)` | PM | its continuation below PM |
+| `(0.01, 20)` | `(2.2, 8.0)` | upper bound, inside the arc array |
+| PM | `(0.5, 0.01)` | the near-vertical one, down from PM |
+
+The first is the one that discriminates, and the text quantifies it both
+ways: ">99% of the analyzed basaltic rocks from oceanic,
+subduction-unrelated settings plot below" it, and ">99% of
+subduction-related basaltic rocks plot above". PM is the printed
+`(0.306, 0.708)`, which is Sun & McDonough's primitive mantle over their
+N-MORB — Nb 0.713/2.33 and Th 0.0850/0.12. Neither primitive mantle in
+this project's own tables (McDonough & Sun 1995, Palme & O'Neill 2014)
+reproduces it, so the printed pair is used as printed.
+
+Two things are deliberately left as the source has them:
+
+- The segment `(0.01,20) → (2.2,8.0)` does not quite reach the main one,
+  which passes through Th_N = 8.38 at Nb_N = 2.2. The gap is 4.8 %, a
+  fiftieth of the frame height, thinner than the lines are drawn. Lines
+  drawn by eye with their coordinates read back off them do not close
+  exactly, and nothing is adjusted to make a junction that the author
+  never claimed was one.
+- **Figure 12a's named sub-fields** (CAB, BABB, IAT & boninite, MTB &
+  SSZ D-MORB, and so on) are not drawn. They carry no coordinates, they
+  overlap heavily, and the paper measures that overlap itself — 261 of
+  1097 samples, 25 %, fall in the wrong sub-type. The two arrays, which
+  the text puts at better than 99 % each, are what the diagram draws.
+
+**Figure 8**, (Dy/Yb)_N vs (Ce/Yb)_N, and **Figure 9**, Yb_N vs Dy_N,
+are both **chondrite**-normalised — both captions say so — both linear,
+and both carry one separation line with its ends printed:
+
+| Figure | Frame | Line | Fields |
+| --- | --- | --- | --- |
+| 8 | x 0–2.5, y 0.5–2 | `(0.4, 1.5) → (2, 0.9)` | G-MORB above (96 %), N-MORB below (99 %) |
+| 9 | x 0–25, y 0–25 | `(7, 25) → (9.5, 0)` | boninite left (100 %), IAT right (99 %) |
+
+All three were wrong before, in the same three ways. They were drawn
+against **N-MORB**, which on Figures 8 and 9 is a factor of 17.9 on Dy
+and Yb, so every sample fell off the bottom-left corner of a frame it
+should have filled. Both had their **axes swapped**. Both were
+**logarithmic** where the source is linear. The boundaries themselves
+were invented: Figure 5a's four segments had been two rays at
+Th_N/Nb_N = 1 and 0.1, and Figures 8 and 9 carried shaded rectangles and
+a hand-drawn boninite blob.
+
+The statistics table reached the same quantities by its own route and
+had the same fault: four of its six Saccani rows normalised to N-MORB.
+`Dy_N` and `Yb_N` were 17.9 times low and `(Ce/Yb)_N` 46 % high.
+`(Dy/Yb)_N` was the one row that survived, within 0.15 %, because N-MORB
+and chondrite happen to have nearly the same Dy/Yb — which is why the
+fault was easy to miss in the row where it did not show. All six rows
+now say which normaliser they used.
+
+One caveat is the source's own. Saccani gives **two** rules for
+boninite against IAT: the line of Figure 9, and "99.5% of boninites have
+DyN < 8.5 and 99% of IATs have DyN > 8.5". The vertical at 8.5 cuts the
+sloping line, at Yb_N = 10, so away from that one crossing the two rules
+call a band of samples differently — a full unit of Dy_N at the foot of
+the frame, one and a half at the top. Neither is adjusted to meet the
+other; the diagram draws the line, because that is what Figure 9 is, and
+both rules are quoted in the citation so a user landing in the band can
+see there are two answers.
+
+`tests/test_saccani_2015.py` pins every published coordinate, the
+normaliser of each figure, the axis order, the linear scales, and the
+band where Saccani's two rules disagree.
+
+### Still to measure (7)
+
+Every one of these now has its source on disk — the sentence that used
+to stand here, that none of them did, was left over from before the
+PDFs were collected.
+
+| Diagram | Source on disk | State |
+| --- | --- | --- |
+| `pearce_gale_1977` | `Pearce_Gale_1977.pdf` | to do |
+| `defant_drummond_YSrY`, `defant_drummond_YbLaYb` | `Defant_Drummond 1990.pdf` | to do |
+| `cabanis_lecolle_1989` | `Cabanis_Lecolle_1989.jpg` | to do; a figure image, so this one has to be measured rather than read |
+| `harris_1986_HfRbTa` | `Harris_etal_1986.pdf` | to do |
+| `vermeesch_NaNbSr`, `vermeesch_SmTiV` | `VermeeschGCubed2006.pdf` | **blocked** |
+
+The two Vermeesch ones are blocked for a reason no further reading will
+clear: they are **QDA**, so their boundaries are conics in log-ratio
+space rather than rays from a triple point, and reproducing them needs
+the per-class covariance matrices. The paper publishes neither those nor
+anchor points for them in Table 6, the way it does for the three LDA
+ternaries. They stay drawn by eye unless the data behind the paper can
+be obtained.
 
 ## Method
 

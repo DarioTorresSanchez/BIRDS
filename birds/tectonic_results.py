@@ -31,6 +31,7 @@ from .diagrams.templates.major_df import (
 )
 from .diagrams.templates.tectonic_bivariate import (
     _NMORB_SUN,
+    _SACCANI_CHONDRITE,
     _yang_fckantms,
     _yang_fcms,
 )
@@ -124,12 +125,32 @@ def _ratio(df: pd.DataFrame, num: str, den: str) -> Optional[pd.Series]:
 
 
 def _saccani_normed(df: pd.DataFrame, element: str) -> Optional[pd.Series]:
+    """Normalise to N-MORB, as Saccani's Figure 5 does for Nb and Th."""
     if element not in _NMORB_SUN:
         return None
     raw = _to_numeric(df, element)
     if raw is None:
         return None
     return raw / _NMORB_SUN[element]
+
+
+def _saccani_chondrite_normed(df: pd.DataFrame,
+                              element: str) -> Optional[pd.Series]:
+    """Normalise to chondrite, as Saccani's Figures 8 and 9 do.
+
+    Those two captions say chondrite, not N-MORB, and the whole of this
+    table normalised all six Saccani rows to N-MORB.  Dy and Yb came out
+    17.9 times low, and Ce_N/Yb_N 46 % high.  Dy_N/Yb_N was the one row
+    that survived, within 0.15 %, because N-MORB and chondrite happen to
+    have almost the same Dy/Yb — which is why the error was easy to miss
+    here.
+    """
+    if element not in _SACCANI_CHONDRITE:
+        return None
+    raw = _to_numeric(df, element)
+    if raw is None:
+        return None
+    return raw / _SACCANI_CHONDRITE[element]
 
 
 def _make_verma_df(coef: DFCoefSet) -> ComputeFn:
@@ -170,19 +191,21 @@ def _ti_v(df: pd.DataFrame) -> Optional[pd.Series]:
 
 
 def _saccani_ce_yb(df):
-    ce_n = _saccani_normed(df, "Ce")
-    yb_n = _saccani_normed(df, "Yb")
+    ce_n = _saccani_chondrite_normed(df, "Ce")
+    yb_n = _saccani_chondrite_normed(df, "Yb")
     if ce_n is None or yb_n is None:
         return None
-    return ce_n / yb_n
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return ce_n / yb_n
 
 
 def _saccani_dy_yb(df):
-    dy_n = _saccani_normed(df, "Dy")
-    yb_n = _saccani_normed(df, "Yb")
+    dy_n = _saccani_chondrite_normed(df, "Dy")
+    yb_n = _saccani_chondrite_normed(df, "Yb")
     if dy_n is None or yb_n is None:
         return None
-    return dy_n / yb_n
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return dy_n / yb_n
 
 
 # ---------------------------------------------------------------------------
@@ -276,23 +299,26 @@ DISCRIMINATORS: List[Discriminator] = [
     Discriminator("dd.la_yb", "La/Yb",
                   "Defant & Drummond (1990) — adakite vs ADR",
                   lambda df: _ratio(df, "La", "Yb")),
-    # ----- Saccani (2015) N-MORB normalised ----------------------------
+    # ----- Saccani (2015) ----------------------------------------------
+    # Figure 5 normalises to N-MORB; Figures 8 and 9 to chondrite.
     Discriminator("saccani.nb_n", "Nb_N (N-MORB)",
-                  "Saccani (2015) — N-MORB normalised",
+                  "Saccani (2015) Fig. 5 — N-MORB normalised",
                   lambda df: _saccani_normed(df, "Nb")),
     Discriminator("saccani.th_n", "Th_N (N-MORB)",
-                  "Saccani (2015) — N-MORB normalised",
+                  "Saccani (2015) Fig. 5 — N-MORB normalised",
                   lambda df: _saccani_normed(df, "Th")),
-    Discriminator("saccani.dy_n", "Dy_N (N-MORB)",
-                  "Saccani (2015) — N-MORB normalised",
-                  lambda df: _saccani_normed(df, "Dy")),
-    Discriminator("saccani.yb_n", "Yb_N (N-MORB)",
-                  "Saccani (2015) — N-MORB normalised",
-                  lambda df: _saccani_normed(df, "Yb")),
-    Discriminator("saccani.ce_yb_n", "Ce_N/Yb_N",
-                  "Saccani (2015) — N-MORB normalised", _saccani_ce_yb),
-    Discriminator("saccani.dy_yb_n", "Dy_N/Yb_N",
-                  "Saccani (2015) — N-MORB normalised", _saccani_dy_yb),
+    Discriminator("saccani.dy_n", "Dy_N (chondrite)",
+                  "Saccani (2015) Fig. 9 — chondrite normalised",
+                  lambda df: _saccani_chondrite_normed(df, "Dy")),
+    Discriminator("saccani.yb_n", "Yb_N (chondrite)",
+                  "Saccani (2015) Fig. 9 — chondrite normalised",
+                  lambda df: _saccani_chondrite_normed(df, "Yb")),
+    Discriminator("saccani.ce_yb_n", "(Ce/Yb)_N (chondrite)",
+                  "Saccani (2015) Fig. 8 — chondrite normalised",
+                  _saccani_ce_yb),
+    Discriminator("saccani.dy_yb_n", "(Dy/Yb)_N (chondrite)",
+                  "Saccani (2015) Fig. 8 — chondrite normalised",
+                  _saccani_dy_yb),
     # ----- Yang et al. (2019) -------------------------------------------
     Discriminator("yang.fcms", "FCMS",
                   "Yang et al. (2019) — high-Mg source proxy",

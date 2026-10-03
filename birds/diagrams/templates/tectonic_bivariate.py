@@ -9,6 +9,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from ...normalizations import REE_CHONDRITES
 from .base import Diagram, inverse_logratio, resolve_column
 
 
@@ -386,22 +387,81 @@ class PearceCann1973ZrTi(Diagram):
 
 
 # ---------------------------------------------------------------------------
-# Saccani (2015) NbN vs ThN (N-MORB normalised)
+# Saccani (2015) — Th-Nb and Ce-Dy-Yb systematics
 # ---------------------------------------------------------------------------
+#
+# Saccani says plainly that the boundaries of his Figures 5, 8 and 9
+# "were drawn by eye in order to obtain the best discrimination between
+# different basaltic types", so there is no analysis to recompute.  What
+# he does give, printed in brackets on each of the three figures beside
+# an arrow pointing at the end it belongs to, are the coordinates of
+# every line.  Those are what is used here; nothing is measured off a
+# figure.
+#
+# Figure 5 is normalised to N-MORB.  Figures 8 and 9 are normalised to
+# **chondrite** — both captions say so — and were being drawn here
+# against N-MORB, which shrinks Dy by 17.9 and Yb by 17.9 and puts every
+# sample off the frame of axes that run to 25.  Their axes were also the
+# wrong way round, and both are linear rather than logarithmic.
+#
+# Figure 12a names fields inside the Th-Nb frame (CAB, BABB, IAT and
+# boninite, and so on) and draws envelopes for them.  Those are not
+# reproduced: they carry no coordinates, they overlap heavily, and the
+# paper measures that overlap itself — 25 % of the MORB-OIB array
+# samples fall in the wrong sub-type.  The two arrays, which the text
+# quantifies at better than 99 % each, are what this diagram draws.
 
 _NMORB_SUN = {"Nb": 2.33, "Th": 0.12, "Yb": 3.05, "Dy": 4.55, "Ce": 7.50}
+
+#: Chondrite for Figures 8 and 9, taken from the table the spider
+#: diagrams already normalise against rather than copied, so the two
+#: cannot drift apart.  Ce 0.612, Dy 0.254, Yb 0.17 ppm.
+_SACCANI_CHONDRITE = REE_CHONDRITES["Sun & McDonough (1989) – CI"]
+
+#: Primordial mantle in Figure 5a's own coordinates, printed on the
+#: figure as (x=0.306; y=0.708).  Sun & McDonough's PM over their
+#: N-MORB: Nb 0.713/2.33 and Th 0.0850/0.12 give exactly these.  Three
+#: of the four segments start or end here.
+_SACCANI_PM = (0.306, 0.708)
+
+#: Figure 5a, each segment with the endpoints printed beside it.  The
+#: first is the one that discriminates: ">99% of the analyzed basaltic
+#: rocks from oceanic, subduction-unrelated settings plot below the
+#: segment between the primordial mantle (PM) composition and the point
+#: with co-ordinates NbN = 100; ThN = 1000", and ">99% of
+#: subduction-related basaltic rocks plot above this segment".
+_SACCANI_TH_NB_LINES = (
+    (_SACCANI_PM, (100.0, 1000.0)),   # MORB-OIB array below, arc array above
+    ((0.01, 0.1), _SACCANI_PM),       # its continuation below PM
+    ((0.01, 20.0), (2.2, 8.0)),       # upper bound, inside the arc array
+    (_SACCANI_PM, (0.5, 0.01)),       # the near-vertical one, down from PM
+)
+
+#: Figure 8, the one separation line: (x=0.4; y=1.5) to (x=2; y=0.9).
+_SACCANI_CE_YB_LINE = ((0.4, 1.5), (2.0, 0.9))
+
+#: Figure 9, the one separation line: (x=7; y=25) to (x=9.5; y=0).
+_SACCANI_DY_YB_LINE = ((7.0, 25.0), (9.5, 0.0))
+
+#: "99.5% of boninites have DyN < 8.5 and 99% of IATs have DyN > 8.5" —
+#: a second and simpler rule the paper gives for the same two types.
+_SACCANI_BONINITE_DY_N = 8.5
 
 
 class Saccani2015NbTh(Diagram):
     key = "saccani2015_nb_th"
-    title = "Nb_N vs Th_N — Saccani (2015)"
-    citation = ("Saccani (2015). Values normalised to N-MORB (Sun & "
-                "McDonough 1989). >94 % discrimination between MORB-OIB "
-                "and volcanic-arc arrays.")
-    x_label = "Nb / Nb$_{N-MORB}$"
-    y_label = "Th / Th$_{N-MORB}$"
+    title = "Th$_N$ vs Nb$_N$ — Saccani (2015)"
+    citation = ("Saccani (2015) Fig. 5a; the line coordinates are "
+                "printed on that figure. Nb and Th normalised to N-MORB "
+                "(Sun & McDonough 1989). More than 99 % of "
+                "subduction-unrelated oceanic basalts plot below the "
+                "segment from primordial mantle to (100, 1000), and "
+                "more than 99 % of subduction-related ones above it. "
+                "The author states that he drew these lines by eye.")
+    x_label = "Nb$_N$"
+    y_label = "Th$_N$"
     x_range = (0.01, 100)
-    y_range = (0.01, 200)
+    y_range = (0.01, 1000)
     log_x = True
     log_y = True
 
@@ -414,17 +474,22 @@ class Saccani2015NbTh(Diagram):
                 pd.to_numeric(df[th], errors="coerce") / _NMORB_SUN["Th"])
 
     def _draw_background(self, ax, options):
-        xs = np.array([0.01, 100.0])
-        # MORB-OIB array bounded approximately by Th_N / Nb_N = 1 (above) and
-        # 0.1 (below) on log-log.
-        ax.fill_between(xs, 0.1 * xs, 1.0 * xs, color="#888",
-                        alpha=0.10, zorder=0)
-        ax.plot(xs, 0.1 * xs, color="#444", lw=1.0)
-        ax.plot(xs, 1.0 * xs, color="#444", lw=1.0)
-        ax.text(5, 0.6, "MORB–OIB array", fontsize=10, color="#333",
-                style="italic")
-        ax.text(0.05, 8, "Volcanic-arc array (subduction)",
-                fontsize=10, color="#333", style="italic")
+        for (x0, y0), (x1, y1) in _SACCANI_TH_NB_LINES:
+            ax.plot([x0, x1], [y0, y1], color="#444", lw=1.0, zorder=0)
+        ax.plot([_SACCANI_PM[0]], [_SACCANI_PM[1]], marker="s",
+                markersize=5, color="#222", linestyle="none", zorder=0)
+        # The published figure rotates the two array names along the
+        # boundary.  Here they are horizontal: the line is at 45° in
+        # axes fraction, but only because the frame spans four decades
+        # of Nb against five of Th, and the angle it subtends on screen
+        # moves with the shape of the canvas.
+        ax.annotate("PM", _SACCANI_PM, textcoords="offset points",
+                    xytext=(-7, 0), fontsize=9, color="#222",
+                    ha="right", va="center", zorder=0)
+        ax.text(0.05, 3.0, "VOLCANIC ARC ARRAY", fontsize=9, color="#333",
+                style="italic", ha="center", va="center", zorder=0)
+        ax.text(15.0, 2.0, "MORB – OIB ARRAY", fontsize=9, color="#333",
+                style="italic", ha="center", va="center", zorder=0)
 
 
 # ---------------------------------------------------------------------------
@@ -692,65 +757,67 @@ class Pearce1984YbTaRb(_Pearce1984):
                 pd.to_numeric(df[rb], errors="coerce"))
 
 # ---------------------------------------------------------------------------
-# Saccani (2015) — additional discriminants
-# Values normalised to N-MORB (Sun & McDonough 1989) using the same
-# reference dictionary as :class:`Saccani2015NbTh`.
+# Saccani (2015) Figures 8 and 9 — chondrite-normalised Ce, Dy and Yb
 # ---------------------------------------------------------------------------
+#
+# Both are linear, both carry one separation line, and both print that
+# line's two ends on the figure.  See the note above Saccani2015NbTh.
 
 class Saccani2015DyYb(Diagram):
-    """DyN vs YbN — distinguishes IAT from Boninite arrays."""
+    """DyN vs YbN — separates boninite from island-arc tholeiite."""
     key = "saccani2015_dy_yb"
-    title = "Dy$_N$ vs Yb$_N$ — Saccani (2015)"
-    citation = ("Saccani (2015). N-MORB normalised (Sun & McDonough 1989). "
-                "Boninites form a low-Dy_N / low-Yb_N cluster (depleted, "
-                "U-shaped REE); island-arc tholeiites (IAT) plot along the "
-                "main MORB array.")
-    x_label = "Yb / Yb$_{N-MORB}$"
-    y_label = "Dy / Dy$_{N-MORB}$"
-    x_range = (0.05, 10)
-    y_range = (0.05, 10)
-    log_x = True
-    log_y = True
+    title = "Yb$_N$ vs Dy$_N$ — Saccani (2015)"
+    citation = ("Saccani (2015) Fig. 9; the separation-line coordinates "
+                "are printed on that figure. Chondrite-normalised (Sun "
+                "& McDonough 1989). Boninite plots left of the line and "
+                "island-arc tholeiite right, at stated rates of 100 % "
+                "and 99 %. The paper gives a simpler rule for the same "
+                "pair: 99.5 % of boninites have Dy_N below 8.5 and 99 % "
+                "of IATs above it.")
+    x_label = "Dy$_N$"
+    y_label = "Yb$_N$"
+    x_range = (0, 25)
+    y_range = (0, 25)
+    log_x = False
+    log_y = False
 
     def _compute_xy(self, df):
         dy = resolve_column(df, ["Dy"])
         yb = resolve_column(df, ["Yb"])
         if not (dy and yb):
             return None, None
-        return (pd.to_numeric(df[yb], errors="coerce") / _NMORB_SUN["Yb"],
-                pd.to_numeric(df[dy], errors="coerce") / _NMORB_SUN["Dy"])
+        return (pd.to_numeric(df[dy], errors="coerce")
+                / _SACCANI_CHONDRITE["Dy"],
+                pd.to_numeric(df[yb], errors="coerce")
+                / _SACCANI_CHONDRITE["Yb"])
 
     def _draw_background(self, ax, options):
-        xs = np.array([0.05, 10.0])
-        # MORB / IAT array follows Dy_N ≈ Yb_N (chondritic Dy/Yb)
-        ax.fill_between(xs, 0.85 * xs, 1.25 * xs, color="#88c0d0",
-                        alpha=0.12, zorder=0)
-        ax.plot(xs, xs, color="#444", lw=1.0)
-        # Boninite envelope — low Yb_N, slightly lower Dy_N
-        bx = np.array([0.08, 0.15, 0.30, 0.55, 0.30, 0.12, 0.08])
-        by = np.array([0.08, 0.10, 0.22, 0.45, 0.55, 0.20, 0.08])
-        ax.fill(bx, by, color="#d08770", alpha=0.18, zorder=0)
-        ax.plot(bx, by, color="#a04c2e", lw=1.0)
-        ax.text(2.0, 0.7, "MORB / IAT array",
-                fontsize=10, style="italic", color="#333")
-        ax.text(0.10, 0.18, "Boninites", fontsize=10, style="italic",
-                color="#a04c2e")
+        (x0, y0), (x1, y1) = _SACCANI_DY_YB_LINE
+        ax.plot([x0, x1], [y0, y1], color="#444", lw=1.2, zorder=0)
+        # Figure 9 writes these two just either side of the line, where
+        # its own clouds leave a gap.  Here they sit higher, above where
+        # both clouds reach, so that they cannot land on a sample.
+        ax.text(3.5, 22.0, "Boninite\n(100 %)", fontsize=10, style="italic",
+                color="#333", ha="center", va="center", zorder=0)
+        ax.text(16.0, 22.0, "IAT\n(99 %)", fontsize=10, style="italic",
+                color="#333", ha="center", va="center", zorder=0)
 
 
 class Saccani2015CeDyYb(Diagram):
-    """CeN/YbN vs DyN/YbN — discriminates N-MORB from G-MORB and OIB."""
+    """(Dy/Yb)N vs (Ce/Yb)N — separates G-MORB from N-MORB."""
     key = "saccani2015_ce_dy_yb"
-    title = "Ce$_N$/Yb$_N$ vs Dy$_N$/Yb$_N$ — Saccani (2015)"
-    citation = ("Saccani (2015). Two normalised inter-REE ratios that "
-                "separate N-MORB (depleted, low Ce_N/Yb_N) from "
-                "Garnet-influenced MORB (G-MORB / E-MORB, garnet residue) "
-                "and OIB along an LREE-enrichment trend.")
-    x_label = "Dy$_N$ / Yb$_N$"
-    y_label = "Ce$_N$ / Yb$_N$"
-    x_range = (0.5, 3.5)
-    y_range = (0.5, 50)
+    title = "(Dy/Yb)$_N$ vs (Ce/Yb)$_N$ — Saccani (2015)"
+    citation = ("Saccani (2015) Fig. 8; the separation-line coordinates "
+                "are printed on that figure. Chondrite-normalised (Sun "
+                "& McDonough 1989). Garnet-influenced MORB plots above "
+                "the line and normal MORB below, at stated rates of "
+                "96 % and 99 %.")
+    x_label = "(Ce/Yb)$_N$"
+    y_label = "(Dy/Yb)$_N$"
+    x_range = (0, 2.5)
+    y_range = (0.5, 2)
     log_x = False
-    log_y = True
+    log_y = False
 
     def _compute_xy(self, df):
         ce = resolve_column(df, ["Ce"])
@@ -758,27 +825,22 @@ class Saccani2015CeDyYb(Diagram):
         yb = resolve_column(df, ["Yb"])
         if not (ce and dy and yb):
             return None, None
-        ce_n = pd.to_numeric(df[ce], errors="coerce") / _NMORB_SUN["Ce"]
-        dy_n = pd.to_numeric(df[dy], errors="coerce") / _NMORB_SUN["Dy"]
-        yb_n = pd.to_numeric(df[yb], errors="coerce") / _NMORB_SUN["Yb"]
-        return dy_n / yb_n, ce_n / yb_n
+        ce_n = pd.to_numeric(df[ce], errors="coerce") / _SACCANI_CHONDRITE["Ce"]
+        dy_n = pd.to_numeric(df[dy], errors="coerce") / _SACCANI_CHONDRITE["Dy"]
+        yb_n = pd.to_numeric(df[yb], errors="coerce") / _SACCANI_CHONDRITE["Yb"]
+        yb_n = yb_n.where(yb_n > 0)
+        return ce_n / yb_n, dy_n / yb_n
 
     def _draw_background(self, ax, options):
-        # N-MORB: low Ce_N/Yb_N (~0.5-1.5) and Dy_N/Yb_N ≈ 1
-        ax.fill_between([0.7, 1.3], [0.5, 0.5], [2.5, 2.5],
-                        color="#88c0d0", alpha=0.15, zorder=0)
-        ax.text(1.0, 1.3, "N-MORB", fontsize=10, style="italic",
-                color="#333", ha="center")
-        # G-MORB / E-MORB: higher Ce_N/Yb_N, slightly higher Dy_N/Yb_N
-        ax.fill_between([1.0, 2.0], [2.5, 2.5], [10.0, 10.0],
-                        color="#a3be8c", alpha=0.15, zorder=0)
-        ax.text(1.5, 5.0, "E-MORB / G-MORB", fontsize=10, style="italic",
-                color="#333", ha="center")
-        # OIB: very high Ce_N/Yb_N, Dy_N/Yb_N > 1.5
-        ax.fill_between([1.5, 3.5], [10.0, 10.0], [50.0, 50.0],
-                        color="#d08770", alpha=0.15, zorder=0)
-        ax.text(2.5, 25.0, "OIB", fontsize=10, style="italic",
-                color="#333", ha="center")
+        (x0, y0), (x1, y1) = _SACCANI_CE_YB_LINE
+        ax.plot([x0, x1], [y0, y1], color="#444", lw=1.2, zorder=0)
+        # As on Figure 9, away from where the published clouds sit: both
+        # of these are at the right-hand end, one above the line and one
+        # below, rather than rotated along it as Figure 8 draws them.
+        ax.text(1.85, 1.78, "G-MORB (96 %)", fontsize=10, style="italic",
+                color="#333", ha="center", va="center", zorder=0)
+        ax.text(1.75, 0.62, "N-MORB (99 %)", fontsize=10, style="italic",
+                color="#333", ha="center", va="center", zorder=0)
 
 
 # ---------------------------------------------------------------------------
