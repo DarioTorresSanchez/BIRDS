@@ -101,6 +101,14 @@ including what is still unverified.
   measuring the figure — calibrated on the three anchors that do agree
   — gives the printed magnitudes back to a hundredth with the signs
   flipped.
+- **The four Pearce, Harris & Tindle (1984) granitoid discriminants**
+  were carrying hand-written line segments unrelated to the boundary
+  coordinates their authors printed in the captions of Figures 3 and 4.
+  They now carry those coordinates, with the two that are wrong used as
+  Verma *et al.* (2012) corrected them: a Yb–Ta boundary whose printed
+  endpoint points into the opposite quadrant from the fields it
+  divides, and a Rb–(Yb+Ta) boundary printed as ending a decade above
+  the junction its two neighbours share.
 - **Ten Verma coefficients**, read back off the rendered pages because
   the equations are embedded objects the PDF text layer does not carry:
   seven of 110 in Verma *et al.* (2012) — including an Al₂O₃
@@ -187,10 +195,9 @@ including what is still unverified.
   the type to be fixed first, with SINCLAS or IgRoCS; fed a basalt, the
   intermediate-magma set answers arc at better than even odds with no
   warning.
-- **14 diagrams still have boundaries drawn by eye** rather than
-  measured or computed — Saccani ×3, Pearce *et al.* (1984) ×4,
-  Vermeesch ×2 (the quadratic ones), Defant & Drummond ×2, Pearce &
-  Gale, Cabanis & Lecolle and Harris.
+- **10 diagrams still have boundaries drawn by eye** rather than
+  measured or computed — Saccani ×3, Vermeesch ×2 (the quadratic ones),
+  Defant & Drummond ×2, Pearce & Gale, Cabanis & Lecolle and Harris.
 - **Ni-Cu-PGE reference values** come from the usual compilations and
   have not been checked page by page against the original papers.
   Pattern shapes are robust; verify the absolute normalised level

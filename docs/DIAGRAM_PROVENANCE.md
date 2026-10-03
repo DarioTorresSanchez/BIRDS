@@ -367,7 +367,7 @@ faded to say so.
 `Ti` was converted from TiO₂ with 5995 ppm per wt.% in four places;
 the mass ratio gives 5993.4. Now a named constant, shared.
 
-## Drawn envelope — eight done, 14 to go
+## Drawn envelope — twelve done, 10 to go
 
 ### Done (3)
 
@@ -469,13 +469,40 @@ repeats its x values as −13, −7, −13, −7. The axes are the additive
 log-ratio of (Zr, Ti, everything else) in ppm, so mapping a boundary
 back to Zr–Ti is the same softmax the ternaries use, scaled by 10⁶.
 
-### Still to measure (14)
+### Published coordinates, two of them corrected (4)
+
+The four **Pearce, Harris & Tindle (1984)** granitoid discriminants are
+among the rare diagrams of their era whose authors printed the boundary
+coordinates outright, in the captions of their Figures 3 and 4. What
+was here before was hand-written line segments bearing no relation to
+those captions — one of them commented "approximate boundaries" — and
+is now the published numbers.
+
+Two of the printed coordinates are wrong. **Verma et al. (2012)**
+corrected both while re-evaluating these diagrams against the original
+authors' own database, and both corrections are checkable from the
+geometry rather than taken on trust:
+
+- **Yb–Ta, syn-COLG/WPG**, printed as `(55,20) to (3,2)`. The two
+  fields it divides lie above and to either side of (3,2), so the
+  boundary has to leave that point going up and to the left. (55,20) is
+  down and to the right — the opposite quadrant, where WPG already is.
+  Used as `(0.1,100) to (3,2)`, which is how Figure 3b draws it.
+- **Rb–(Yb+Ta), syn-COLG/VAG**, printed as ending at `(6,2000)` where
+  the other two boundaries of that junction both start at `(6,200)`. A
+  triple point has to be one point, and Figure 4b draws the junction at
+  Rb = 200, so the printed value is a factor of ten out.
+
+`tests/test_pearce_1984.py` pins every published coordinate and, more
+usefully, asserts that the boundaries sharing a field actually meet.
+That junction check is exactly what the second error breaks, and it
+would have caught it in the original.
+
+### Still to measure (10)
 
 - `saccani2015_nb_th`, `saccani2015_dy_yb`, `saccani2015_ce_dy_yb`
 - `pearce_gale_1977`
 - `defant_drummond_YSrY`, `defant_drummond_YbLaYb`
-- `pearce1984_YbTa`, `pearce1984_YNb`, `pearce1984_YbTaRb`,
-  `pearce1984_YNbRb`
 - `vermeesch_NaNbSr`, `vermeesch_SmTiV` — the two **QDA** ones, whose
   boundaries are conics in log-ratio space rather than rays from a
   triple point, so Table 6 has no anchor points for them

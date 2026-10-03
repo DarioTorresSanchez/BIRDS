@@ -491,51 +491,122 @@ class DefantDrummondYbLaYb(Diagram):
 # Pearce et al. (1984) — granitoid discriminants
 # ---------------------------------------------------------------------------
 
-class Pearce1984YbTa(Diagram):
-    key = "pearce1984_YbTa"
-    title = "Ta vs Yb — Pearce et al. (1984)"
-    citation = ("Pearce et al. (1984); Verma et al. (2012). WPG: 0 % "
-                "misclassified; VAG: ~11 %; S-COLG: ~25 %.")
-    x_label = "Yb (ppm)"
-    y_label = "Ta (ppm)"
-    x_range = (0.1, 100)
-    y_range = (0.05, 100)
+# ---------------------------------------------------------------------------
+# Pearce, Harris & Tindle (1984) — the four granitoid discriminants
+# ---------------------------------------------------------------------------
+#
+# These four are among the rare diagrams of this era whose authors
+# printed the boundary coordinates outright, in the captions of their
+# Figures 3 and 4.  Nothing here is measured off a figure.
+#
+# Two of the printed coordinates are wrong, and Verma et al. (2012)
+# corrected both in the course of re-evaluating these diagrams against
+# the original authors' own database.  The corrections are used here,
+# and each is checkable from the geometry of the figure rather than
+# taken on trust:
+#
+# * **Yb-Ta, syn-COLG/WPG.** Printed as "(55,20) to (3,2)".  syn-COLG
+#   lies upper-left of the triple point and WPG upper-right, so their
+#   boundary has to leave (3,2) going up and to the left; (55,20) is
+#   down and to the right, which would put the boundary on the far side
+#   of the diagram from the two fields it divides.  Verma's (0.1,100)
+#   runs the way Figure 3b draws it.
+# * **Rb-(Yb+Ta), syn-COLG/VAG.** Printed as ending at "(6,2000)",
+#   where the other two boundaries of that junction both start at
+#   (6,200).  A triple point has to be one point.  Figure 4b draws the
+#   junction at Rb = 200, so the printed 2000 is a factor of ten.
+#
+# ``(x, y)`` throughout, in the axis order each diagram plots.
+
+#: Dashed in the source: the upper limit for ocean-ridge granites from
+#: anomalous ridge segments, not a field boundary in its own right.
+_P84_ANOMALOUS = "ORG (anomalous ridges)"
+
+_PEARCE_1984 = {
+    "Y-Nb": {
+        "boundaries": (
+            (((1.0, 2000.0), (50.0, 10.0)), "solid", ("VAG+syn-COLG", "WPG")),
+            (((40.0, 1.0), (50.0, 10.0)), "solid", ("VAG+syn-COLG", "ORG")),
+            (((50.0, 10.0), (1000.0, 100.0)), "solid", ("WPG", "ORG")),
+            (((25.0, 25.0), (1000.0, 400.0)), "dashed", ("WPG", _P84_ANOMALOUS)),
+        ),
+        "labels": {"WPG": (11.0, 180.0),
+                   "VAG +\nsyn-COLG": (3.5, 20.0),
+                   "ORG": (250.0, 4.0)},
+    },
+    "Yb-Ta": {
+        "boundaries": (
+            # Corrected from the printed (55, 20); see the note above.
+            (((0.1, 100.0), (3.0, 2.0)), "solid", ("syn-COLG", "WPG")),
+            (((0.1, 0.35), (3.0, 2.0)), "solid", ("VAG", "syn-COLG")),
+            (((3.0, 2.0), (5.0, 1.0)), "solid", ("VAG", "WPG")),
+            (((5.0, 0.05), (5.0, 1.0)), "solid", ("VAG", "ORG")),
+            (((5.0, 1.0), (100.0, 7.0)), "solid", ("WPG", "ORG")),
+            (((3.0, 2.0), (100.0, 20.0)), "dashed", ("WPG", _P84_ANOMALOUS)),
+        ),
+        "labels": {"syn-COLG": (0.35, 7.0), "WPG": (3.5, 35.0),
+                   "VAG": (0.6, 0.2), "ORG": (25.0, 0.35)},
+    },
+    "YNb-Rb": {
+        "boundaries": (
+            (((2.0, 80.0), (55.0, 300.0)), "solid", ("VAG", "syn-COLG")),
+            (((55.0, 300.0), (400.0, 2000.0)), "solid", ("syn-COLG", "WPG")),
+            (((55.0, 300.0), (51.5, 8.0)), "solid", ("VAG", "WPG")),
+            (((51.5, 8.0), (50.0, 1.0)), "solid", ("VAG", "ORG")),
+            (((51.5, 8.0), (2000.0, 400.0)), "solid", ("WPG", "ORG")),
+        ),
+        "labels": {"syn-COLG": (5.0, 700.0), "WPG": (350.0, 700.0),
+                   "VAG": (7.0, 9.0), "ORG": (400.0, 7.0)},
+    },
+    "YbTa-Rb": {
+        "boundaries": (
+            # Corrected from the printed (6, 2000); see the note above.
+            (((0.5, 140.0), (6.0, 200.0)), "solid", ("syn-COLG", "VAG")),
+            (((6.0, 200.0), (50.0, 2000.0)), "solid", ("syn-COLG", "WPG")),
+            (((6.0, 200.0), (6.0, 8.0)), "solid", ("VAG", "WPG")),
+            (((6.0, 8.0), (6.0, 1.0)), "solid", ("VAG", "ORG")),
+            (((6.0, 8.0), (200.0, 400.0)), "solid", ("WPG", "ORG")),
+        ),
+        "labels": {"syn-COLG": (1.3, 800.0), "WPG": (40.0, 800.0),
+                   "VAG": (1.3, 8.0), "ORG": (40.0, 5.0)},
+    },
+}
+
+
+class _Pearce1984(Diagram):
+    """Shared drawing for the four granitoid discriminants."""
+
+    panel: str = ""
     log_x = True
     log_y = True
 
-    def _compute_xy(self, df):
-        yb = resolve_column(df, ["Yb"])
-        ta = resolve_column(df, ["Ta"])
-        if not (yb and ta):
-            return None, None
-        return (pd.to_numeric(df[yb], errors="coerce"),
-                pd.to_numeric(df[ta], errors="coerce"))
-
     def _draw_background(self, ax, options):
-        # Boundary coordinates from Rollinson Fig 5.8a (caption)
-        ax.plot([0.1, 3], [0.35, 2], color="#444", lw=1.0)   # VAG / S-COLG
-        ax.plot([0.1, 3], [100, 2], color="#444", lw=1.0)    # S-COLG / WPG
-        ax.plot([3, 5], [2, 1], color="#444", lw=1.0)        # VAG / WPG (kink)
-        ax.plot([5, 100], [1, 7], color="#444", lw=1.0)      # WPG / ORG
-        ax.plot([5, 5], [0.05, 1], color="#444", lw=1.0)     # VAG / ORG
-        ax.text(0.3, 7, "S-COLG", fontsize=11, style="italic", color="#333")
-        ax.text(0.3, 0.15, "VAG", fontsize=11, style="italic", color="#333")
-        ax.text(20, 20, "WPG", fontsize=11, style="italic", color="#333")
-        ax.text(20, 0.2, "ORG", fontsize=11, style="italic", color="#333")
+        spec = _PEARCE_1984[self.panel]
+        for (start, end), style, _pair in spec["boundaries"]:
+            ax.plot([start[0], end[0]], [start[1], end[1]],
+                    color="#444", lw=1.0,
+                    ls="--" if style == "dashed" else "-",
+                    zorder=2)
+        for name, (x, y) in spec["labels"].items():
+            ax.text(x, y, name, fontsize=10, style="italic", color="#333",
+                    ha="center", va="center", zorder=3)
 
 
-class Pearce1984YNb(Diagram):
+class Pearce1984YNb(_Pearce1984):
     key = "pearce1984_YNb"
     title = "Nb vs Y — Pearce et al. (1984)"
-    citation = ("Pearce et al. (1984); Verma et al. (2012). Three rays "
-                "meeting at central (50, 10) define VAG+S-COLG / WPG / "
-                "ORG fields.")
+    citation = ("Pearce, Harris & Tindle (1984) Figure 3a, boundary "
+                "coordinates from its caption.  Volcanic-arc and "
+                "syn-collision granites are not separated on this "
+                "diagram — the authors say so — so use the Yb-Ta one "
+                "to tell them apart.  The dashed line is the upper "
+                "limit for ocean-ridge granites from anomalous ridge "
+                "segments.")
+    panel = "Y-Nb"
     x_label = "Y (ppm)"
     y_label = "Nb (ppm)"
     x_range = (1, 2000)
     y_range = (1, 2000)
-    log_x = True
-    log_y = True
 
     def _compute_xy(self, df):
         y = resolve_column(df, ["Y"])
@@ -545,61 +616,44 @@ class Pearce1984YNb(Diagram):
         return (pd.to_numeric(df[y], errors="coerce"),
                 pd.to_numeric(df[nb], errors="coerce"))
 
-    def _draw_background(self, ax, options):
-        # Three rays meeting at central point (50, 10)
-        ax.plot([50, 1], [10, 2000], color="#444", lw=1.0)   # VAG+S-COLG/WPG
-        ax.plot([50, 1000], [10, 100], color="#444", lw=1.0)  # WPG/ORG
-        ax.plot([50, 40], [10, 1], color="#444", lw=1.0)      # ORG/VAG+S-COLG (short)
-        ax.plot([50, 50], [10, 1], color="#444", lw=1.0)      # extension
-        ax.text(3, 100, "WPG", fontsize=12, style="italic", color="#333")
-        ax.text(3, 3, "VAG +\nS-COLG", fontsize=10, style="italic",
-                color="#333", ha="center")
-        ax.text(300, 3, "ORG", fontsize=12, style="italic", color="#333")
 
-
-class Pearce1984YbTaRb(Diagram):
-    key = "pearce1984_YbTaRb"
-    title = "Rb vs (Yb + Ta) — Pearce et al. (1984)"
-    citation = "Pearce et al. (1984). Alternative formulation using Rb."
-    x_label = "Yb + Ta (ppm)"
-    y_label = "Rb (ppm)"
-    x_range = (0.5, 1000)
-    y_range = (1, 2000)
-    log_x = True
-    log_y = True
+class Pearce1984YbTa(_Pearce1984):
+    key = "pearce1984_YbTa"
+    title = "Ta vs Yb — Pearce et al. (1984)"
+    citation = ("Pearce, Harris & Tindle (1984) Figure 3b, boundary "
+                "coordinates from its caption, with the syn-COLG/WPG "
+                "boundary as corrected by Verma et al. (2012): the "
+                "printed (55,20) points away from the two fields it "
+                "divides.  This is the diagram that separates volcanic-"
+                "arc from syn-collision granites.")
+    panel = "Yb-Ta"
+    x_label = "Yb (ppm)"
+    y_label = "Ta (ppm)"
+    x_range = (0.1, 100)
+    y_range = (0.05, 100)
 
     def _compute_xy(self, df):
         yb = resolve_column(df, ["Yb"])
         ta = resolve_column(df, ["Ta"])
-        rb = resolve_column(df, ["Rb"])
-        if not (yb and ta and rb):
+        if not (yb and ta):
             return None, None
-        return (pd.to_numeric(df[yb], errors="coerce")
-                + pd.to_numeric(df[ta], errors="coerce"),
-                pd.to_numeric(df[rb], errors="coerce"))
-
-    def _draw_background(self, ax, options):
-        # Approximate boundaries (Pearce et al. 1984 fig 4)
-        ax.plot([0.5, 6], [400, 80], color="#444", lw=1.0)    # S-COLG/VAG
-        ax.plot([6, 6], [80, 4], color="#444", lw=1.0)        # VAG/ORG
-        ax.plot([6, 1000], [80, 700], color="#444", lw=1.0)   # WPG upper
-        ax.plot([6, 1000], [4, 30], color="#444", lw=1.0)     # WPG/ORG lower
-        ax.text(1, 600, "S-COLG", fontsize=10, style="italic", color="#333")
-        ax.text(2, 30, "VAG", fontsize=11, style="italic", color="#333")
-        ax.text(80, 400, "WPG", fontsize=11, style="italic", color="#333")
-        ax.text(60, 5, "ORG", fontsize=11, style="italic", color="#333")
+        return (pd.to_numeric(df[yb], errors="coerce"),
+                pd.to_numeric(df[ta], errors="coerce"))
 
 
-class Pearce1984YNbRb(Diagram):
+class Pearce1984YNbRb(_Pearce1984):
     key = "pearce1984_YNbRb"
     title = "Rb vs (Y + Nb) — Pearce et al. (1984)"
-    citation = "Pearce et al. (1984). Alternative formulation using Rb."
+    citation = ("Pearce, Harris & Tindle (1984) Figure 4a, boundary "
+                "coordinates from its caption.  Adding Rb to the Y-Nb "
+                "pair is what separates volcanic-arc from syn-collision "
+                "granites; Rb is mobile, so prefer the Yb-Ta diagram "
+                "for altered rocks.")
+    panel = "YNb-Rb"
     x_label = "Y + Nb (ppm)"
     y_label = "Rb (ppm)"
     x_range = (1, 2000)
     y_range = (1, 2000)
-    log_x = True
-    log_y = True
 
     def _compute_xy(self, df):
         y = resolve_column(df, ["Y"])
@@ -611,16 +665,31 @@ class Pearce1984YNbRb(Diagram):
                 + pd.to_numeric(df[nb], errors="coerce"),
                 pd.to_numeric(df[rb], errors="coerce"))
 
-    def _draw_background(self, ax, options):
-        ax.plot([1, 50], [400, 80], color="#444", lw=1.0)
-        ax.plot([50, 50], [80, 4], color="#444", lw=1.0)
-        ax.plot([50, 2000], [80, 800], color="#444", lw=1.0)
-        ax.plot([50, 2000], [4, 30], color="#444", lw=1.0)
-        ax.text(3, 600, "S-COLG", fontsize=10, style="italic", color="#333")
-        ax.text(10, 25, "VAG", fontsize=11, style="italic", color="#333")
-        ax.text(300, 400, "WPG", fontsize=11, style="italic", color="#333")
-        ax.text(400, 6, "ORG", fontsize=11, style="italic", color="#333")
 
+class Pearce1984YbTaRb(_Pearce1984):
+    key = "pearce1984_YbTaRb"
+    title = "Rb vs (Yb + Ta) — Pearce et al. (1984)"
+    citation = ("Pearce, Harris & Tindle (1984) Figure 4b, boundary "
+                "coordinates from its caption, with the syn-COLG/VAG "
+                "boundary as corrected by Verma et al. (2012): the "
+                "printed endpoint (6,2000) misses the junction at "
+                "(6,200) that the other two boundaries share.  Rb is "
+                "mobile, so prefer the Yb-Ta diagram for altered rocks.")
+    panel = "YbTa-Rb"
+    x_label = "Yb + Ta (ppm)"
+    y_label = "Rb (ppm)"
+    x_range = (0.5, 1000)
+    y_range = (1, 2000)
+
+    def _compute_xy(self, df):
+        yb = resolve_column(df, ["Yb"])
+        ta = resolve_column(df, ["Ta"])
+        rb = resolve_column(df, ["Rb"])
+        if not (yb and ta and rb):
+            return None, None
+        return (pd.to_numeric(df[yb], errors="coerce")
+                + pd.to_numeric(df[ta], errors="coerce"),
+                pd.to_numeric(df[rb], errors="coerce"))
 
 # ---------------------------------------------------------------------------
 # Saccani (2015) — additional discriminants
