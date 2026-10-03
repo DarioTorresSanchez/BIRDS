@@ -37,6 +37,7 @@ from typing import Optional, Sequence, Tuple
 import numpy as np
 import pandas as pd
 
+from ...normalizations import TIO2_WT_TO_TI_PPM
 from .base import Diagram, PlotOptions, get_groups, resolve_column
 
 
@@ -93,10 +94,6 @@ BUTLER_WORONOW_FIELDS = {
 }
 
 _LINE = dict(color="#444", linewidth=1.0, alpha=0.9, zorder=2)
-
-
-#: 1 wt.% TiO2 = 5993.4 ppm Ti, from the mass ratio 47.867 / 79.866.
-TIO2_WT_TO_TI_PPM = 5993.4
 
 
 def _titanium_ppm(df: pd.DataFrame) -> Optional[pd.Series]:

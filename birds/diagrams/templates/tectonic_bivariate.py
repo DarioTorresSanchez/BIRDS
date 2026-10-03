@@ -9,14 +9,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from ...normalizations import REE_CHONDRITES
+from ...normalizations import REE_CHONDRITES, TIO2_WT_TO_TI_PPM
 from .base import Diagram, inverse_logratio, resolve_column
-
-
-#: 1 wt.% TiO2 = 5993.4 ppm Ti, from the mass ratio 47.867 / 79.866.
-#: Was 5995 in four places, which is 0.03 % high — harmless on a plot,
-#: but a constant with a known value has no reason to be approximate.
-TIO2_WT_TO_TI_PPM = 5993.4
 
 
 # ---------------------------------------------------------------------------

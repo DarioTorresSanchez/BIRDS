@@ -618,3 +618,44 @@ Comparing a set against the wrong paper gives 0 %, which is how the acid
 and basic sets first appeared to fail — they were checked against the
 intermediate-magma paper by mistake. Each set must be matched to its own
 source before the number means anything.
+
+### The two-routes sweep
+
+A correct boundary is not enough on its own. The same quantity reaches
+the user twice — once as an axis on a diagram, once as a row in the
+statistics table — and the two are computed by different code. Three
+faults in this project have been a correction landing on one route and
+not the other: the Verma units, the Saccani normalisers, and Pearce
+(2008)'s Ti/Yb. In each case the plot and the table disagreed under one
+heading, with nothing on screen to say which was right.
+
+So all 208 statistics rows were paired with the diagram axis plotting
+the same thing and required to equal it exactly. The method is
+mechanical: evaluate both on one synthetic dataset of log-uniform
+positive values, then take the ratio row by row. A ratio that is
+*constant across every row* means the two are the same quantity; if that
+constant is not 1, one route has been corrected and the other has not.
+
+Two cautions, both of which produced nonsense before being fixed:
+
+- **Pair within a source family.** Saccani's Yb_N is chondrite-normalised
+  and Pearce's axis is raw Yb, so one is reliably 0.17 times the other.
+  That is two papers doing different things, not a fault.
+- **Pair the Verma panels by the identity of the coefficient set, not by
+  the panel name.** Keys such as `IA_CA_COL` repeat across all eight
+  sets, so matching on the name compares a majors row against a traces
+  diagram and reports 324 mismatches that are not there.
+
+Done properly the sweep compares 80 Verma panel axes and 21 other pairs.
+The Verma rows are clean, and structurally so: `tectonic_results.py`
+imports the diagram module's own `_apply_df` and `_logratios_for_coef`,
+so the two routes are one route. The two faults it found were both among
+the hand-written rows, and both are described above.
+
+The sweep is now `tests/test_statistics_match_diagrams.py`, and it was
+checked by putting each fault back and confirming the failure. Worth
+recording: it catches the two *quantity* faults but **not** a wrong
+shared constant — change the one definition and both routes move
+together, still agreeing. That is what the separate mass-ratio test is
+for, and it is the reason the TiO₂ → Ti factor is checked against
+47.867 / 79.865 rather than against itself.

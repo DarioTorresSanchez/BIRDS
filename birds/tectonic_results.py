@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 
 from .diagrams.templates.base import resolve_column
+from .normalizations import TIO2_WT_TO_TI_PPM
 from .diagrams.templates.major_df import (
     butler_woronow_df1,
     butler_woronow_df2,
@@ -112,7 +113,18 @@ def _ti_ppm(df: pd.DataFrame) -> Optional[pd.Series]:
     tio2 = _to_numeric(df, "TiO2")
     if tio2 is None:
         return None
-    return tio2 * 5995.0
+    return tio2 * TIO2_WT_TO_TI_PPM
+
+
+def _tio2_wt(df: pd.DataFrame) -> Optional[pd.Series]:
+    """Return TiO₂ in wt.% — direct column or converted back from Ti ppm."""
+    tio2 = _to_numeric(df, "TiO2")
+    if tio2 is not None:
+        return tio2
+    ti = _to_numeric(df, "Ti")
+    if ti is None:
+        return None
+    return ti / TIO2_WT_TO_TI_PPM
 
 
 def _ratio(df: pd.DataFrame, num: str, den: str) -> Optional[pd.Series]:
@@ -163,13 +175,22 @@ def _make_verma_df(coef: DFCoefSet) -> ComputeFn:
     return _fn
 
 
-def _ti_yb(df: pd.DataFrame) -> Optional[pd.Series]:
-    ti = _ti_ppm(df)
+def _tio2_yb(df: pd.DataFrame) -> Optional[pd.Series]:
+    """TiO₂ in wt.% over Yb in ppm, which is what Pearce (2008) plots.
+
+    This row used to report Ti in ppm over Yb, a factor of 5993 away
+    from the axis of the diagram it is named after.  The diagram was
+    corrected to TiO₂/Yb and this route to the same number was not, so
+    the table and the plot disagreed by three and a half orders of
+    magnitude under one heading.  Same fault as the Verma units and the
+    Saccani normalisers: a fix that landed on one of two routes.
+    """
+    tio2 = _tio2_wt(df)
     yb = _to_numeric(df, "Yb")
-    if ti is None or yb is None:
+    if tio2 is None or yb is None:
         return None
     with np.errstate(divide="ignore", invalid="ignore"):
-        return ti / yb
+        return tio2 / yb
 
 
 def _ti_y(df: pd.DataFrame) -> Optional[pd.Series]:
@@ -277,8 +298,10 @@ DISCRIMINATORS: List[Discriminator] = [
     Discriminator("pearce2008.nb_yb", "Nb/Yb",
                   "Pearce (2008) — mafic crustal proxy",
                   lambda df: _ratio(df, "Nb", "Yb")),
-    Discriminator("pearce2008.ti_yb", "Ti/Yb",
-                  "Pearce (2008) — mafic crustal proxy", _ti_yb),
+    # Key kept as it was so a selection made in the tree survives; the
+    # quantity and the label are the diagram's.
+    Discriminator("pearce2008.ti_yb", "TiO₂/Yb (wt.% / ppm)",
+                  "Pearce (2008) — mafic crustal proxy", _tio2_yb),
     # ----- Pearce & Gale (1977) -----------------------------------------
     Discriminator("pearcegale.zr_y", "Zr/Y",
                   "Pearce & Gale (1977) — within-plate vs plate margin",

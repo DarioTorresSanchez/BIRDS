@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.patches import Polygon
 
+from ...normalizations import TIO2_WT_TO_TI_PPM
 from .base import (
     Diagram,
     PlotOptions,
@@ -154,7 +155,7 @@ def _ti_ppm(df: pd.DataFrame) -> Optional[pd.Series]:
     ox = resolve_column(df, ["TiO2"])
     if ox is None:
         return None
-    return pd.to_numeric(df[ox], errors="coerce") * 5995.0
+    return pd.to_numeric(df[ox], errors="coerce") * TIO2_WT_TO_TI_PPM
 
 
 _VRMS_NA_NB_SR = {

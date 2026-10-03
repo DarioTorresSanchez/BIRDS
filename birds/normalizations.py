@@ -285,10 +285,24 @@ CHALCOPHILE_NORMS: Dict[str, Mapping[str, float]] = {
 # Multiply the wt.% value by *factor* to obtain ppm of the element.
 # ---------------------------------------------------------------------------
 
+#: 1 wt.% TiO2 = 5993.4 ppm Ti, from the mass ratio 47.867 / 79.866.
+#:
+#: This one lives here, on its own, because three parts of the program
+#: convert TiO2 to Ti and they must not answer differently: the
+#: discrimination diagrams, the statistics table, and this table.  The
+#: value was 5995 in several of them, which is what the older atomic
+#: weight Ti = 47.90 gives.
+#:
+#: These ten are stoichiometry, not measurements, so each is its own
+#: mass ratio rounded to four figures and nothing else.  Checking them
+#: that way found two that were not: Ti, 0.025 % high because of the
+#: old weight, and P, 0.017 % high from rounding 4364.27 upward.
+TIO2_WT_TO_TI_PPM = 5993.4
+
 OXIDE_TO_ELEMENT_PPM: Dict[str, Tuple[str, float]] = {
     "K":  ("K2O",  8302),   # K2O wt% × 8302  -> K ppm
-    "Ti": ("TiO2", 5995),   # TiO2 wt% × 5995 -> Ti ppm
-    "P":  ("P2O5", 4365),
+    "Ti": ("TiO2", TIO2_WT_TO_TI_PPM),
+    "P":  ("P2O5", 4364),   # 4365 was a rounding slip: the ratio is 4364.27
     "Si": ("SiO2", 4674),
     "Al": ("Al2O3", 5293),
     "Mg": ("MgO",  6030),

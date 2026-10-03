@@ -126,6 +126,26 @@ including what is still unverified.
   within 0.15 %, because N-MORB and chondrite happen to have nearly the
   same Dy/Yb — which is why the fault was easy to miss in the row where
   it did not show. Every row now says which normaliser it used.
+- **A sweep of all 208 statistics rows against the diagrams**, looking
+  for the fault that the Verma units and the Saccani normalisers both
+  were: a quantity computed twice by two routes that do not share code,
+  with a correction landing on only one of them. Every row was paired
+  with the diagram axis plotting the same thing and required to equal
+  it. The 175 Verma rows came out clean — they call the diagram
+  module's own functions, so they cannot drift — and two faults turned
+  up among the other 33.
+- **Pearce (2008) Ti/Yb in the statistics table** reported Ti in ppm
+  over Yb where the diagram of the same name plots TiO₂ in wt.% over
+  Yb. The diagram had been corrected and this route to the same number
+  had not, so the table and the plot disagreed by a factor of 5993
+  under one heading.
+- **The TiO₂ → Ti conversion existed in five places with three
+  values.** Two said 5993.4, three said 5995 — which is what the
+  superseded atomic weight Ti = 47.90 gives. It is now defined once and
+  imported, which is what made Pearce & Gale's Ti/Y row disagree with
+  its own diagram in the sixth decimal. Checking the other nine
+  oxide-to-element factors the same way found P rounded upward from
+  4364.27 to 4365; the rest were already right to within 0.008 %.
 - **Ten Verma coefficients**, read back off the rendered pages because
   the equations are embedded objects the PDF text layer does not carry:
   seven of 110 in Verma *et al.* (2012) — including an Al₂O₃
@@ -208,6 +228,11 @@ including what is still unverified.
   unusable: its log-ratios contradict the concentrations printed beside
   them and appear to have slipped a row. The panels that use it are
   verified against the printed equations only.
+- **FCMS is computed but never plotted.** Yang *et al.* (2019) give two
+  parameters and the statistics table reports both, but only the
+  FCKANTMS diagram exists, so there is no figure to read an FCMS value
+  against. Found by the sweep, which pairs rows with diagrams: this one
+  has no partner.
 - **Nothing gates a Verma diagram on rock type.** Those papers require
   the type to be fixed first, with SINCLAS or IgRoCS; fed a basalt, the
   intermediate-magma set answers arc at better than even odds with no
