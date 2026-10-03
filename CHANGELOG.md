@@ -90,6 +90,17 @@ including what is still unverified.
   logarithm is natural, not base ten, and the Si-Ti-Sr triangle had
   Si/1000 at the apex where Figure 42b has Ti/40. Reference N-MORB, OIB
   and IAB now land in their own field on all three, nine out of nine.
+- **Wood (1980) Th–Hf/3–Ta and Pearce & Cann (1973) Zr–Ti** now carry
+  Vermeesch's discriminant boundaries instead of, respectively, fields
+  drawn by eye and two straight lines at Ti/Zr = 30 and 110 that a
+  comment called "approximate refined boundaries" and that were neither
+  his nor refined. Pearce & Cann's is two segments rather than three
+  rays, which is why its row of Table 6 repeats its x values. One of
+  Wood's anchor points is used with both signs reversed: the table
+  places it diagonally opposite where the figure draws it, and
+  measuring the figure — calibrated on the three anchors that do agree
+  — gives the printed magnitudes back to a hundredth with the signs
+  flipped.
 - **Ten Verma coefficients**, read back off the rendered pages because
   the equations are embedded objects the PDF text layer does not carry:
   seven of 110 in Verma *et al.* (2012) — including an Al₂O₃
@@ -176,10 +187,10 @@ including what is still unverified.
   the type to be fixed first, with SINCLAS or IgRoCS; fed a basalt, the
   intermediate-magma set answers arc at better than even odds with no
   warning.
-- **16 diagrams still have boundaries drawn by eye** rather than
+- **14 diagrams still have boundaries drawn by eye** rather than
   measured or computed — Saccani ×3, Pearce *et al.* (1984) ×4,
   Vermeesch ×2 (the quadratic ones), Defant & Drummond ×2, Pearce &
-  Gale, Pearce & Cann, Wood, Cabanis & Lecolle and Harris.
+  Gale, Cabanis & Lecolle and Harris.
 - **Ni-Cu-PGE reference values** come from the usual compilations and
   have not been checked page by page against the original papers.
   Pattern shapes are robust; verify the absolute normalised level

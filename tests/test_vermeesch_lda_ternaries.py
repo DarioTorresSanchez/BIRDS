@@ -309,3 +309,75 @@ class TestTheDiagramsStillDraw:
                   if len(c.get_offsets())]
         assert not points
         plt.close(figure)
+
+
+class TestWood:
+    """Th-Hf/3-Ta, with Vermeesch's LDA in place of Wood's eye-drawn
+    fields -- and one anchor point used against what Table 6 prints.
+
+    The table gives node 2 as (1.43, -1.5).  That puts it diagonally
+    opposite where Figure 41b draws it, and sends a reference N-MORB
+    into the OIB field.  Measuring the figure settles it: the four
+    numbered discs were detected in a render of panel (b) and the axes
+    calibrated on nodes 1, 3 and 4, which do agree with the table.  That
+    calibration reproduces node 3 as (-0.076, -0.864) against a
+    published (-0.07, -0.86), and puts node 2 at (-1.44, +1.50) -- the
+    printed magnitudes to a hundredth, with both signs reversed.
+    """
+
+    SPEC = ternary._LDA_TH_TA_HF
+
+    REFERENCE = pd.DataFrame([
+        {"Sample": "N-MORB", "Th": 0.12, "Ta": 0.132, "Hf": 2.05},
+        {"Sample": "OIB", "Th": 4.00, "Ta": 2.70, "Hf": 7.80},
+        {"Sample": "IAB", "Th": 2.00, "Ta": 0.18, "Hf": 1.80},
+    ])
+
+    def test_the_three_anchors_that_agree_with_the_table(self):
+        assert self.SPEC["triple"] == (-0.07, -0.86)
+        ends = {tuple(end) for end, _pair in self.SPEC["boundaries"]}
+        assert (-1.49, -2.48) in ends
+        assert (2.81, 1.0) in ends
+
+    def test_node_two_is_used_with_its_signs_reversed(self):
+        ends = {tuple(end) for end, _pair in self.SPEC["boundaries"]}
+        assert (-1.43, 1.5) in ends, "the measured position"
+        assert (1.43, -1.5) not in ends, "the printed position"
+
+    @pytest.mark.parametrize("name", ["N-MORB", "OIB", "IAB"])
+    def test_reference_basalts_land_in_their_own_field(self, name):
+        xs, ys = _log_ratios("wood_1980_ThHfTa", self.REFERENCE)
+        index = list(self.REFERENCE["Sample"]).index(name)
+        got = _field_at(self.SPEC, float(xs.iloc[index]),
+                        float(ys.iloc[index]))
+        assert got == name.replace("N-", "")
+
+    def test_the_printed_node_would_misclassify(self):
+        """Guards the correction: it has to still matter.
+
+        With node 2 as printed, the ray that should separate MORB from
+        OIB points the other way and N-MORB is swept into OIB.
+        """
+        as_printed = {
+            "triple": self.SPEC["triple"],
+            "boundaries": tuple(
+                (((1.43, -1.5) if tuple(end) == (-1.43, 1.5) else end), pair)
+                for end, pair in self.SPEC["boundaries"]),
+        }
+        xs, ys = _log_ratios("wood_1980_ThHfTa", self.REFERENCE)
+        index = list(self.REFERENCE["Sample"]).index("N-MORB")
+        assert _field_at(as_printed, float(xs.iloc[index]),
+                         float(ys.iloc[index])) != "MORB"
+
+    def test_the_apices_match_the_figure(self):
+        """Figure 41a and 41d put Hf/3 at the top, Th bottom-left and Ta
+        bottom-right."""
+        assert get_diagram("wood_1980_ThHfTa").apices == ("Hf/3", "Th", "Ta")
+
+    def test_the_axes_divide_by_the_top_apex(self):
+        frame = self.REFERENCE.iloc[[1]]
+        top, left, right = get_diagram("wood_1980_ThHfTa")._abc(frame)
+        assert float(left.iloc[0] / top.iloc[0]) == pytest.approx(
+            3.0 * frame["Th"].iloc[0] / frame["Hf"].iloc[0])
+        assert float(right.iloc[0] / top.iloc[0]) == pytest.approx(
+            3.0 * frame["Ta"].iloc[0] / frame["Hf"].iloc[0])

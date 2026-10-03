@@ -179,6 +179,20 @@ def _should_shade(gs: object, options: "PlotOptions") -> bool:
     return bool(getattr(options, "shaded_ranges", False))
 
 
+def inverse_logratio(x, y):
+    """``(ln(B/A), ln(C/A))`` back to ternary ``(A, B, C)`` summing to 1.
+
+    The softmax of ``(0, x, y)``, computed against the largest exponent
+    so a boundary walked far from the triple point does not overflow.
+    """
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    top = np.maximum(np.maximum(x, y), 0.0)
+    ea, eb, ec = np.exp(-top), np.exp(x - top), np.exp(y - top)
+    total = ea + eb + ec
+    return ea / total, eb / total, ec / total
+
+
 def ternary_to_xy(a: pd.Series, b: pd.Series, c: pd.Series
                   ) -> Tuple[pd.Series, pd.Series]:
     """Project ternary coordinates (apex A at top, B left, C right) into

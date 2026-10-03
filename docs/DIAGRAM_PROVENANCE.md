@@ -367,7 +367,7 @@ faded to say so.
 `Ti` was converted from TiO₂ with 5995 ppm per wt.% in four places;
 the mass ratio gives 5993.4. Now a named constant, shared.
 
-## Drawn envelope — six done, 16 to go
+## Drawn envelope — eight done, 14 to go
 
 ### Done (3)
 
@@ -417,9 +417,10 @@ Fig. 7b — with the three boundary polylines the caption gives as
 coordinates. An internal check holds: equation (8)'s constant, 1.473,
 equals equation (6)'s 0.271 plus equation (7)'s 1.201.
 
-### Computed, not measured (3)
+### Computed, not measured (5)
 
-`vermeesch_SiTiSr`, `vermeesch_EuLuSr` and `vermeesch_VTiSc` were drawn
+`vermeesch_SiTiSr`, `vermeesch_EuLuSr`, `vermeesch_VTiSc`,
+`wood_1980_ThHfTa` and `pearce_cann_1973_ZrTi` were drawn
 envelopes — polygons typed in ternary percent, approximating by eye
 something that can be computed exactly. They are not any more.
 
@@ -447,17 +448,38 @@ Three things had to be settled that the paper does not state outright:
 Reference N-MORB, OIB and IAB compositions now land in their own field
 on all three, nine assignments out of nine.
 
-### Still to measure (16)
+**Wood (1980) Th–Hf/3–Ta** joins them, replacing the fields Wood drew by
+eye with Vermeesch's LDA (his Figure 41b). One anchor point is used
+against what Table 6 prints. The table gives node 2 as (1.43, −1.5),
+which puts it diagonally opposite where the figure draws it and sends a
+reference N-MORB into the OIB field. The figure was measured to settle
+it: the four numbered discs were detected in a render of panel (b) and
+the axes calibrated on nodes 1, 3 and 4, which do agree with the table.
+That calibration reproduces node 3 as (−0.076, −0.864) against a
+published (−0.07, −0.86) — so it is trustworthy — and puts node 2 at
+(−1.44, +1.50): the printed magnitudes to a hundredth, both signs
+reversed.
+
+**Pearce & Cann (1973) Zr–Ti** was drawing two straight dotted lines at
+Ti/Zr = 30 and 110, with a comment calling them "approximate refined
+boundaries". They were neither Vermeesch's nor refined. His Figure 38
+is not three rays from a triple point but **two separate segments**,
+each given by its two endpoints, which is why that row of Table 6
+repeats its x values as −13, −7, −13, −7. The axes are the additive
+log-ratio of (Zr, Ti, everything else) in ppm, so mapping a boundary
+back to Zr–Ti is the same softmax the ternaries use, scaled by 10⁶.
+
+### Still to measure (14)
 
 - `saccani2015_nb_th`, `saccani2015_dy_yb`, `saccani2015_ce_dy_yb`
-- `pearce_gale_1977`, `pearce_cann_1973_ZrTi`
+- `pearce_gale_1977`
 - `defant_drummond_YSrY`, `defant_drummond_YbLaYb`
 - `pearce1984_YbTa`, `pearce1984_YNb`, `pearce1984_YbTaRb`,
   `pearce1984_YNbRb`
 - `vermeesch_NaNbSr`, `vermeesch_SmTiV` — the two **QDA** ones, whose
   boundaries are conics in log-ratio space rather than rays from a
   triple point, so Table 6 has no anchor points for them
-- `wood_1980_ThHfTa`, `cabanis_lecolle_1989`, `harris_1986_HfRbTa`
+- `cabanis_lecolle_1989`, `harris_1986_HfRbTa`
 
 None of their sources is on disk.
 

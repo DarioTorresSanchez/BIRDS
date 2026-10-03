@@ -14,6 +14,7 @@ from .base import (
     draw_ternary_frame,
     get_groups,
     resolve_column,
+    inverse_logratio as _inverse_logratio,
     ternary_to_xy,
 )
 
@@ -89,50 +90,6 @@ _WOOD_FIELDS = {
     "Volcanic arc\nbasalts":   [(60, 35, 5), (95, 0, 5), (75, 0, 25), (60, 25, 15)],
 }
 
-
-class Wood1980ThHfTa(Diagram):
-    key = "wood_1980_ThHfTa"
-    title = "Th – Hf/3 – Ta — Wood (1980) / Vermeesch (2006a)"
-    citation = ("Wood (1980); refined by Vermeesch (2006a). 74 % success "
-                "for IAB; 100 % for OIB.")
-
-    def _abc(self, df):
-        th = resolve_column(df, ["Th"])
-        hf = resolve_column(df, ["Hf"])
-        ta = resolve_column(df, ["Ta"])
-        if not (th and hf and ta):
-            return None
-        return (pd.to_numeric(df[th], errors="coerce"),
-                pd.to_numeric(df[hf], errors="coerce") / 3.0,
-                pd.to_numeric(df[ta], errors="coerce"))
-
-    def plot(self, figure, df, plot_style, options: PlotOptions):
-        figure.clear()
-        ax = figure.add_subplot(111)
-        draw_ternary_frame(ax, ("Th", "Hf / 3", "Ta"), options.x_axis)
-
-        # Draw fields
-        for name, abc in _WOOD_FIELDS.items():
-            a, b, c = zip(*abc)
-            x, y = ternary_to_xy(pd.Series(a), pd.Series(b), pd.Series(c))
-            poly = Polygon(list(zip(x, y)), closed=True, fill=False,
-                           edgecolor="#444", linewidth=0.9, alpha=0.85,
-                           zorder=2)
-            ax.add_patch(poly)
-            cx = float(np.mean(x))
-            cy = float(np.mean(y))
-            ax.text(cx, cy, name, ha="center", va="center", fontsize=8,
-                    color="#333", alpha=0.9, zorder=3)
-
-        # Plot data
-        _plot_ternary_data(ax, df, plot_style, self._abc)
-        self._apply_legend(ax, options)
-        figure.tight_layout()
-
-
-# ---------------------------------------------------------------------------
-# Cabanis & Lecolle (1989) La/10 – Y/15 – Nb/8
-# ---------------------------------------------------------------------------
 
 _CABANIS_FIELDS = {
     "Calc-alkaline\nbasalt":  [(25, 55, 20), (35, 50, 15), (45, 35, 20), (30, 45, 25)],
@@ -305,20 +262,6 @@ _LDA_RAY_REACH = 40.0
 #: 1 wt.% oxide to ppm of the element, from the mass ratios.
 _SI_WT_TO_PPM = 4674.0
 _TI_WT_TO_PPM = 5993.4
-
-
-def _inverse_logratio(x, y):
-    """``(ln(B/A), ln(C/A))`` back to ternary ``(A, B, C)`` summing to 1.
-
-    The softmax of ``(0, x, y)``, computed against the largest exponent
-    so a boundary walked far from the triple point does not overflow.
-    """
-    x = np.asarray(x, dtype=float)
-    y = np.asarray(y, dtype=float)
-    top = np.maximum(np.maximum(x, y), 0.0)
-    ea, eb, ec = np.exp(-top), np.exp(x - top), np.exp(y - top)
-    total = ea + eb + ec
-    return ea / total, eb / total, ec / total
 
 
 def _lda_boundary_xy(triple, end):
@@ -517,6 +460,58 @@ _HARRIS_FIELDS = {
     "Syn-collisional\ngranites":   [(20, 65, 15), (35, 55, 10), (45, 45, 10), (30, 55, 15)],
     "Post-collisional\ngranites":  [(30, 50, 20), (45, 35, 20), (40, 30, 30), (30, 40, 30)],
 }
+
+
+#: Vermeesch (2006a) Table 6 and Figure 41b, the LDA that replaces the
+#: fields Wood drew by eye.  Same shape as the other three ternaries --
+#: node 3 the triple point, the rest ray ends -- and the same axes,
+#: ln(B/A) and ln(C/A) with A the top apex.
+#:
+#: Node 2 is used with both its signs flipped.  Table 6 prints it as
+#: (1.43, -1.5), which puts it on the opposite side of the origin from
+#: where Figure 41b draws it, and sends a reference N-MORB into the OIB
+#: field.  Measuring the figure settles it: detecting the four numbered
+#: discs and calibrating the axes on nodes 1, 3 and 4 -- which do agree
+#: with the table, and reproduce node 3 as (-0.076, -0.864) against a
+#: published (-0.07, -0.86) -- puts node 2 at (-1.44, +1.50), matching
+#: the printed magnitudes to a hundredth with both signs reversed.
+_LDA_TH_TA_HF_APICES = ("Hf/3", "Th", "Ta")
+
+_LDA_TH_TA_HF = {
+    "axes": ("ln(3 Th / Hf)", "ln(3 Ta / Hf)"),
+    "triple": (-0.07, -0.86),
+    "boundaries": (
+        ((-1.43, 1.5), ("OIB", "MORB")),    # node 2, signs corrected
+        ((-1.49, -2.48), ("MORB", "IAB")),  # node 1
+        ((2.81, 1.0), ("IAB", "OIB")),      # node 4
+    ),
+}
+
+
+class Wood1980ThHfTa(_VermeeschLDATernary):
+    key = "wood_1980_ThHfTa"
+    title = "Th – Hf/3 – Ta — Wood (1980) / Vermeesch (2006a)"
+    citation = ("Wood (1980), with the decision boundaries Vermeesch "
+                "(2006a) derived for it by linear discriminant analysis "
+                "(his Figure 41b) in place of the fields Wood drew by "
+                "eye.  Th, Hf/3 and Ta in ppm.  The analysis is done in "
+                "ln(3Th/Hf) — ln(3Ta/Hf) space, where the boundaries are "
+                "straight; mapped back here they curve.  One of the four "
+                "anchor points of his Table 6 is used with its signs "
+                "corrected against the figure — see the note at the "
+                "coefficients.")
+    spec = _LDA_TH_TA_HF
+    apices = _LDA_TH_TA_HF_APICES
+
+    def _abc(self, df):
+        th = resolve_column(df, ["Th"])
+        hf = resolve_column(df, ["Hf"])
+        ta = resolve_column(df, ["Ta"])
+        if not (th and hf and ta):
+            return None
+        return (pd.to_numeric(df[hf], errors="coerce") / 3.0,
+                pd.to_numeric(df[th], errors="coerce"),
+                pd.to_numeric(df[ta], errors="coerce"))
 
 
 class Harris1986HfRbTa(Diagram):

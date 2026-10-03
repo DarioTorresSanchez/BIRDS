@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from .base import Diagram, resolve_column
+from .base import Diagram, inverse_logratio, resolve_column
 
 
 #: 1 wt.% TiO2 = 5993.4 ppm Ti, from the mass ratio 47.867 / 79.866.
@@ -305,12 +305,49 @@ class Shervais1982TiV(Diagram):
 # Pearce & Cann (1973) Zr vs Ti
 # ---------------------------------------------------------------------------
 
+#: Vermeesch (2006a) Table 6, Figure 38b.  Unlike his ternary LDAs,
+#: this one is not three rays from a triple point but **two straight
+#: segments**, each given by its two endpoints -- which is why the x
+#: column of Table 6 repeats as -13, -7, -13, -7.  The axes are
+#: ln(Zr/(1e6 - Zr - Ti)) and ln(Ti/(1e6 - Zr - Ti)), the additive
+#: log-ratio of the three-part composition (Zr, Ti, everything else) in
+#: ppm, so mapping a boundary back to Zr-Ti is the same softmax the
+#: ternaries use, scaled by 1e6.  Straight there, curved here.
+_PEARCE_CANN_LDA = {
+    "upper": (((-13.0, -4.28), (-7.0, -4.45)), ("OIB", "MORB")),
+    "lower": (((-13.0, -5.36), (-7.0, -4.72)), ("MORB", "IAB")),
+}
+
+#: How far past the published endpoints to carry each boundary, as a
+#: fraction of the segment, so the curve crosses the whole frame
+#: instead of stopping in mid-air at the anchor.
+_PEARCE_CANN_OVERRUN = 0.6
+
+#: The closure the log-ratio denominator is taken against: Zr and Ti in
+#: ppm against the 1e6 ppm of the whole rock.
+_PPM_CLOSURE = 1.0e6
+
+
+def _pearce_cann_boundary(segment):
+    """One decision boundary, as (Zr ppm, Ti ppm) along its length."""
+    (x0, y0), (x1, y1) = segment
+    t = np.linspace(-_PEARCE_CANN_OVERRUN, 1.0 + _PEARCE_CANN_OVERRUN, 200)
+    xs = x0 + (x1 - x0) * t
+    ys = y0 + (y1 - y0) * t
+    _rest, zr, ti = inverse_logratio(xs, ys)
+    return zr * _PPM_CLOSURE, ti * _PPM_CLOSURE
+
+
 class PearceCann1973ZrTi(Diagram):
     key = "pearce_cann_1973_ZrTi"
-    title = "Zr vs Ti — Pearce & Cann (1973)"
-    citation = ("Pearce & Cann (1973); Vermeesch (2006a) redefined "
-                "boundaries (Fig. 5.2c). Good for OIB and IAB; less "
-                "reliable for MORB.")
+    title = "Zr vs Ti — Pearce & Cann (1973) / Vermeesch (2006a)"
+    citation = ("Pearce & Cann (1973), with the decision boundaries "
+                "Vermeesch (2006a) derived for it by linear discriminant "
+                "analysis (his Figure 38).  The analysis is done on "
+                "ln(Zr/rest) and ln(Ti/rest), where the boundaries are "
+                "two straight lines; mapped back to Zr-Ti they curve.  "
+                "Anchor points from his Table 6.  OIB above, IAB below, "
+                "MORB between.")
     x_label = "Zr (ppm)"
     y_label = "Ti (ppm)"
     x_range = (10, 1000)
@@ -331,16 +368,21 @@ class PearceCann1973ZrTi(Diagram):
         return pd.to_numeric(df[zr], errors="coerce"), ti_ppm
 
     def _draw_background(self, ax, options):
-        # Approximate refined boundaries (Vermeesch 2006a)
-        # IAB: low Ti/Zr (~50)
-        # OIB: high Ti and Zr
-        # MORB: intermediate
-        xs = np.array([10, 1000])
-        ax.plot(xs, 30 * xs, color="#444", lw=0.8, ls=":")    # Ti/Zr ≈ 30 (IAB upper)
-        ax.plot(xs, 110 * xs, color="#444", lw=0.8, ls=":")  # Ti/Zr ≈ 110 (OIB lower)
-        ax.text(80, 1500, "IAB", fontsize=11, style="italic", color="#333")
-        ax.text(80, 6000, "MORB", fontsize=11, style="italic", color="#333")
-        ax.text(80, 20000, "OIB", fontsize=11, style="italic", color="#333")
+        for segment, _pair in _PEARCE_CANN_LDA.values():
+            zr, ti = _pearce_cann_boundary(segment)
+            ax.plot(zr, ti, color="#444", lw=0.9, alpha=0.9, zorder=2)
+        # Labels sit between the two boundaries, and outside them, at a
+        # Zr the frame actually shows.
+        at_zr = 60.0
+        upper = _pearce_cann_boundary(_PEARCE_CANN_LDA["upper"][0])
+        lower = _pearce_cann_boundary(_PEARCE_CANN_LDA["lower"][0])
+        top = float(np.interp(at_zr, upper[0], upper[1]))
+        bottom = float(np.interp(at_zr, lower[0], lower[1]))
+        for name, height in (("OIB", top * 1.9),
+                             ("MORB", np.sqrt(top * bottom)),
+                             ("IAB", bottom / 2.2)):
+            ax.text(at_zr, height, name, fontsize=11, style="italic",
+                    color="#333", ha="center", va="center")
 
 
 # ---------------------------------------------------------------------------
