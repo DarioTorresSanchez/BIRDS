@@ -136,22 +136,27 @@ _VOLCANIC_PATHS = tuple(
 )
 
 
-def _classify_points(points, *, normative_ol, normative_q):
-    """Name a sequence of (SiO2, alkalis) pairs.
+def _classify_points(points, paths, splits, *, normative_ol, normative_q):
+    """Name a sequence of (SiO2, alkalis) pairs against *paths*.
 
     A composition sitting exactly on a boundary is given the name of the
     first field that claims it, in the order the outlines are declared —
     the IUGS scheme does not assign boundaries either way, so any
     consistent rule will do, and a stated one beats an accidental one.
+
+    *splits* names the fields that the plane cannot separate on its own;
+    the plutonic scheme has none, because Middlemost draws the quartz
+    monzonite field rather than splitting a trachyte field by normative
+    quartz.
     """
     pts = np.asarray(points, dtype=float).reshape(-1, 2)
     names = [""] * len(pts)
     finite = np.isfinite(pts).all(axis=1)
-    for clean, path in _VOLCANIC_PATHS:
+    for clean, path in paths:
         inside = np.zeros(len(pts), dtype=bool)
         if finite.any():
             inside[finite] = path.contains_points(pts[finite])
-        split = _VOLCANIC_SPLITS.get(clean)
+        split = splits.get(clean)
         for i in np.flatnonzero(inside):
             if names[i]:
                 continue
@@ -267,6 +272,7 @@ class TASVolcanic(Diagram):
         Returns ``""`` for a composition off the diagram.
         """
         names = _classify_points([(sio2, alkalis)],
+                                 _VOLCANIC_PATHS, _VOLCANIC_SPLITS,
                                  normative_ol=[normative_ol],
                                  normative_q=[normative_q])
         return names[0]
@@ -296,6 +302,7 @@ class TASVolcanic(Diagram):
 
         names = _classify_points(
             list(zip(x.tolist(), y.tolist())),
+            _VOLCANIC_PATHS, _VOLCANIC_SPLITS,
             normative_ol=optional("Ol", "norm_Ol", "Olivine"),
             normative_q=optional("Q", "norm_Q", "Quartz"),
         )
@@ -326,6 +333,81 @@ _PLUTONIC_FIELDS = {
     "Foid\nSyenite":     [(52.5,14),(57,18),(63,16.2),(61,13.5),(57.6,11.7),(52.5,14)],
 
 }
+
+
+# ---------------------------------------------------------------------------
+# Naming a plutonic composition
+# ---------------------------------------------------------------------------
+#
+# Same arrangement as the volcanic scheme above: the regions are built
+# *from* the outlines that get drawn, so a name cannot drift away from
+# the picture.
+#
+# Fourteen of the sixteen close on their own.  Two are stored as the
+# single boundary segment each contributes to the drawing -- the rest
+# of their edges belong to their neighbours and would be drawn twice --
+# so those two are given a closed form here.  That is the whole of what
+# used to stand in the way: with them closed, the sixteen tile the
+# diagram exactly, with no overlap and no interior gap.
+#
+# Middlemost's own text is what says they may be closed this way.  He
+# sets the plutonic scheme out as the volcanic one renamed -- gabbro
+# for basalt, diorite for andesite, granodiorite for dacite, syenite
+# for trachyte, granite for rhyolite, foid gabbro for tephrite, and so
+# on -- so the two fields here are the volcanic phonotephrite and
+# tephriphonolite under plutonic names, and take their vertices.
+# Checked against Figure 4 rather than taken on trust: both closures
+# land on its drawn outlines.
+#
+# Not every field of Figure 4 is drawn here.  Quartzolite, beyond the
+# granite field, and the tawite/urtite/italite group above foidolite
+# are what Middlemost calls "outside the main sequence of plutonic
+# rocks"; a composition there is left unnamed rather than forced into
+# a neighbour.
+
+_PLUTONIC_CLOSURES = {
+    "Foid\nMonzodiorite": [(45, 9.4), (49.4, 7.3), (53, 9.3), (48.4, 11.5)],
+    "Foid\nMonzosyenite": [(48.4, 11.5), (53, 9.3), (57.6, 11.7),
+                           (52.5, 14)],
+}
+
+
+def _plutonic_regions():
+    """name → closed vertex list, built once from the drawn outlines."""
+    out = dict(_PLUTONIC_CLOSURES)
+    for name, verts in _PLUTONIC_FIELDS.items():
+        out.setdefault(name, list(verts))
+    return out
+
+
+#: Outline key → the name Middlemost writes in his text.  The keys are
+#: what the figure needs to fit the label inside the field, which is
+#: not always the rock's name: "Monzo\n-gabbro" has to come back as
+#: monzogabbro and "Gabbro\ndiorite" as gabbroic diorite.  Stripping
+#: the newline is not enough, so the mapping is explicit.
+_PLUTONIC_NAMES = {
+    "Peridot\ngabbro": "Peridotgabbro",
+    "Gabbro": "Gabbro",
+    "Gabbro\ndiorite": "Gabbroic diorite",
+    "Diorite": "Diorite",
+    "Granodiorite": "Granodiorite",
+    "Granite": "Granite",
+    "Quartz\nMonzonite": "Quartz monzonite",
+    "Syenite": "Syenite",
+    "Monzonite": "Monzonite",
+    "Monzo\ndiorite": "Monzodiorite",
+    "Monzo\n-gabbro": "Monzogabbro",
+    "Foid\ngabbro": "Foid gabbro",
+    "Foidolite": "Foidolite",
+    "Foid\nMonzodiorite": "Foid monzodiorite",
+    "Foid\nMonzosyenite": "Foid monzosyenite",
+    "Foid\nSyenite": "Foid syenite",
+}
+
+_PLUTONIC_PATHS = tuple(
+    (_PLUTONIC_NAMES[name], Path(verts))
+    for name, verts in _plutonic_regions().items()
+)
 
 
 class TASPlutonic(Diagram):
@@ -370,3 +452,45 @@ class TASPlutonic(Diagram):
     def _draw_background(self, ax, options) -> None:
         super()._draw_background(ax, options)
         _draw_ib_boundary(ax, x_max=self.x_range[1])
+
+    # ------------------------------------------------------------------
+    # Classification
+    # ------------------------------------------------------------------
+    @staticmethod
+    def classify(sio2: float, alkalis: float) -> str:
+        """Name one plutonic composition from SiO2 and Na2O + K2O.
+
+        Both wt.%, recalculated to 100 % anhydrous, as for the volcanic
+        diagram.  Returns ``""`` for a composition off the diagram —
+        including the two corners Middlemost names but does not draw
+        here, quartzolite beyond SiO2 ~87 and the tawite/urtite/italite
+        group above the foidolite field, which he calls "outside the
+        main sequence of plutonic rocks".
+
+        Unlike the volcanic scheme this takes no normative arguments.
+        It needs none: Middlemost gives foid gabbro one name where the
+        volcanic plane splits tephrite from basanite, and he draws the
+        quartz monzonite field instead of splitting a trachyte field at
+        20 % normative quartz.
+        """
+        return _classify_points([(sio2, alkalis)],
+                                _PLUTONIC_PATHS, {},
+                                normative_ol=[None],
+                                normative_q=[None])[0]
+
+    @staticmethod
+    def classify_frame(df: pd.DataFrame) -> pd.Series:
+        """Name every row of *df*, as a Series aligned to its index."""
+        si = resolve_column(df, ["SiO2"])
+        na = resolve_column(df, ["Na2O"])
+        k = resolve_column(df, ["K2O"])
+        if not (si and na and k):
+            return pd.Series([""] * len(df), index=df.index, dtype="object")
+        x = pd.to_numeric(df[si], errors="coerce")
+        y = (pd.to_numeric(df[na], errors="coerce")
+             + pd.to_numeric(df[k], errors="coerce"))
+        names = _classify_points(list(zip(x.tolist(), y.tolist())),
+                                 _PLUTONIC_PATHS, {},
+                                 normative_ol=[None] * len(df),
+                                 normative_q=[None] * len(df))
+        return pd.Series(names, index=df.index, dtype="object")

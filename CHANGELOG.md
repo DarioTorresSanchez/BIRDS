@@ -30,8 +30,20 @@ including what is still unverified.
   polygons the diagram already draws, so the name and the picture
   cannot disagree. Tephrite/basanite and trachyte/trachydacite split on
   normative olivine and quartz; without them the pair is returned
-  whole. The plutonic TAS has no equivalent yet — its outlines do not
-  tile and Middlemost (1994) is not to hand.
+  whole.
+- **`TASPlutonic.classify()` and `classify_frame()`**, now that
+  Middlemost (1994) is to hand. What stood in the way was that two of
+  its sixteen outlines are stored as the single boundary segment each
+  contributes to the drawing; closing those two makes the sixteen tile
+  exactly, with no overlap and no interior gap. Middlemost's own text
+  is what licenses the vertices — he sets the plutonic scheme out as
+  the volcanic one renamed, so those two fields are the volcanic
+  phonotephrite and tephriphonolite under plutonic names — and both
+  closures were then checked against his Figure 4. It takes no
+  normative arguments and needs none: he gives foid gabbro one name
+  where the volcanic plane splits tephrite from basanite, and draws the
+  quartz monzonite field rather than splitting a trachyte field at
+  20 % normative quartz.
 - **Validation against USGS reference materials** BHVO-2, BCR-2 and
   AGV-2 (`tests/test_usgs_reference_materials.py`), running the whole
   chain a user follows: pre-process, classify, norm, normalise,

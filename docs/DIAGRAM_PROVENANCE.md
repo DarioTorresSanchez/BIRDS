@@ -769,6 +769,71 @@ rather than by label, the measured boundaries, their symmetry, the
 branch, the collapse against the original's labels, and the three
 misplaced reference basalts.
 
+## Middlemost (1994) — naming a plutonic rock from the TAS
+
+`Middlemost_1994.pdf` — *Earth-Science Reviews* **37**, 215–224,
+Figure 4. Key `tas_plutonic`.
+
+`TASVolcanic` has had `classify()` for a while; the plutonic one did
+not, and the reason recorded here was that its outlines do not tile.
+They do not, as stored: **two of the sixteen are kept as the single
+boundary segment each contributes to the drawing**, because the rest of
+their edges belong to their neighbours and drawing them twice would
+show. Closing those two is the whole of the fix. With them closed the
+sixteen tile exactly — a 0.2 × 0.08 grid over the whole diagram finds
+**no overlap and no interior gap**.
+
+What says they may be closed that way is Middlemost's own text, which
+sets the plutonic scheme out as the volcanic one renamed: gabbro for
+basalt, diorite for andesite, granodiorite for dacite, syenite for
+trachyte, granite for rhyolite, foid gabbro for tephrite, monzogabbro
+for trachybasalt, and so on. The two fields in question are the
+volcanic phonotephrite and tephriphonolite under plutonic names, and
+take their vertices. Both closures were then checked against Figure 4
+rather than taken on trust, and land on its drawn outlines.
+
+**The classification takes no normative arguments and needs none.**
+Middlemost gives foid gabbro one name where the volcanic plane splits
+tephrite from basanite, and he *draws* the quartz monzonite field
+rather than splitting a trachyte field at 20 % normative quartz — the
+figure has a geometric boundary where the volcanic scheme has a
+normative one.
+
+**A false alarm worth recording.** Overlaying our stored polygons on
+Figure 4 first showed them displaced by about 6 wt.% SiO₂, which looked
+like a transcription error across the whole set. It was the
+calibration: the leftmost tick is SiO₂ = **40**, not 30, the "30"
+numeral having fallen outside the crop. Refitted, the overlay matches,
+and the drawn verticals read 41.0, 44.9, 52.2 and 62.9 against stored
+41, 45, 52 and 63. Nothing needed changing. The lesson is the project's
+own: calibrate on labels you can see in the crop, and check a known
+feature before believing a systematic offset.
+
+**The two schemes are not the same diagram**, and 3.4 % of the shared
+plane disagrees. All of it is Middlemost having redrawn rather than
+traced, and it is pinned as tests so neither set gets "corrected" to
+match the other:
+
+- he closes **foid syenite** under a tawite/urtite/italite field that
+  Le Bas has no equivalent of, where volcanic phonolite runs open to
+  the top of the plane;
+- he closes **granite** on the right, where volcanic rhyolite runs
+  open, so the high-alkali corner above it is his syenite and quartz
+  monzonite;
+- his **granodiorite/granite** boundary meets the axis at SiO₂ **77.3**
+  where Le Bas puts dacite/rhyolite at **77.0**. Measured off Figure 4
+  the boundary extrapolates to 77.31, so the 0.3 is his.
+
+Quartzolite and the tawite/urtite/italite group are in Figure 4 but are
+not drawn here; Middlemost calls them "outside the main sequence of
+plutonic rocks". A composition there is left unnamed rather than forced
+into a neighbour.
+
+`tests/test_tas_plutonic_classify.py` pins the tiling, the two
+closures against their volcanic twins, a point inside each of the
+sixteen fields, the names against the layout labels, and the three
+places the two schemes part company.
+
 ## Harris, Pearce & Tindle (1986) — wrong apex and wrong divisor
 
 `Harris_etal_1986.pdf` — *Geol. Soc. London Spec. Publ.* **19**, 67–81,
