@@ -1099,6 +1099,69 @@ YANG_PERIDOTITE_PRIMARY = ((-0.4, -1.45), (1.05, 0.05), (1.3, 0.15),
                            (2.9, 1.7))
 
 
+#: Figure 1a's own frame, where the lherzolite trend is drawn.
+YANG_FIG1A_X_RANGE = (-3.5, 1.0)
+YANG_FIG1A_Y_RANGE = (-1.4, 1.4)
+
+
+class Yang2019FCMS(Diagram):
+    """ln(FeO/CaO) vs ln(MgO/SiO2), with the lherzolite trend drawn.
+
+    FCMS had no diagram: the statistics table reported it and there
+    was nothing to read the number against.  This is the plane it is
+    defined in.
+
+    Yang et al. publish no discrimination diagram for FCMS and no
+    field boundaries for it -- Figure 7's caption is the only place in
+    the paper that gives boundary coordinates, and those are for
+    FCKANTMS.  So none are drawn here.  What is published, and what
+    this draws, is the lherzolite trend itself: the cubic of equation
+    (2), printed on Figure 1a beside the curve, repeated in Table 1
+    and again in the conclusions.  FCMS *is* the vertical distance
+    from it, so a sample's FCMS can be read off the plot directly.
+    """
+
+    key = "yang_2019_fcms"
+    title = "ln(FeO/CaO) vs ln(MgO/SiO$_2$) — Yang et al. (2019)"
+    citation = ("Yang et al. (2019) JGR Solid Earth 124, 3429-3480, "
+                "Fig. 1a. The curve is their lherzolite trend, the "
+                "cubic of equation (2), printed on the figure: "
+                "y = 0.058x³ + 0.636x² + 1.850x + 1.170, R² = 0.944. "
+                "FCMS is the vertical distance from it, so lherzolite "
+                "melts sit near zero and pyroxenite and hornblendite "
+                "melts well above or below. The paper draws no field "
+                "boundaries on this plane and none are invented here. "
+                "It also warns that lherzolite melts scatter about the "
+                "curve, because ln(FeO/CaO) and ln(MgO/SiO₂) both "
+                "depend on melting degree and pressure — which is why "
+                "FCKANTMS, which corrects for both, is the parameter "
+                "the paper's conclusions recommend. All iron as FeO.")
+    x_label = "ln(MgO / SiO$_2$)"
+    y_label = "ln(FeO / CaO)"
+    x_range = YANG_FIG1A_X_RANGE
+    y_range = YANG_FIG1A_Y_RANGE
+
+    def _compute_xy(self, df):
+        x = _ln_ratio(df, "MgO", "SiO2")
+        y = _yang_feo_cao(df)
+        if x is None or y is None:
+            return None, None
+        return x, y
+
+    def _draw_background(self, ax, options):
+        xs = np.linspace(*YANG_FIG1A_X_RANGE, 200)
+        ax.plot(xs, _cubic(YANG_LHERZOLITE_TREND, xs), color="#444",
+                lw=1.3, zorder=0)
+        ax.annotate("lherzolite trend  (FCMS = 0)", (-1.9, -0.47),
+                    xytext=(0, -14), textcoords="offset points",
+                    fontsize=8.5, style="italic", color="#333",
+                    ha="center", zorder=0)
+        ax.text(-2.6, 0.95, "FCMS > 0", fontsize=9, style="italic",
+                color="#333", zorder=0)
+        ax.text(-2.6, -1.15, "FCMS < 0", fontsize=9, style="italic",
+                color="#333", zorder=0)
+
+
 class Yang2019FCKANTMS(Diagram):
     """FCKANTMS vs ln(SiO2/(CaO+Na2O+TiO2)) — Yang et al. (2019)."""
 

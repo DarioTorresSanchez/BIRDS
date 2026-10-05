@@ -41,6 +41,7 @@ from .templates.tectonic_bivariate import (
     Saccani2015NbTh,
     Shervais1982TiV,
     Yang2019FCKANTMS,
+    Yang2019FCMS,
 )
 from .templates.tectonic_ternary import (
     CabanisLecolle1989,
@@ -78,7 +79,7 @@ _REGISTRY: Dict[str, object] = {
         Saccani2015NbTh, Saccani2015DyYb, Saccani2015CeDyYb,
         DefantDrummondYSrY, DefantDrummondYbLaYb,
         Pearce1984YbTa, Pearce1984YNb, Pearce1984YbTaRb, Pearce1984YNbRb,
-        Yang2019FCKANTMS,
+        Yang2019FCMS, Yang2019FCKANTMS,
         # ----- Tectonic — ternary --------------------------------------------
         Wood1980ThHfTa, CabanisLecolle1989,
         Vermeesch2006NaNbSr, Vermeesch2006SiTiSr, Vermeesch2006EuLuSr,

@@ -31,6 +31,21 @@ including what is still unverified.
   cannot disagree. Tephrite/basanite and trachyte/trachydacite split on
   normative olivine and quartz; without them the pair is returned
   whole.
+- **The FCMS plane, Yang *et al.* (2019) Fig. 1a.** FCMS was reported
+  in the statistics table with no diagram to read it against — the gap
+  the two-routes sweep found, by its having no partner to pair with.
+  It still gets no *discrimination* diagram, because the paper
+  publishes none: boundary coordinates appear in exactly one caption,
+  Figure 7's, and those are FCKANTMS. What is published is the plane
+  and the trend through it, so the diagram is ln(FeO/CaO) against
+  ln(MgO/SiO₂) with the lherzolite cubic printed on Figure 1a drawn
+  across it. FCMS **is** the vertical distance from that curve, which
+  is what makes it worth plotting: the value can be read straight off,
+  and a lherzolite melt sits on the line. The citation passes on the
+  paper's own view that FCKANTMS supersedes it, having removed the
+  temperature and pressure effects that scatter lherzolite melts here.
+  The catalogue entry used to read "FCMS / FCKANTMS" and point at the
+  FCKANTMS diagram alone; the two are now listed separately.
 - **`TASPlutonic.classify()` and `classify_frame()`**, now that
   Middlemost (1994) is to hand. What stood in the way was that two of
   its sixteen outlines are stored as the single boundary segment each
@@ -267,7 +282,7 @@ including what is still unverified.
 #### Interface
 
 - **Samples off the frame were counted as plotted.** Thirty-two of the
-  52 templates fix their limits to the frame their source figure is
+  53 templates fix their limits to the frame their source figure is
   drawn on — the TAS is 35–78 wt.% SiO₂ by 0–16 wt.% alkalis, the Verma
   panels run −8 to +8 — and matplotlib clips anything beyond. The tally
   under the canvas counted those samples as plotted, so "n = 12" could
@@ -308,11 +323,6 @@ including what is still unverified.
   unusable: its log-ratios contradict the concentrations printed beside
   them and appear to have slipped a row. The panels that use it are
   verified against the printed equations only.
-- **FCMS is computed but never plotted.** Yang *et al.* (2019) give two
-  parameters and the statistics table reports both, but only the
-  FCKANTMS diagram exists, so there is no figure to read an FCMS value
-  against. Found by the sweep, which pairs rows with diagrams: this one
-  has no partner.
 - **Nothing gates a Verma diagram on rock type.** Those papers require
   the type to be fixed first, with SINCLAS or IgRoCS; fed a basalt, the
   intermediate-magma set answers arc at better than even odds with no

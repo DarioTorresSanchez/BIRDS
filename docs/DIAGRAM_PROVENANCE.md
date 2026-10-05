@@ -769,6 +769,52 @@ rather than by label, the measured boundaries, their symmetry, the
 branch, the collapse against the original's labels, and the three
 misplaced reference basalts.
 
+## Yang *et al.* (2019) — the FCMS plane, and the diagram it does not get
+
+`Using_Major_Element_Logratios_to_Recognize_Composi.pdf` — *JGR Solid
+Earth* **124**, 3429–3480, Figure 1a. Key `yang_2019_fcms`.
+
+FCMS was computed and reported in the statistics table and had no
+diagram, so there was nothing to read the number against. That gap was
+found by the two-routes sweep, by FCMS having no axis to pair with.
+
+**It still gets no discrimination diagram, because the paper publishes
+none.** Boundary coordinates appear in exactly one place in the whole
+paper — the caption of Figure 7 — and those are for FCKANTMS against
+ln(SiO₂/(CaO+Na₂O+TiO₂)), which is the diagram already implemented.
+The conclusions say why FCMS has none: incorporating ln(K₂O/Al₂O₃),
+ln(TiO₂/Na₂O) and ln(Na₂O/K₂O) gives "a more powerful parameter called
+FCKANTMS", because it removes the temperature and pressure effects that
+make lherzolite melts scatter in the FCMS plane. The paper's own text
+notes that "the lherzolite melts mostly are not lie on the cubic
+polynomial curve" for that reason.
+
+**What is published is the plane and the trend through it**, and that
+is what this draws. Figure 1a plots ln(FeO/CaO) against ln(MgO/SiO₂)
+on −3.5 to 1 by −1.4 to 1.4, with the cubic printed beside the curve:
+
+> y = 0.058x³ + 0.636x² + 1.850x + 1.170,  R² = 0.944
+
+which is equation (2) of Table 1, repeated again in the conclusions —
+three printings, so there is no room for doubt — and already the stored
+`YANG_LHERZOLITE_TREND`.
+
+The reason the plane is worth drawing is that **FCMS is the vertical
+distance from that curve**. A sample's FCMS can be read straight off
+the plot, a lherzolite melt sits on the line, and the sign says which
+side. That identity is asserted against the statistics row, which
+reaches the same number by the other route — the row evaluates
+equation (2), the diagram plots the two log-ratios — so their agreeing
+is a real cross-check and not a restatement.
+
+The catalogue entry used to read "FCMS / FCKANTMS source proxy" and
+point at the FCKANTMS diagram alone; the two are now listed
+separately.
+
+`tests/test_yang_2019_fcms.py` pins the cubic, the frame, the shape of
+the trend, the axis order, the all-iron-as-FeO convention, the
+distance identity, and that exactly one line is drawn on the plane.
+
 ## Middlemost (1994) — naming a plutonic rock from the TAS
 
 `Middlemost_1994.pdf` — *Earth-Science Reviews* **37**, 215–224,

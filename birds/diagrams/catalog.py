@@ -61,7 +61,8 @@ TECTONIC_VOLCANIC: dict[str, list[tuple[str, str]]] = {
         ("Major elements DF (no FeO) - Pearce 1976 / Vermeesch 2006", "pearce_1976_DF"),
         ("TiO2-Zr-Y-Sr DF - Butler & Woronow / Vermeesch 2006", "butler_woronow_DF"),
         ("TiO2-Nb-V-Y-Zr DF set (5 panels) - Verma & Agrawal 2011", "verma_agrawal_2011"),
-        ("FCMS / FCKANTMS source proxy - Yang et al. 2019", "yang_2019_fckantms"),
+        ("FCMS source proxy (ln FeO/CaO vs ln MgO/SiO2) - Yang et al. 2019", "yang_2019_fcms"),
+        ("FCKANTMS source proxy - Yang et al. 2019", "yang_2019_fckantms"),
     ],
     "Intermediate": [
         ("Y vs Sr/Y (adakite) - Defant & Drummond 1990", "defant_drummond_YSrY"),
