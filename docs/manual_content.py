@@ -25,12 +25,19 @@ SECTIONS = [
         {"type": "p", "text":
          "B.I.R.D.S (Broad Igneous Rocks — Diagrams & Statistics) is a desktop "
          "application for plotting and analysing whole-rock geochemical "
-         "data of igneous rocks. It bundles 52 plotting templates, a "
+         "data of igneous rocks. It bundles 53 plotting templates, a "
          "spider-diagram engine with 28 published normalisers "
          "(REE chondrites and shales, multi-element references and "
-         "Ni-Cu-PGE metal references), a discrimination module with 33 "
+         "Ni-Cu-PGE metal references), a discrimination module with 34 "
          "tectonic diagrams, and a statistics dashboard with REE-anomaly "
-         "indices and a correlation-matrix heat-map."},
+         "indices, a correlation-matrix heat-map and 208 tectonic "
+         "discrimination parameters."},
+        {"type": "p", "text":
+         "Every field boundary is transcribed, measured or recomputed "
+         "from the original publication rather than redrawn by eye. "
+         "docs/DIAGRAM_PROVENANCE.md records which of the three it was, "
+         "diagram by diagram, together with the handful whose sources do "
+         "not permit it and what each would need."},
         {"type": "p", "text":
          "The software is built on top of the open scientific Python "
          "stack (PySide6, matplotlib, pandas, NumPy, SciPy) and runs "
@@ -212,11 +219,34 @@ SECTIONS = [
         ]},
         {"type": "h2", "text": "Available diagrams (plutonic)"},
         {"type": "bullet", "items": [
-            "TAS plutonic — Wilson (1989) / Cox et al. (1979).",
+            "TAS plutonic — Middlemost (1994).",
             "Normative An–Ab–Or — Barker (1979).",
             "Frost et al. (2001) — Fe-index, MALI, ASI, AI vs FSSI.",
             "Ab–Or–Q haplogranite — Tuttle & Bowen (1958).",
         ]},
+        {"type": "h2", "text": "Naming a rock from the TAS"},
+        {"type": "p", "text":
+         "Both TAS diagrams can name a composition as well as plot it. "
+         "The naming regions are built from the polygons the diagram "
+         "draws, so the name and the picture cannot disagree."},
+        {"type": "bullet", "items": [
+            "Volcanic — Le Bas et al. (1986). Tephrite/basanite and "
+            "trachyte/trachydacite are separated by normative olivine "
+            "and quartz; without a CIPW norm the pair is returned "
+            "whole rather than guessed at.",
+            "Plutonic — Middlemost (1994), which renames the volcanic "
+            "fields (gabbro for basalt, diorite for andesite, granite "
+            "for rhyolite, foid gabbro for tephrite, and so on) and "
+            "adds a quartz monzonite field between granite and syenite. "
+            "It needs no normative input.",
+        ]},
+        {"type": "note", "text":
+         "Both require the analysis recalculated to 100 % anhydrous, "
+         "as the IUGS scheme does. A composition outside the published "
+         "diagram is left unnamed rather than forced into the nearest "
+         "field — on the plutonic TAS that includes quartzolite and the "
+         "tawite/urtite/italite group, which Middlemost places outside "
+         "the main sequence of plutonic rocks."},
         {"type": "p", "text":
          "Use the controls on the left to edit axis labels, font, "
          "legend location, and to enable a convex-hull shaded range "
@@ -275,32 +305,62 @@ SECTIONS = [
         {"type": "p", "text":
          "Open Tectonic diagrams → Volcanic or → Plutonic. Inside the "
          "window, choose the composition (Mafic, Intermediate or Acid) "
-         "and the specific discriminator from the second combo. 14 "
-         "published discriminators are implemented with their original "
-         "field boundaries:"},
+         "and the specific discriminator from the second combo. 34 "
+         "published discriminators are implemented, each with the "
+         "boundaries of its own source. Each plot prints its citation "
+         "as a subtitle, and the entry in the combo names the axes in "
+         "the order the published figure draws them — y first, then x."},
         {"type": "h2", "text": "Mafic"},
         {"type": "bullet", "items": [
             "Pearce (2008) Th/Yb vs Nb/Yb — crustal-input proxy.",
-            "Pearce (2008) Ti/Yb vs Nb/Yb — melting-depth proxy.",
-            "Pearce & Gale (1977) Ti/Y vs Zr/Y.",
-            "Shervais (1982) / Vermeesch (2006) Ti vs V.",
-            "Pearce & Cann (1973) Zr vs Ti.",
-            "Saccani (2015) Nb_N vs Th_N.",
-            "Wood (1980) Th – Hf/3 – Ta ternary.",
-            "Cabanis & Lecolle (1989) La/10 – Y/15 – Nb/8 ternary.",
+            "Pearce (2008) TiO2/Yb vs Nb/Yb — melting-depth proxy. "
+            "The y axis is TiO2 in wt.% over Yb in ppm, as published.",
+            "Saccani (2015) Th_N vs Nb_N — MORB-OIB array against "
+            "volcanic arc array, N-MORB normalised.",
+            "Saccani (2015) Yb_N vs Dy_N — boninite against island-arc "
+            "tholeiite, chondrite normalised.",
+            "Saccani (2015) (Dy/Yb)_N vs (Ce/Yb)_N — N-MORB against "
+            "G-MORB, chondrite normalised.",
+            "Pearce & Gale (1977) Zr/Y vs Ti/Y — within-plate against "
+            "plate-margin.",
+            "Shervais (1982) / Vermeesch (2006a) Ti vs V.",
+            "Pearce & Cann (1973) / Vermeesch (2006a) Zr vs Ti.",
+            "Five Vermeesch (2006a) ternaries: Na–25Nb–Sr, "
+            "Si/1000–Ti/40–Sr, 100Eu–500Lu–Sr, V–Ti/50–5Sc and "
+            "50Sm–Ti/50–V.",
+            "Wood (1980) / Vermeesch (2006a) Th – Hf/3 – Ta ternary.",
+            "Cabanis & Lecolle (1989) La/10 – Y/15 – Nb/8 ternary, "
+            "with Y/15 at the apex.",
+            "Pearce (1976) / Vermeesch (2006a) major-element DF, and "
+            "Butler & Woronow (1986) / Vermeesch (2006a) Zr–Y–Sr–Ti DF.",
+            "Verma & Agrawal (2011) — basic and ultrabasic rocks, five "
+            "triplet DF panels.",
+            "Yang et al. (2019) ln(FeO/CaO) vs ln(MgO/SiO2), the FCMS "
+            "plane, and FCKANTMS vs ln(SiO2/(CaO+Na2O+TiO2)).",
         ]},
         {"type": "h2", "text": "Intermediate"},
         {"type": "bullet", "items": [
-            "Defant & Drummond (1990) Y vs Sr/Y — adakite.",
-            "Defant & Drummond (1990) Yb vs La/Yb — adakite.",
+            "Defant & Drummond (1990) Sr/Y vs Y — adakite.",
+            "Defant & Drummond (1990) La/Yb vs Yb — adakite.",
+            "Verma & Verma (2013) — three five-panel DF sets: majors, "
+            "immobile majors + traces, and immobile traces.",
         ]},
         {"type": "h2", "text": "Acid (granitoids)"},
         {"type": "bullet", "items": [
-            "Pearce et al. (1984) Ta vs Yb.",
-            "Pearce et al. (1984) Nb vs Y.",
-            "Pearce et al. (1984) Rb vs (Yb+Ta).",
-            "Pearce et al. (1984) Rb vs (Y+Nb).",
+            "Pearce et al. (1984) Ta vs Yb, Nb vs Y, Rb vs (Yb+Ta) and "
+            "Rb vs (Y+Nb).",
+            "Harris et al. (1986) Rb/30 – Hf – Ta×3 ternary, with "
+            "Rb/30 at the apex.",
+            "Verma, Pandarinath & Rivera-Gómez (2012) — acid rocks, "
+            "five triplet DF panels.",
+            "Verma et al. (2013) — three further five-panel DF sets: "
+            "majors, immobile majors + traces, and immobile traces.",
         ]},
+        {"type": "note", "text":
+         "The Verma sets assume the rock type has already been fixed, "
+         "with SINCLAS or IgRoCS. Nothing in B.I.R.D.S enforces that: "
+         "fed a basalt, the intermediate-magma set will still answer, "
+         "and confidently. Choose the set that matches your rocks."},
     ]),
 
     ("11. Statistics and Anomalies", [
@@ -308,22 +368,49 @@ SECTIONS = [
          "Click Statistics and Anomalies → Open dashboard to compute "
          "every available statistic in one click. A “Refresh” button "
          "and a chondrite-reference selector live at the top of the "
-         "window. Five tabs hold the results:"},
+         "window. Eight tabs hold the results:"},
         {"type": "bullet", "items": [
             "Descriptive — count, mean, std, percentiles, median, MAD, "
             "%RSD, skewness and kurtosis for every numeric column.",
             "By group — the same statistics broken down by your "
             "grouping column(s).",
-            "REE anomalies & ratios — Eu/Eu*, Ce/Ce*, Pr/Pr*, Gd/Gd*, "
+            "Paper table — a publication-ready layout, samples down "
+            "the side and elements across.",
+            "Anomalies & ratios — Eu/Eu*, Ce/Ce*, Pr/Pr*, Gd/Gd*, "
             "Y/Y*, Y/Ho (raw), and the normalised (La/Yb)_N, "
             "(La/Sm)_N, (Gd/Yb)_N, (Sm/Yb)_N per sample. Positive "
             "anomalies are highlighted in pink, negative in light blue.",
             "Trace-element ratios — 15 commonly used ratios per sample "
             "(La/Yb, Zr/Y, Th/Yb, Nb/Y, Ti/V, Ba/Nb, Rb/Sr, …).",
-            "Correlation matrix — Pearson r heatmap of up to 30 "
-            "numeric columns, with cell annotations if the matrix fits "
-            "on screen.",
+            "Correlation matrix — Pearson r heatmap, poolable, "
+            "facetable per group or shown for one group alone, with "
+            "cell annotations if the matrix fits on screen.",
+            "Tectonic discrimination — 208 parameters, ticked from a "
+            "tree and computed per sample. See below.",
+            "Plots — the figures that go with the tables.",
         ]},
+        {"type": "h2", "text": "The tectonic discrimination tab"},
+        {"type": "p", "text":
+         "This is where the discriminant functions behind the Verma "
+         "diagrams, and the simple ratios behind the others, are "
+         "reported as numbers. Tick what you want in the tree on the "
+         "left; the count in the tab title follows your selection."},
+        {"type": "bullet", "items": [
+            "For seven of the eight Verma coefficient sets the "
+            "posterior probability of each tectonic setting is given "
+            "as well as the discriminant score, following Verma & "
+            "Agrawal (2011). Verma et al. (2012) publishes neither "
+            "group centroids nor group means, so that set reports "
+            "scores alone.",
+            "33.3 % is the by-chance level for a three-group panel. A "
+            "sample sitting near it is inconclusive, and seeing the "
+            "number says so where a field name would not.",
+        ]},
+        {"type": "note", "text":
+         "Every row here is checked against the diagram that plots the "
+         "same quantity, and required to equal it exactly. The two "
+         "reach the number by different code, so when a correction "
+         "lands on one it has to land on the other."},
     ]),
 
     ("12. Saving results", [
@@ -389,18 +476,46 @@ SECTIONS = [
         {"type": "p", "text":
          "B.I.R.D.S implements diagrams and statistics from the "
          "following sources. Cite each one according to the diagram you "
-         "used in your figures and tables."},
+         "used in your figures and tables — every plot prints its own "
+         "citation as a subtitle, and References → Show full "
+         "bibliography (APA) lists them all."},
         {"type": "bullet", "items": [
             "Rollinson, H.R., Pease, V. (2021). Using Geochemical Data "
             "to Understand Geological Processes (2nd ed.). Cambridge "
             "University Press.",
+            "Le Bas, M.J., Le Maitre, R.W., Streckeisen, A., Zanettin, "
+            "B. (1986). A chemical classification of volcanic rocks "
+            "based on the total alkali-silica diagram. J. Petrol. 27, "
+            "745–750.",
+            "Middlemost, E.A.K. (1994). Naming materials in the "
+            "magma/igneous rock system. Earth-Sci. Rev. 37, 215–224.",
             "Pearce, J.A. (2008). Geochemical fingerprinting of oceanic "
             "basalts with applications to ophiolite classification and "
             "the search for Archean oceanic crust. Lithos 100, 14–48.",
+            "Pearce, J.A., Gale, G.H. (1977). Identification of "
+            "ore-deposition environment from trace-element geochemistry "
+            "of associated igneous host rocks. GSL Sp. Pub. 7, 14–24.",
+            "Pearce, J.A., Harris, N.B.W., Tindle, A.G. (1984). Trace "
+            "element discrimination diagrams for the tectonic "
+            "interpretation of granitic rocks. J. Petrol. 25, 956–983.",
+            "Harris, N.B.W., Pearce, J.A., Tindle, A.G. (1986). "
+            "Geochemical characteristics of collision-zone magmatism. "
+            "GSL Sp. Pub. 19, 67–81.",
+            "Cabanis, B., Lecolle, M. (1989). Le diagramme "
+            "La/10-Y/15-Nb/8. C. R. Acad. Sci. 309 (II), 2023–2029.",
+            "Defant, M.J., Drummond, M.S. (1990). Derivation of some "
+            "modern arc magmas by melting of young subducted "
+            "lithosphere. Nature 347, 662–665.",
+            "Saccani, E. (2015). A new method of discriminating "
+            "different types of post-Archean ophiolitic basalts. "
+            "Geosci. Front. 6, 481–501.",
             "Vermeesch, P. (2006a). Tectonic discrimination diagrams "
             "revisited. G-cubed 7, Q06017.",
             "Verma, S.P. and co-authors (2006–2017). Multi-dimensional "
             "tectonomagmatic discrimination diagrams (multiple papers).",
+            "Verma, S.P. (2010). Statistical evaluation of bivariate, "
+            "ternary and discriminant function tectonomagmatic "
+            "discrimination diagrams. Turk. J. Earth Sci. 19, 185–238.",
             "Yang, Z.-F. et al. (2019). Using major element logratios "
             "to recognize compositional patterns of basalt. J. Geophys. "
             "Res. Solid Earth 124, 3458–3490.",

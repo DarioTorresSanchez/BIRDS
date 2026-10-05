@@ -31,6 +31,19 @@ including what is still unverified.
   cannot disagree. Tephrite/basanite and trachyte/trachydacite split on
   normative olivine and quartz; without them the pair is returned
   whole.
+- **The user manual and the diagram menus had gone stale.** The manual
+  still said "52 plotting templates", "33 tectonic diagrams", "14
+  published discriminators" and "Five tabs", and attributed the
+  plutonic TAS to Wilson (1989); it now says 53, 34, 34 and eight, and
+  cites Middlemost. It has gained the TAS rock-naming section, the
+  tectonic discrimination tab with its posterior probabilities, and
+  nine references the diagrams had acquired without it. Eleven entries
+  in the **tectonic menu** named their axes in the order they had
+  before this autumn's corrections, so the combo offered "Ti/Y vs Zr/Y"
+  and opened a plot titled "Zr/Y vs Ti/Y"; they now agree.
+  `tests/test_manual_and_menu_are_current.py` recomputes every count
+  from the registry and requires each menu entry to name the axes its
+  own plot draws, because counts written in prose drift silently.
 - **The FCMS plane, Yang *et al.* (2019) Fig. 1a.** FCMS was reported
   in the statistics table with no diagram to read it against — the gap
   the two-routes sweep found, by its having no partner to pair with.
