@@ -769,13 +769,70 @@ rather than by label, the measured boundaries, their symmetry, the
 branch, the collapse against the original's labels, and the three
 misplaced reference basalts.
 
-### Still to measure (3)
+## Harris, Pearce & Tindle (1986) — wrong apex and wrong divisor
 
-| Diagram | Source on disk | State |
+`Harris_etal_1986.pdf` — *Geol. Soc. London Spec. Publ.* **19**, 67–81,
+Figure 6. Key `harris_1986_HfRbTa`.
+
+Two errors, and the first is the one that mattered. **The apexes were
+wrong**: Hf sat at the top with Rb bottom left, where Figure 6 puts
+**Rb/30 at the apex**, Hf bottom left, Ta×3 bottom right. **And the
+divisor was wrong**: `Rb/10` where the figure, its caption and Figure 7
+all print **Rb/30** — in the menu text of both the volcanic and
+plutonic trees as well as in the code. Between them every sample was
+placed by the wrong pair of coordinates and with one of them three
+times too large. The four fields under it were quadrilaterals typed in
+ternary percent.
+
+The measurement went cleanly, for a reason worth reusing: **the dotted
+boundaries and the data symbols do not overlap in size.** The figure
+has 241 connected components of 32–64 px, which are the dots of the
+boundaries, and 133 of 256–4096 px, which are the open and closed
+triangles and squares. Separating on that and running RANSAC over the
+dots recovers five segments carrying 245 of 260 dots, each straight to
+0.5–4.3 px rms against a triangle 2008 px wide. The triangle itself is
+equilateral to **0.04 %** — fitted edges give a height of 1739.6 px
+against 1738.9 for the measured width — which is what fixes the
+calibration.
+
+Two things the measurement turned up that eyeballing would not have:
+
+- **The near-vertical boundary curves slightly.** Fitting its 69 dots
+  with a parabola rather than a line improves the residual from 4.0 to
+  2.8 px and bows by 9.3 px at most, which is 0.46 % of the triangle's
+  width. It is drawn straight, with the number recorded so the choice
+  is visible.
+- **There is no single triple point.** Two branches leave the vertical
+  boundary about four units apart — the VA|WP one at Rb/30 = 26.2 %,
+  the III|WP one at 22.5 % — with a short stem between them. Fitting
+  the three as concurrent lines put their pairwise intersections up to
+  11 units apart, which is how the stem was noticed; enlarging the
+  figure shows it plainly.
+
+| Field | Meaning, from the paper's summary |
+| --- | --- |
+| VA | volcanic arc, pre-collision calc-alkaline |
+| Group II | syn-collision peraluminous leucogranites |
+| Group III | late or post-collision calc-alkaline |
+| WP | within plate |
+
+The paper notes that Group III "can only be distinguished from
+volcanic-arc intrusions by their higher ratios of Ta/Hf and Ta/Zr",
+which the citation passes on.
+
+`tests/test_harris_1986.py` pins the apex order and the divisor by
+arithmetic rather than by label, the five segments, their shared
+vertices, the two separate branches, and the catalogue text.
+
+### Still drawn by eye (3) — all blocked, none pending
+
+Nothing is left that a measurement could fix. The three below are
+blocked on sources, not on effort.
+
+| Diagram | Source on disk | Why |
 | --- | --- | --- |
-| `harris_1986_HfRbTa` | `Harris_etal_1986.pdf` | to do |
-| `defant_drummond_YbLaYb` | **not on disk** | blocked on finding the real source, see above |
-| `vermeesch_NaNbSr`, `vermeesch_SmTiV` | `VermeeschGCubed2006.pdf` | **blocked** |
+| `defant_drummond_YbLaYb` | **not on disk** | the paper it cites does not contain that figure; see above |
+| `vermeesch_NaNbSr`, `vermeesch_SmTiV` | `VermeeschGCubed2006.pdf` | QDA, and the paper publishes no covariance matrices |
 
 The two Vermeesch ones are blocked for a reason no further reading will
 clear: they are **QDA**, so their boundaries are conics in log-ratio

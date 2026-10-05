@@ -126,6 +126,22 @@ including what is still unverified.
   within 0.15 %, because N-MORB and chondrite happen to have nearly the
   same Dy/Yb — which is why the fault was easy to miss in the row where
   it did not show. Every row now says which normaliser it used.
+- **Harris, Pearce & Tindle (1986).** Two errors. The apexes were
+  wrong — Hf at the top where Figure 6 puts **Rb/30**, with Hf bottom
+  left and Ta×3 bottom right — and the divisor was wrong, `Rb/10`
+  where the figure, its caption and Figure 7 all print **Rb/30**, in
+  the menu text of both trees as well as in the code. Between them
+  every sample was placed by the wrong pair of coordinates and with
+  one of them three times too large. The five boundary segments are
+  now measured: the dotted boundaries separate from the data because
+  the two populations do not overlap in size, and RANSAC over the dots
+  recovers them carrying 245 of 260, each straight to 0.5–4.3 px on a
+  triangle 2008 px wide. Two things that turned up in the measuring:
+  the near-vertical boundary curves, though only by 0.46 % of the
+  triangle's width, and it has **no single triple point** — two
+  branches leave it about four units apart with a short stem between,
+  which is why fitting them as concurrent lines put their
+  intersections up to 11 units apart.
 - **Cabanis & Lecolle (1989).** The apexes were wrong: La/10 sat at the
   top where both the original and Rollinson & Pease (2021) Fig. 5.4d
   put **Y/15**, so every sample was placed by the wrong pair of
@@ -289,13 +305,13 @@ including what is still unverified.
   the type to be fixed first, with SINCLAS or IgRoCS; fed a basalt, the
   intermediate-magma set answers arc at better than even odds with no
   warning.
-- **3 diagrams still have boundaries drawn by eye** rather than measured
-  or computed — Vermeesch ×2 (the quadratic ones) and Harris. All of
-  those except Harris are blocked rather than pending, along with
-  `defant_drummond_YbLaYb`: the Vermeesch pair, being QDA, need
-  per-class covariance matrices that the paper does not publish, and
-  the Defant & Drummond one needs a source that has not been
-  identified, since the paper it cites does not contain that diagram.
+- **3 diagrams still have boundaries drawn by eye, and all three are
+  blocked on sources rather than pending** — the two quadratic
+  Vermeesch ternaries, which being QDA need per-class covariance
+  matrices the paper does not publish, and `defant_drummond_YbLaYb`,
+  which needs a source that has not been identified since the paper it
+  cites does not contain that diagram. Nothing is left that a
+  measurement could fix.
 - **The La/10–Y/15–Nb/8 diagram misplaces reference MORB and OIB.** Not
   a fault in the code: Verma (2010) puts OIB + MORB at 29–62 %
   correctly classified, and Sun & McDonough's N-MORB duly falls in the

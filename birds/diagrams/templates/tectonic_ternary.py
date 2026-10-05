@@ -533,18 +533,6 @@ class Vermeesch2006SmTiV(Diagram):
         figure.tight_layout()
 
 
-# ---------------------------------------------------------------------------
-# Harris et al. (1986) — Hf − Rb/10 − 3 Ta granitoid discrimination
-# ---------------------------------------------------------------------------
-
-_HARRIS_FIELDS = {
-    "Volcanic-arc\ngranites":      [(15, 50, 35), (25, 60, 15), (35, 50, 15), (20, 40, 40)],
-    "Within-plate\ngranites":      [(40, 25, 35), (55, 15, 30), (45, 10, 45), (35, 20, 45)],
-    "Syn-collisional\ngranites":   [(20, 65, 15), (35, 55, 10), (45, 45, 10), (30, 55, 15)],
-    "Post-collisional\ngranites":  [(30, 50, 20), (45, 35, 20), (40, 30, 30), (30, 40, 30)],
-}
-
-
 #: Vermeesch (2006a) Table 6 and Figure 41b, the LDA that replaces the
 #: fields Wood drew by eye.  Same shape as the other three ternaries --
 #: node 3 the triple point, the rest ray ends -- and the same axes,
@@ -597,13 +585,83 @@ class Wood1980ThHfTa(_VermeeschLDATernary):
                 pd.to_numeric(df[ta], errors="coerce"))
 
 
+# ---------------------------------------------------------------------------
+# Harris, Pearce & Tindle (1986) Rb/30 – Hf – Ta×3
+# ---------------------------------------------------------------------------
+#
+# Geol. Soc. London Spec. Publ. 19, 67-81, Figure 6.  Two errors, and
+# the first is the one that matters.
+#
+# **The apexes were wrong.**  Hf sat at the top with Rb bottom left;
+# Figure 6 puts **Rb/30 at the apex**, Hf bottom left and Ta×3 bottom
+# right.  **And the divisor was wrong**: Rb/10 where the figure, its
+# caption and Figure 7 all say Rb/30.  Between them every sample was
+# placed by the wrong pair of coordinates and with one of them three
+# times too large.  The four fields under it were quadrilaterals typed
+# in ternary percent.
+#
+# Measured off Figure 6.  Its triangle is equilateral to 0.04 % -- the
+# fitted edges give a height of 1739.6 px against 1738.9 for the
+# measured width -- which is what fixes the calibration.  The dotted
+# boundaries separate cleanly from the data because the two populations
+# do not overlap in size: 241 components of 32-64 px for the dots of
+# the boundaries, 133 of 256-4096 px for the triangles and squares.
+# RANSAC over the dots recovers five segments carrying 245 of 260 dots,
+# each straight to 0.5-4.3 px rms against a triangle 2008 px wide.
+#
+# The near-vertical boundary does curve slightly.  Fitting its 69 dots
+# with a parabola instead of a line improves the residual from 4.0 to
+# 2.8 px and bows by 9.3 px at most, which is 0.46 % of the triangle's
+# width -- so it is drawn straight.
+#
+# It has no single triple point.  Two branches leave it about four
+# units apart: the VA|WP boundary at Rb/30 = 26.2 % and the III|WP one
+# at 22.5 %, with a short stem of the vertical between them.  That is
+# what the figure draws, and fitting the three as concurrent lines put
+# their pairwise intersections up to 11 units apart, which is how the
+# stem was noticed.
+
+#: Vertices of the boundary network, in (Rb/30, Hf, Ta×3) percent.
+_HARRIS_BEND = (71.8, 13.7, 14.5)        # vertical meets the Group-II top
+_HARRIS_VA_WP_BRANCH = (26.2, 40.5, 33.3)
+_HARRIS_III_WP_BRANCH = (22.5, 42.4, 35.2)
+_HARRIS_GREEN_START = (50.3, 26.8, 22.9)  # II|III leaves the vertical
+
+#: The five dotted segments of Figure 6, each a polyline.  Ends that
+#: run off to a side of the triangle are extended to meet it.
+HARRIS_BOUNDARIES = {
+    "VA | Group II–III": (_HARRIS_BEND, _HARRIS_VA_WP_BRANCH,
+                          _HARRIS_III_WP_BRANCH),
+    "top of Group II": (_HARRIS_BEND, (76.7, 0.0, 23.3)),
+    "Group II | Group III": (_HARRIS_GREEN_START, (29.6, 0.0, 70.4)),
+    "Group III | WP": (_HARRIS_III_WP_BRANCH, (18.8, 0.0, 81.2)),
+    "VA | WP": (_HARRIS_VA_WP_BRANCH, (0.0, 82.1, 17.9)),
+}
+
+#: Where Figure 6 puts each of its four labels, measured with the rest.
+#: Group II is syn-collision and Group III late or post-collision, per
+#: the paper's summary; the figure itself prints only the numerals.
+HARRIS_FIELD_LABELS = (
+    ("VA", 32.0, 61.7, 6.4),
+    ("Group II\n(syn-collision)", 60.0, 11.0, 29.1),
+    ("Group III\n(late/post-collision)", 36.3, 20.3, 43.4),
+    ("WP", 5.3, 51.9, 42.7),
+)
+
+
 class Harris1986HfRbTa(Diagram):
     key = "harris_1986_HfRbTa"
-    title = "Hf − Rb/10 − 3 Ta — Harris et al. (1986)"
-    citation = ("Harris, Pearce & Tindle (1986). Granitoid discrimination "
-                "into volcanic-arc, within-plate, syn-collisional and "
-                "post-collisional fields. Apex coordinates: Hf, Rb/10 and "
-                "3 × Ta (all in ppm).")
+    title = "Rb/30 − Hf − Ta×3 — Harris et al. (1986)"
+    citation = ("Harris, Pearce & Tindle (1986) Fig. 6, boundaries "
+                "measured off the published figure. Apexes are Rb/30 "
+                "at the top, Hf bottom left and 3 × Ta bottom right, "
+                "all in ppm. Separates volcanic-arc (VA) and "
+                "within-plate (WP) granites from the two collision "
+                "groups: Group II, the syn-collision peraluminous "
+                "leucogranites, and Group III, the late or "
+                "post-collision calc-alkaline intrusions, which the "
+                "paper says can be told from volcanic-arc rocks only "
+                "by their higher Ta/Hf and Ta/Zr.")
 
     def _abc(self, df):
         hf = resolve_column(df, ["Hf"])
@@ -611,15 +669,26 @@ class Harris1986HfRbTa(Diagram):
         ta = resolve_column(df, ["Ta"])
         if not (hf and rb and ta):
             return None
-        return (pd.to_numeric(df[hf], errors="coerce"),
-                pd.to_numeric(df[rb], errors="coerce") / 10.0,
+        # (apex, left, right) = (Rb/30, Hf, Ta x 3)
+        return (pd.to_numeric(df[rb], errors="coerce") / 30.0,
+                pd.to_numeric(df[hf], errors="coerce"),
                 3.0 * pd.to_numeric(df[ta], errors="coerce"))
 
     def plot(self, figure, df, plot_style, options: PlotOptions):
         figure.clear()
         ax = figure.add_subplot(111)
-        draw_ternary_frame(ax, ("Hf", "Rb / 10", "3 Ta"), options.x_axis)
-        _draw_ternary_fields(ax, _HARRIS_FIELDS, fontsize=7.5)
+        draw_ternary_frame(ax, ("Rb / 30", "Hf", "3 Ta"), options.x_axis)
+        for poly in HARRIS_BOUNDARIES.values():
+            a, b, c = zip(*poly)
+            x, y = ternary_to_xy(pd.Series(a), pd.Series(b), pd.Series(c))
+            ax.plot(x, y, color="#444", lw=0.9, linestyle=(0, (2, 2)),
+                    zorder=2)
+        for name, a, b, c in HARRIS_FIELD_LABELS:
+            x, y = ternary_to_xy(pd.Series([a]), pd.Series([b]),
+                                 pd.Series([c]))
+            ax.text(float(x.iloc[0]), float(y.iloc[0]), name,
+                    ha="center", va="center", fontsize=7.5, color="#333",
+                    zorder=3)
         _plot_ternary_data(ax, df, plot_style, self._abc)
         self._apply_legend(ax, options)
         figure.tight_layout()
