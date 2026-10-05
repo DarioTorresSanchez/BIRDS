@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-2353%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-2370%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -62,7 +62,7 @@ export is sized in millimetres for the journal you are submitting to.
 
 | | |
 |---|---|
-| **Everything is sourced** | Field boundaries and discriminant functions are transcribed, measured or recomputed from the original paper rather than redrawn by eye, and [`docs/DIAGRAM_PROVENANCE.md`](docs/DIAGRAM_PROVENANCE.md) says which of the three it was, diagram by diagram — including the four that are still drawn by eye, and which of those are blocked on a source rather than pending. Each plot carries its citation in the subtitle, and `References → Show full bibliography` prints the complete APA list. |
+| **Everything is sourced** | Field boundaries and discriminant functions are transcribed, measured or recomputed from the original paper rather than redrawn by eye, and [`docs/DIAGRAM_PROVENANCE.md`](docs/DIAGRAM_PROVENANCE.md) says which of the three it was, diagram by diagram — including the three that are still drawn by eye, and which of those are blocked on a source rather than pending. Each plot carries its citation in the subtitle, and `References → Show full bibliography` prints the complete APA list. |
 | **No silent data loss** | A counter under every canvas reports how many samples were plotted, filtered, hidden or missing the required elements — and clicking any of those numbers lists the samples by name. |
 | **Detection limits are real values** | `<0.5`, `≤0.2`, `b.d.l.`, `n.d.` are parsed at import and substituted under an explicit policy (x/2, x/√2 or blank), flagged in amber in the data table, and the policy can be changed afterwards without re-importing. |
 | **Cross-view sample identification** | Modifier-click a point in any view to highlight the same sample in every other view. |

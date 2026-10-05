@@ -126,6 +126,20 @@ including what is still unverified.
   within 0.15 %, because N-MORB and chondrite happen to have nearly the
   same Dy/Yb — which is why the fault was easy to miss in the row where
   it did not show. Every row now says which normaliser it used.
+- **Cabanis & Lecolle (1989).** The apexes were wrong: La/10 sat at the
+  top where both the original and Rollinson & Pease (2021) Fig. 5.4d
+  put **Y/15**, so every sample was placed by the wrong pair of
+  coordinates. Under it were seven quadrilaterals typed in ternary
+  percent, approximating a figure whose real structure is wedges from
+  the apex. The two boundaries are now measured from both figures
+  independently — 61.9/38.1 and 37.9/62.1 from one, 62.0/38.0 and
+  38.1/61.9 from the other, agreeing to 0.2 % — and only the left one
+  reaches the apex; the right branches off it. The finer subdivisions
+  are not drawn, because Verma (2010) found they do not hold and
+  Rollinson's redrawing drops them too. The collapse to three fields
+  was checked by placing each of the original's own seven labels in
+  ternary coordinates: all six that can be placed fall in the wedge
+  that absorbs them.
 - **Pearce & Gale (1977).** The boundary coordinates were already
   quoted in a comment in the file — Rollinson & Pease (2021) print
   them, "(513, 0) and (313, 7.5)", as Ti/Y–Zr/Y — and were drawn as if
@@ -275,13 +289,19 @@ including what is still unverified.
   the type to be fixed first, with SINCLAS or IgRoCS; fed a basalt, the
   intermediate-magma set answers arc at better than even odds with no
   warning.
-- **4 diagrams still have boundaries drawn by eye** rather than measured
-  or computed — Vermeesch ×2 (the quadratic ones), Cabanis & Lecolle
-  and Harris. Three further ones are blocked rather than pending: the
-  Vermeesch pair, being QDA, need per-class covariance matrices that
-  the paper does not publish, and `defant_drummond_YbLaYb` needs a
-  source that has not been identified, since the paper it cites does
-  not contain that diagram.
+- **3 diagrams still have boundaries drawn by eye** rather than measured
+  or computed — Vermeesch ×2 (the quadratic ones) and Harris. All of
+  those except Harris are blocked rather than pending, along with
+  `defant_drummond_YbLaYb`: the Vermeesch pair, being QDA, need
+  per-class covariance matrices that the paper does not publish, and
+  the Defant & Drummond one needs a source that has not been
+  identified, since the paper it cites does not contain that diagram.
+- **The La/10–Y/15–Nb/8 diagram misplaces reference MORB and OIB.** Not
+  a fault in the code: Verma (2010) puts OIB + MORB at 29–62 %
+  correctly classified, and Sun & McDonough's N-MORB duly falls in the
+  continental-rift wedge while their OIB sits on the boundary. Only
+  E-MORB lands where it should. Pinned as tests so the boundaries do
+  not later get moved to suit them.
 - **Figure 2's boninite field is not drawn.** Its outline does not
   resolve unambiguously in the scan: the long dashed line at Sr/Y ≈ 49
   may be its top edge or a separate boundary, and the two readings give

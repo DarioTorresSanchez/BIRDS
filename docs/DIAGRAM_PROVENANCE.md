@@ -704,11 +704,75 @@ agreement with the measurement, the axis assignment by arithmetic
 rather than by label, the linear scales, the frame, which side is
 which, and the E-MORB overlap.
 
-### Still to measure (4)
+## Cabanis & Lecolle (1989) — the apexes were wrong
+
+`Cabanis_Lecolle_1989.jpg` plus Rollinson & Pease (2021) Figure 5.4d.
+Key `cabanis_lecolle_1989`. *C. R. Acad. Sci.* **309** (II), 2023–2029.
+
+**The apexes were wrong**, and that is the error that mattered: La/10
+sat at the top where both sources put **Y/15**, so every sample was
+placed by the wrong pair of coordinates. `ternary_to_xy` takes
+(apex, left, right) and `_abc` returned La first. The published order
+is Y/15 at the apex, La/10 bottom left, Nb/8 bottom right. Under it
+were seven quadrilaterals typed in ternary percent, approximating by
+eye a figure whose real structure is wedges from the apex.
+
+The two boundaries were measured twice, from two independent figures by
+two different pipelines, as La/10 and Nb/8 percent where each meets the
+base:
+
+| Source | left (IAB\|CRB) | right (CRB\|OIB+MORB) |
+| --- | --- | --- |
+| Rollinson & Pease Fig. 5.4d (vector art) | 61.9 / 38.1 | 37.9 / 62.1 |
+| the 1989 diagram as reproduced (JPEG) | 62.0 / 38.0 | 38.1 / 61.9 |
+
+They agree to **0.2 %**, and the pair is symmetric about the median
+from the apex to 0.1 % before any rounding, so **62/38 and 38/62** are
+used. Each fits a straight line to about 1 px rms over 182 sampled
+rows.
+
+**Only the left boundary reaches the apex.** The right one branches off
+it part of the way down — which is the one thing the two sources
+disagree about, Y/15 = 89.4 % in Figure 5.4d against 80.9 % in the
+original. It changes nothing below the branch, and Figure 5.4d's value
+is used with the rest of its version.
+
+**The seven fields are not drawn.** Cabanis & Lecolle subdivide the
+three further — calc-alkaline and VAT on the left, continental in the
+middle, N-MORB, E-MORB, alkaline and intercontinental rifts on the
+right — with short cross-lines. Verma (2010) measured how well those
+hold and the answer is: not well, outside the arc field. Rollinson &
+Pease, redrawing the diagram with that reassessment in hand, show only
+three. The cross-lines are also entangled with the labels in the JPEG
+and do not separate cleanly, but the reason they are left out is the
+first one, not the second.
+
+**The collapse checks out against the original's own labels.** Placing
+each of Cabanis & Lecolle's seven field names in ternary coordinates
+and reading La/(La+Nb): calc-alkali 77.6 % and VAT 76.7 % fall in the
+arc wedge, continental 49.9 % in the middle one, and E-MORB 23.7 %,
+alkaline 20.2 % and intercontinental rifts 20.0 % in the right one —
+exactly how Figure 5.4d groups them. Six of seven; the N-MORB label
+sits outside the triangle on a leader and cannot be placed.
+
+**A warning worth passing on.** Verma puts OIB + MORB at 29–62 %
+correctly classified, and Sun & McDonough's own reference compositions
+show what that means: their **N-MORB falls in the continental-rift
+wedge** outright, at La/(La+Nb) = 46.2 % against a boundary at 38 %,
+and their **OIB sits on the boundary** to a tenth of a percent. Only
+E-MORB lands where it should. Those are pinned as tests so that nobody
+later reads them as a transcription error and moves the boundaries to
+suit them.
+
+`tests/test_cabanis_lecolle_1989.py` pins the apex order by arithmetic
+rather than by label, the measured boundaries, their symmetry, the
+branch, the collapse against the original's labels, and the three
+misplaced reference basalts.
+
+### Still to measure (3)
 
 | Diagram | Source on disk | State |
 | --- | --- | --- |
-| `cabanis_lecolle_1989` | `Cabanis_Lecolle_1989.jpg` | to do; a figure image, so this one has to be measured rather than read |
 | `harris_1986_HfRbTa` | `Harris_etal_1986.pdf` | to do |
 | `defant_drummond_YbLaYb` | **not on disk** | blocked on finding the real source, see above |
 | `vermeesch_NaNbSr`, `vermeesch_SmTiV` | `VermeeschGCubed2006.pdf` | **blocked** |

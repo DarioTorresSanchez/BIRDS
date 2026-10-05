@@ -92,23 +92,89 @@ _WOOD_FIELDS = {
 }
 
 
-_CABANIS_FIELDS = {
-    "Calc-alkaline\nbasalt":  [(25, 55, 20), (35, 50, 15), (45, 35, 20), (30, 45, 25)],
-    "Tholeiite\n(VA)":        [(10, 70, 20), (25, 55, 20), (30, 45, 25), (15, 60, 25)],
-    "N-MORB":                 [(5, 75, 20), (10, 70, 20), (15, 60, 25), (10, 65, 25)],
-    "E-MORB":                 [(15, 55, 30), (25, 45, 30), (30, 35, 35), (20, 50, 30)],
-    "OIB":                    [(40, 25, 35), (60, 10, 30), (50, 5, 45), (30, 25, 45)],
-    "Continental\ntholeiite": [(15, 60, 25), (25, 50, 25), (30, 40, 30), (20, 50, 30)],
-    "Back-arc\nbasalt":       [(10, 65, 25), (20, 55, 25), (25, 45, 30), (15, 55, 30)],
+# ---------------------------------------------------------------------------
+# Cabanis & Lecolle (1989) La/10 – Y/15 – Nb/8
+# ---------------------------------------------------------------------------
+#
+# C. R. Acad. Sci. 309 (II), 2023-2029, as redrawn with Verma's (2010)
+# reassessment in Rollinson & Pease (2021) Figure 5.4d.
+#
+# **The apexes were wrong**, which is the error that matters: this put
+# La/10 at the top where both sources put Y/15, so every sample was
+# placed by the wrong pair of coordinates.  Published order is Y/15 at
+# the apex, La/10 bottom left, Nb/8 bottom right.
+#
+# The seven fields that used to be drawn were quadrilaterals typed in
+# ternary percent, approximating by eye a figure whose real structure
+# is three wedges from the apex.  The two boundaries were measured
+# twice, from two independent figures by two different pipelines:
+#
+#   source                                left (IAB|CRB)   right (CRB|OIB+MORB)
+#   Rollinson & Pease Fig. 5.4d           61.9 / 38.1      37.9 / 62.1
+#   the 1989 diagram as reproduced        62.0 / 38.0      38.1 / 61.9
+#
+# as La/10 and Nb/8 percent where the line meets the base.  They agree
+# to 0.2 %, and the pair is symmetric about the median from the apex to
+# 0.1 %, so 62/38 and 38/62 are used.  Each fits a straight line to
+# about 1 px rms over 182 sampled rows.
+#
+# **The two do not both start at the apex.**  Only the left one
+# reaches it, to within a pixel in both figures; the right one begins
+# part of the way down it.  That branch is the one place the two
+# sources disagree -- Y/15 = 89.4 % in Figure 5.4d against 80.9 % in
+# the original -- and it matters only for very Y-rich samples, above
+# which there is no CRB wedge to fall into.  Figure 5.4d's value is
+# used, with the rest of its version.
+#
+# Cabanis & Lecolle's own figure subdivides the three further --
+# calc-alkaline and VAT on the left, continental in the middle,
+# N-MORB, E-MORB, alkaline and intercontinental rifts on the right --
+# with short cross-lines.  Those are not drawn.  Verma (2010) measured
+# how well they hold and the answer is: not well, outside the arc
+# field.  Rollinson & Pease, redrawing the diagram with that
+# reassessment in hand, show only these three.
+#
+# The grouping checks out against the original's own labels.  Placing
+# each of them in ternary coordinates and reading La/(La+Nb):
+# calc-alkali 77.6 % and VAT 76.7 % fall in the arc wedge, continental
+# 49.9 % in the middle one, and E-MORB 23.7 %, alkaline 20.2 % and
+# intercontinental rifts 20.0 % in the right one -- which is exactly
+# how Figure 5.4d collapses them.
+
+#: Where each boundary meets the La/10 – Nb/8 edge, in percent.
+CABANIS_BOUNDARIES = {
+    "IAB|CRB": (62.0, 38.0),
+    "CRB|OIB+MORB": (38.0, 62.0),
 }
+
+#: Y/15 percent at which the right boundary leaves the left one.
+CABANIS_BRANCH_Y = 89.4
+
+#: The same branch measured on the original figure, for the record.
+CABANIS_BRANCH_Y_ORIGINAL = 80.9
+
+#: Verma's (2010) success rates, as Figure 5.4d labels the three fields.
+CABANIS_FIELDS = (
+    ("IAB\n(>74 %)", 100.0, 62.0),
+    ("CRB\n(42 %)", 62.0, 38.0),
+    ("OIB + MORB\n(29–62 %)", 38.0, 0.0),
+)
 
 
 class CabanisLecolle1989(Diagram):
     key = "cabanis_lecolle_1989"
     title = "La/10 – Y/15 – Nb/8 — Cabanis & Lecolle (1989)"
-    citation = ("Cabanis & Lecolle (1989). Robust for arc + back-arc "
-                "(<24 % misclassification) and N-MORB; CRB / OIB / E-MORB "
-                "less reliable per Verma (2010).")
+    citation = ("Cabanis & Lecolle (1989), on the boundaries Rollinson "
+                "& Pease (2021) Fig. 5.4d draws after Verma's (2010) "
+                "reassessment. Two straight lines from the Y/15 apex "
+                "to La/10 = 62 % and 38 % on the opposite edge, "
+                "measured from that figure and from the original and "
+                "agreeing to 0.2 %. Reliable only for island-arc and "
+                "back-arc basalts, better than 74 %; continental rift "
+                "basalts are misclassified 42 % of the time and "
+                "OIB + MORB between 29 and 62 %. Cabanis & Lecolle's "
+                "finer subdivisions are not drawn — those are the ones "
+                "the reassessment found do not hold.")
 
     def _abc(self, df):
         la = resolve_column(df, ["La"])
@@ -116,26 +182,42 @@ class CabanisLecolle1989(Diagram):
         nb = resolve_column(df, ["Nb"])
         if not (la and y and nb):
             return None
-        return (pd.to_numeric(df[la], errors="coerce") / 10.0,
-                pd.to_numeric(df[y], errors="coerce") / 15.0,
+        # (apex, left, right) = (Y/15, La/10, Nb/8)
+        return (pd.to_numeric(df[y], errors="coerce") / 15.0,
+                pd.to_numeric(df[la], errors="coerce") / 10.0,
                 pd.to_numeric(df[nb], errors="coerce") / 8.0)
 
     def plot(self, figure, df, plot_style, options: PlotOptions):
         figure.clear()
         ax = figure.add_subplot(111)
-        draw_ternary_frame(ax, ("La / 10", "Y / 15", "Nb / 8"),
+        draw_ternary_frame(ax, ("Y / 15", "La / 10", "Nb / 8"),
                            options.x_axis)
-        for name, abc in _CABANIS_FIELDS.items():
-            a, b, c = zip(*abc)
-            x, y = ternary_to_xy(pd.Series(a), pd.Series(b), pd.Series(c))
-            poly = Polygon(list(zip(x, y)), closed=True, fill=False,
-                           edgecolor="#444", linewidth=0.7, alpha=0.7,
-                           zorder=2)
-            ax.add_patch(poly)
-            cx = float(np.mean(x))
-            cy = float(np.mean(y))
-            ax.text(cx, cy, name, ha="center", va="center", fontsize=7,
-                    color="#333", alpha=0.9, zorder=3)
+        def xy(a, b, c):
+            x, y = ternary_to_xy(pd.Series([a]), pd.Series([b]),
+                                 pd.Series([c]))
+            return float(x.iloc[0]), float(y.iloc[0])
+
+        # Left boundary: apex to La/10 = 62 % on the opposite edge.
+        la_l, nb_l = CABANIS_BOUNDARIES["IAB|CRB"]
+        apex = xy(1.0, 0.0, 0.0)
+        left_base = xy(0.0, la_l, nb_l)
+        ax.plot(*zip(apex, left_base), color="#444", lw=1.0, zorder=2)
+
+        # Right boundary: it leaves the left one part of the way down,
+        # rather than starting at the apex.
+        f = CABANIS_BRANCH_Y / 100.0
+        branch = xy(f * 100.0, (1 - f) * la_l, (1 - f) * nb_l)
+        la_r, nb_r = CABANIS_BOUNDARIES["CRB|OIB+MORB"]
+        ax.plot(*zip(branch, xy(0.0, la_r, nb_r)),
+                color="#444", lw=1.0, zorder=2)
+        for name, la_hi, la_lo in CABANIS_FIELDS:
+            # label each wedge near the base, at the middle of its span
+            mid_la = (la_hi + la_lo) / 2.0
+            lx, ly = ternary_to_xy(pd.Series([12.0]), pd.Series([mid_la]),
+                                   pd.Series([100.0 - mid_la]))
+            ax.text(float(lx.iloc[0]), float(ly.iloc[0]), name,
+                    ha="center", va="center", fontsize=8, color="#333",
+                    zorder=3)
         _plot_ternary_data(ax, df, plot_style, self._abc)
         self._apply_legend(ax, options)
         figure.tight_layout()
