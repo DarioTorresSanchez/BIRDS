@@ -172,8 +172,11 @@ def test_no_row_disagrees_with_its_own_familys_diagram(rows, axes):
     ("pearce2008.nb_yb", "pearce2008_thyb_nbyb:x"),
     ("pearce2008.th_yb", "pearce2008_thyb_nbyb:y"),
     ("pearce2008.ti_yb", "pearce2008_tiyb_nbyb:y"),
-    ("pearcegale.zr_y", "pearce_gale_1977:x"),
-    ("pearcegale.ti_y", "pearce_gale_1977:y"),
+    # Pearce & Gale put Ti/Y across the bottom and Zr/Y up the side;
+    # this pair was the other way round until the diagram was rebuilt
+    # from the source, and these two rows are what caught the swap.
+    ("pearcegale.ti_y", "pearce_gale_1977:x"),
+    ("pearcegale.zr_y", "pearce_gale_1977:y"),
     ("shervais.v", "shervais_1982_TiV:y"),
     ("dd.sr_y", "defant_drummond_YSrY:y"),
     ("dd.la_yb", "defant_drummond_YbLaYb:y"),

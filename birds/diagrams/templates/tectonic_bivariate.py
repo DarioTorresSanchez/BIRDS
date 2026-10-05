@@ -208,20 +208,70 @@ class Pearce2008TiYbNbYb(Diagram):
 # ---------------------------------------------------------------------------
 # Pearce & Gale (1977) — mafic within-plate vs plate-margin
 # ---------------------------------------------------------------------------
+#
+# Geol. Soc. London Spec. Publ. 7, 14-24, Figure 3.  Everything about
+# how this was drawn was wrong, in the way Saccani's Figures 8 and 9
+# were: the **axes were swapped** -- Pearce & Gale put Ti/Y across the
+# bottom and Zr/Y up the side -- **both were logarithmic** where the
+# figure is linear on both, and the frame, (1, 30) by (100, 1000), was
+# invented.  The published one runs Ti/Y 0 to about 1100 against Zr/Y
+# 0 to about 8.  The fields went with the axes: within-plate is to the
+# **right**, at high Ti/Y, not above.
+#
+# The boundary coordinates are printed, in the caption of Rollinson &
+# Pease (2021) Figure 5.2a: "Boundary coordinates: (513, 0) and
+# (313, 7.5)", as (Ti/Y, Zr/Y).  They were already quoted in a comment
+# here and then drawn as if they were (Zr/Y, Ti/Y) pairs, which put a
+# line from (1, 513) to (30, 313) on the plot -- unrelated to either
+# reading.
+#
+# Checked against Pearce & Gale's own Figure 3 by measuring it.  With
+# the axes calibrated on their tick labels, the drawn line fits a
+# straight line to an rms of 0.3 in Ti/Y over 144 sampled rows and
+# gives (521.6, 0) and (303.3, 7.5): 1.7 % and 3.1 % from the printed
+# pair, against a calibration uncertainty of about 4 units in Ti/Y.
+# The printed pair is what is used, as published numbers rather than
+# my measurement of a 1977 half-tone; the measurement is recorded as
+# the independent check that it agrees.
+
+#: Rollinson & Pease (2021) Fig. 5.2a caption, as (Ti/Y, Zr/Y).
+PEARCE_GALE_BOUNDARY = ((513.0, 0.0), (313.0, 7.5))
+
+#: Measured off Pearce & Gale's own Figure 3, for the record.
+PEARCE_GALE_MEASURED = ((521.6, 0.0), (303.3, 7.5))
+
+#: Rollinson & Pease's frame rather than Pearce & Gale's.  Figure 3
+#: runs Ti/Y to about 1118 and Zr/Y only to about 7.9, which clips an
+#: ordinary ocean-island basalt: Sun & McDonough's OIB sits at Zr/Y
+#: 9.7.  Figure 5.2a redraws the same diagram on 0-1200 by 0-18, which
+#: is also the frame the printed boundary coordinates come with.
+PEARCE_GALE_X_RANGE = (0, 1200)
+PEARCE_GALE_Y_RANGE = (0, 18)
+
+#: Verma's (2010) success rates, as Figure 5.2a labels its two fields.
+PEARCE_GALE_RATES = {"plate margin": 90, "within-plate": 89}
+
 
 class PearceGale1977(Diagram):
     key = "pearce_gale_1977"
-    title = "Ti/Y vs Zr/Y — Pearce & Gale (1977)"
-    citation = ("Pearce & Gale (1977). Boundary at Zr/Y ≈ 3 / Ti/Y ≈ 350 "
-                "separates within-plate (above) from plate-margin (below) "
-                "basalts. Reassessed by Verma (2010): <11 % misclassified "
-                "excluding E-MORB.")
-    x_label = "Zr/Y"
-    y_label = "Ti/Y"
-    x_range = (1, 30)
-    y_range = (100, 1000)
-    log_x = True
-    log_y = True
+    title = "Zr/Y vs Ti/Y — Pearce & Gale (1977)"
+    citation = ("Pearce & Gale (1977) Fig. 3, on the frame Rollinson & "
+                "Pease (2021) Fig. 5.2a redraws it on. Boundary "
+                "coordinates (513, 0) and (313, 7.5) in Ti/Y–Zr/Y are "
+                "printed in that caption and confirmed by measuring "
+                "the original figure. Within-plate basalts "
+                "(continental rift, ocean island) plot to the right at "
+                "better than 89 %, plate-margin basalts (island arc, "
+                "continental arc, N-MORB) to the left at better than "
+                "90 %, per Verma's (2010) reassessment over ~4000 "
+                "analyses — but only with E-MORB excluded, which this "
+                "diagram does not separate. Neither source draws the "
+                "boundary above Zr/Y = 7.5, so it is not extended "
+                "there.")
+    x_label = "Ti/Y"
+    y_label = "Zr/Y"
+    x_range = PEARCE_GALE_X_RANGE
+    y_range = PEARCE_GALE_Y_RANGE
 
     def _compute_xy(self, df):
         zr = resolve_column(df, ["Zr"])
@@ -231,21 +281,26 @@ class PearceGale1977(Diagram):
         if not (zr and y and (ti_el or ti_ox)):
             return None, None
         y_s = pd.to_numeric(df[y], errors="coerce")
+        y_s = y_s.where(y_s > 0)
         if ti_el:
             ti_ppm = pd.to_numeric(df[ti_el], errors="coerce")
         else:
             ti_ppm = pd.to_numeric(df[ti_ox], errors="coerce") * TIO2_WT_TO_TI_PPM
-        return (pd.to_numeric(df[zr], errors="coerce") / y_s, ti_ppm / y_s)
+        return (ti_ppm / y_s, pd.to_numeric(df[zr], errors="coerce") / y_s)
 
     def _draw_background(self, ax, options):
-        # Boundary from Rollinson Fig 5.2a captioned (513, 0) and (313, 7.5)
-        # — but in Zr/Y, Ti/Y space. Approximate dividing line.
-        ax.plot([1, 30], [513, 313], color="#444", linewidth=1.2,
-                linestyle="--")
-        ax.text(8, 700, "Within-plate basalts",
-                fontsize=10, style="italic", color="#333")
-        ax.text(8, 200, "Plate-margin basalts",
-                fontsize=10, style="italic", color="#333")
+        # Drawn as the segment it is published as.  Figure 5.2a stops
+        # it at Zr/Y = 7.5 and Figure 3's own frame barely reaches 7.9,
+        # so neither source says where it goes above that and it is not
+        # extrapolated there.
+        (x0, y0), (x1, y1) = PEARCE_GALE_BOUNDARY
+        ax.plot([x0, x1], [y0, y1], color="#444", lw=1.4, zorder=0)
+        ax.text(200, 5.0, "plate margin\nbasalts\n(>90 %)", fontsize=9,
+                style="italic", color="#333", ha="center", va="center",
+                zorder=0)
+        ax.text(750, 10.5, "within-plate\nbasalts\n(>89 %)", fontsize=9,
+                style="italic", color="#333", ha="center", va="center",
+                zorder=0)
 
 
 # ---------------------------------------------------------------------------

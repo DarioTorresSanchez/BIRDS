@@ -651,11 +651,63 @@ frame, the two measured fields, the agreement between the measured
 field edge and the stated threshold, and that the adakite side of the
 frame is left empty of drawn boundaries.
 
-### Still to measure (5)
+## Pearce & Gale (1977) — the coordinates were already in the file
+
+`Pearce_Gale_1977.pdf` — *Geol. Soc. London Spec. Publ.* **7**, 14–24,
+Figure 3. Key `pearce_gale_1977`.
+
+The boundary coordinates were never in doubt. Rollinson & Pease (2021)
+print them in the caption of their Figure 5.2a — "Boundary coordinates:
+**(513, 0) and (313, 7.5)**" — as (Ti/Y, Zr/Y), and a comment in this
+file already quoted them. They were then drawn as if they were
+(Zr/Y, Ti/Y) pairs, which put a line from (1, 513) to (30, 313) on the
+plot: a thing unrelated to either reading. Everything around them was
+wrong too, in the same four ways Saccani's Figures 8 and 9 were:
+
+| | Published | Was |
+| --- | --- | --- |
+| x axis | Ti/Y | Zr/Y |
+| y axis | Zr/Y | Ti/Y |
+| scales | linear, both | logarithmic, both |
+| frame | Ti/Y 0–1118 by Zr/Y 0–7.9 (Fig. 3) | (1, 30) by (100, 1000) |
+| within-plate field | to the **right**, at high Ti/Y | above |
+
+**The check**: Pearce & Gale's own Figure 3 was measured, with its axes
+calibrated on their tick labels. The drawn line fits a straight line to
+an rms of **0.3 in Ti/Y over 144 sampled rows** and gives
+**(521.6, 0) and (303.3, 7.5)** — 1.7 % and 3.1 % from the printed
+pair, against a calibration uncertainty of about 4 units in Ti/Y. The
+printed pair is what is used, being published and citable where the
+measurement is one person's reading of a 1977 half-tone; the
+measurement is kept in the code as the record that the two agree.
+
+**The frame is Rollinson's, not Pearce & Gale's.** Figure 3 reaches
+only Zr/Y ≈ 7.9, which clips an ordinary ocean-island basalt — Sun &
+McDonough's OIB sits at Zr/Y 9.7. Figure 5.2a redraws the same diagram
+on 0–1200 by 0–18, and that is also the frame the printed coordinates
+come with. A fixed frame clips, so the one that does not clip the rock
+the diagram exists to identify is the one to draw on.
+
+**The boundary is not extrapolated.** Figure 5.2a stops it at
+Zr/Y = 7.5 and Figure 3's own frame ends just above it, so neither
+source says where it goes higher and neither does the code.
+
+Figure 5.2a also labels the two fields with Verma's (2010) rates over
+~4000 analyses: **plate margin >90 %, within-plate >89 %** — better
+than the "<11 % misclassified" the old citation carried, and both hold
+only with E-MORB excluded. That exclusion is not cosmetic: Sun &
+McDonough's E-MORB lands at Ti/Y 273 against their N-MORB at 271, so
+the diagram cannot separate them at all. The citation says so.
+
+`tests/test_pearce_gale_1977.py` pins the printed coordinates, the
+agreement with the measurement, the axis assignment by arithmetic
+rather than by label, the linear scales, the frame, which side is
+which, and the E-MORB overlap.
+
+### Still to measure (4)
 
 | Diagram | Source on disk | State |
 | --- | --- | --- |
-| `pearce_gale_1977` | `Pearce_Gale_1977.pdf` | to do |
 | `cabanis_lecolle_1989` | `Cabanis_Lecolle_1989.jpg` | to do; a figure image, so this one has to be measured rather than read |
 | `harris_1986_HfRbTa` | `Harris_etal_1986.pdf` | to do |
 | `defant_drummond_YbLaYb` | **not on disk** | blocked on finding the real source, see above |

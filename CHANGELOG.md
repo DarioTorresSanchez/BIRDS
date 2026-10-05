@@ -126,6 +126,22 @@ including what is still unverified.
   within 0.15 %, because N-MORB and chondrite happen to have nearly the
   same Dy/Yb — which is why the fault was easy to miss in the row where
   it did not show. Every row now says which normaliser it used.
+- **Pearce & Gale (1977).** The boundary coordinates were already
+  quoted in a comment in the file — Rollinson & Pease (2021) print
+  them, "(513, 0) and (313, 7.5)", as Ti/Y–Zr/Y — and were drawn as if
+  they were Zr/Y–Ti/Y, which put a line from (1, 513) to (30, 313) on
+  the plot, unrelated to either reading. Around them the **axes were
+  swapped**, **both were logarithmic** where the figure is linear, the
+  frame was invented, and the within-plate field was placed above
+  instead of to the right. Measuring Pearce & Gale's own Figure 3
+  confirms the printed pair to 1.7 % and 3.1 %, within a few units of
+  the calibration's own uncertainty. The frame is now Rollinson's
+  0–1200 by 0–18 rather than Figure 3's own, which stops at Zr/Y ≈ 7.9
+  and so clips an ordinary ocean-island basalt at 9.7. Verma's (2010)
+  rates — plate margin >90 %, within-plate >89 % — replace the vaguer
+  "<11 % misclassified", and the citation now says they hold only with
+  E-MORB excluded, which matters: Sun & McDonough's E-MORB lands at
+  Ti/Y 273 against their N-MORB at 271.
 - **Defant & Drummond (1990).** Their Figure 2 draws no adakite field —
   its adakites are crosses and nothing encloses them — so the dashed
   "adakite boundary" here, and the `Sr/Y > 40` in its citation, were in
@@ -259,13 +275,13 @@ including what is still unverified.
   the type to be fixed first, with SINCLAS or IgRoCS; fed a basalt, the
   intermediate-magma set answers arc at better than even odds with no
   warning.
-- **5 diagrams still have boundaries drawn by eye** rather than measured
-  or computed — Vermeesch ×2 (the quadratic ones), Pearce & Gale,
-  Cabanis & Lecolle and Harris. Three of the five are blocked rather
-  than pending: the Vermeesch pair, being QDA, need per-class
-  covariance matrices that the paper does not publish, and
-  `defant_drummond_YbLaYb` needs a source that has not been identified,
-  since the paper it cites does not contain that diagram.
+- **4 diagrams still have boundaries drawn by eye** rather than measured
+  or computed — Vermeesch ×2 (the quadratic ones), Cabanis & Lecolle
+  and Harris. Three further ones are blocked rather than pending: the
+  Vermeesch pair, being QDA, need per-class covariance matrices that
+  the paper does not publish, and `defant_drummond_YbLaYb` needs a
+  source that has not been identified, since the paper it cites does
+  not contain that diagram.
 - **Figure 2's boninite field is not drawn.** Its outline does not
   resolve unambiguously in the scan: the long dashed line at Sr/Y ≈ 49
   may be its top edge or a separate boundary, and the two readings give
