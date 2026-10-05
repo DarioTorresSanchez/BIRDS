@@ -150,14 +150,22 @@ class TestCoverage:
 
     def test_the_bounded_templates_are_still_bounded(self):
         """If this count moves, the frames moved with it -- worth a
-        look rather than a silent change in what gets checked."""
+        look rather than a silent change in what gets checked.
+
+        It has moved once, from 24 to 23: `defant_drummond_YbLaYb` gave
+        its frame up.  Defant & Drummond do not publish that diagram,
+        so there was no figure to take a frame from and the one it had
+        was invented.  A template may only fix its limits when a
+        published figure fixes them.
+        """
         own = [k for k, d in _REGISTRY.items()
                if getattr(d, "x_range", None) or getattr(d, "y_range", None)]
         panelled = [k for k, d in _REGISTRY.items()
                     if getattr(d, "panels", None)
                     and getattr(d.panels[0], "x_range", None)]
-        assert len(own) == 24, f"{len(own)} templates carry their own frame"
+        assert len(own) == 23, f"{len(own)} templates carry their own frame"
         assert len(panelled) == 8, f"{len(panelled)} carry it on panels"
+        assert "defant_drummond_YbLaYb" not in own
 
     def test_a_hidden_sample_is_not_also_off_the_frame(self):
         """The categories have to stay disjoint or the total stops

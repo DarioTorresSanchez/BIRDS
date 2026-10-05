@@ -126,6 +126,28 @@ including what is still unverified.
   within 0.15 %, because N-MORB and chondrite happen to have nearly the
   same Dy/Yb — which is why the fault was easy to miss in the row where
   it did not show. Every row now says which normaliser it used.
+- **Defant & Drummond (1990).** Their Figure 2 draws no adakite field —
+  its adakites are crosses and nothing encloses them — so the dashed
+  "adakite boundary" here, and the `Sr/Y > 40` in its citation, were in
+  neither the figure nor the text. The frame was `(0, 50)` by
+  `(0, 200)` against a published `(0, 25)` by `(0, 500)`, which put a
+  sample at less than half its real Y and more than twice its real
+  Sr/Y relative to anything drawn around it. The island-arc ADR and
+  MORB fields are now measured off the figure and the adakite
+  threshold the paper does state, Y ≤ 18 ppm, is drawn in place of the
+  invented curve. The measured left edge of the island-arc field came
+  out at Y = 17.9 against that independently stated 18 — two unrelated
+  parts of the paper agreeing to a third of the measurement's
+  uncertainty. Figure 2's boninite field is not reproduced: its
+  outline does not resolve in the scan, and guessing it would be the
+  same fault again.
+- **`defant_drummond_YbLaYb` is not in the paper it cites.** Defant &
+  Drummond (1990) has three figures and none is Yb against La/Yb;
+  Rollinson & Pease (2021) list one under this reference, marked
+  *unevaluated*, which is where the attribution came from. It now
+  draws only the Yb ≤ 1.9 ppm threshold the paper does state, says so
+  on the plot, and has given up its invented `(0, 6)` by `(0, 80)`
+  frame so the axes follow the data.
 - **A sweep of all 208 statistics rows against the diagrams**, looking
   for the fault that the Verma units and the Saccani normalisers both
   were: a quantity computed twice by two routes that do not share code,
@@ -237,11 +259,17 @@ including what is still unverified.
   the type to be fixed first, with SINCLAS or IgRoCS; fed a basalt, the
   intermediate-magma set answers arc at better than even odds with no
   warning.
-- **7 diagrams still have boundaries drawn by eye** rather than measured
-  or computed — Vermeesch ×2 (the quadratic ones), Defant & Drummond ×2,
-  Pearce & Gale, Cabanis & Lecolle and Harris. The two Vermeesch ones
-  are blocked rather than pending: being QDA, they need per-class
-  covariance matrices that the paper does not publish.
+- **5 diagrams still have boundaries drawn by eye** rather than measured
+  or computed — Vermeesch ×2 (the quadratic ones), Pearce & Gale,
+  Cabanis & Lecolle and Harris. Three of the five are blocked rather
+  than pending: the Vermeesch pair, being QDA, need per-class
+  covariance matrices that the paper does not publish, and
+  `defant_drummond_YbLaYb` needs a source that has not been identified,
+  since the paper it cites does not contain that diagram.
+- **Figure 2's boninite field is not drawn.** Its outline does not
+  resolve unambiguously in the scan: the long dashed line at Sr/Y ≈ 49
+  may be its top edge or a separate boundary, and the two readings give
+  fields of quite different extent.
 - **Saccani gives two rules for boninite against island-arc tholeiite**
   and they do not agree everywhere. The vertical at Dy_N = 8.5 cuts the
   line of Figure 9 at Yb_N = 10, so either side of that crossing a band

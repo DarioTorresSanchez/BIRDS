@@ -584,18 +584,81 @@ see there are two answers.
 normaliser of each figure, the axis order, the linear scales, and the
 band where Saccani's two rules disagree.
 
-### Still to measure (7)
+## Defant & Drummond (1990) — one diagram measured, one not in the paper
 
-Every one of these now has its source on disk — the sentence that used
-to stand here, that none of them did, was left over from before the
-PDFs were collected.
+`Defant_Drummond 1990.pdf` — *Nature* **347**, 662–665. Keys
+`defant_drummond_YSrY`, `defant_drummond_YbLaYb`. The file is a scan
+with no text layer, so everything here was read off rendered pages.
+
+The paper has exactly three figures: Y or Yb against the age of the
+subducting lithosphere, Sr/Y against Y, and a chondrite spider. Two
+things follow, and both diagrams were wrong because of them.
+
+**Figure 2 draws no adakite field.** Its adakites are plotted as
+crosses and nothing encloses them. What it draws is a boninite field,
+an island-arc andesite-dacite-rhyolite field, a MORB bar, four model
+melting curves and an AFC trend arrow. The dashed "adakite boundary"
+this diagram carried, and the `Sr/Y > 40` its citation asserted, are in
+neither the figure nor the text. The frame was wrong too — `(0, 50)` by
+`(0, 200)` against a published `(0, 25)` by `(0, 500)`, so a sample sat
+at less than half its real Y and more than twice its real Sr/Y relative
+to anything drawn around it.
+
+What the paper does give for adakites is a list of numbers, on page
+663: "low Y and HREE relative to island-arc ADRs (for example, Y and
+Yb ≤ 18 and 1.9 p.p.m., respectively), high Sr relative to island-arc
+ADR (rarely <400 p.p.m.)". Those two thresholds are exact and quotable
+and are what both diagrams now draw.
+
+Measured off Figure 2, after calibrating the axes on their own tick
+labels (residuals 1.5 px in Y and 1.7 px in Sr/Y, against 83 px per
+unit of Y and 3.1 px per unit of Sr/Y):
+
+| Field | Extent | How |
+| --- | --- | --- |
+| MORB | Y 20 → 25 (frame edge), Sr/Y 0 → 15 | exact: it is filled, so the edges are the longest unbroken runs of ink — Y 19.97–25.01, Sr/Y −1.8 to 15.2, the overshoots being the axis line's thickness |
+| Island-arc ADR | left edge Y 17.9, dome Sr/Y 59.6 at Y 20.0, falling to Sr/Y 21 at Y 25 | dashes located as connected components and their centroids converted; good to about 0.3 in Y and 3 in Sr/Y |
+
+**The check worth recording**: the island-arc field's left edge
+measured **Y = 17.9**, and the paper's stated adakite limit, written in
+the text and nowhere drawn on the figure, is **Y ≤ 18**. Those come
+from independent places — a dashed outline on a half-tone scan and a
+sentence on page 663 — and agree to 0.1, a third of the measurement's
+own uncertainty. Nothing in reading the dashes used the number 18.
+
+**The boninite field is deliberately not drawn.** Its outline does not
+resolve unambiguously in the scan: the long dashed line at Sr/Y ≈ 49
+running right from about Y = 2 may be its top edge or may be a separate
+boundary, and the two readings give fields of quite different extent.
+Guessing would be inventing a boundary, which is the fault the diagram
+already had.
+
+**There is no Yb against La/Yb figure in this paper at all.** Rollinson
+& Pease (2021) list one in their table of discrimination diagrams,
+under this reference and marked *unevaluated*, and that is where the
+attribution came from. It cannot be reproduced from a source that does
+not contain it. `defant_drummond_YbLaYb` therefore draws only the
+Yb ≤ 1.9 ppm threshold the paper does state, says so in its citation,
+and **has given up its frame**: its limits were `(0, 6)` by `(0, 80)`,
+which clipped samples and came from nowhere, and the axes now follow
+the data. To complete it, the real source is needed — most likely
+Drummond & Defant (1990, *J. Geophys. Res.* **95**, 21503–21521),
+Defant & Drummond (1993, *Geology*) or Martin (1986, *Geology* **14**,
+753–756); none is on disk.
+
+`tests/test_defant_drummond_1990.py` pins both thresholds, Figure 2's
+frame, the two measured fields, the agreement between the measured
+field edge and the stated threshold, and that the adakite side of the
+frame is left empty of drawn boundaries.
+
+### Still to measure (5)
 
 | Diagram | Source on disk | State |
 | --- | --- | --- |
 | `pearce_gale_1977` | `Pearce_Gale_1977.pdf` | to do |
-| `defant_drummond_YSrY`, `defant_drummond_YbLaYb` | `Defant_Drummond 1990.pdf` | to do |
 | `cabanis_lecolle_1989` | `Cabanis_Lecolle_1989.jpg` | to do; a figure image, so this one has to be measured rather than read |
 | `harris_1986_HfRbTa` | `Harris_etal_1986.pdf` | to do |
+| `defant_drummond_YbLaYb` | **not on disk** | blocked on finding the real source, see above |
 | `vermeesch_NaNbSr`, `vermeesch_SmTiV` | `VermeeschGCubed2006.pdf` | **blocked** |
 
 The two Vermeesch ones are blocked for a reason no further reading will

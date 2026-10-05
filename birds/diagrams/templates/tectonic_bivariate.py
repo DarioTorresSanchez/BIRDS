@@ -489,17 +489,89 @@ class Saccani2015NbTh(Diagram):
 # ---------------------------------------------------------------------------
 # Defant & Drummond (1990) — adakite vs classic arc
 # ---------------------------------------------------------------------------
+#
+# Nature 347, 662-665.  The paper has exactly three figures: Y or Yb
+# against the age of the subducting lithosphere (Fig. 1), Sr/Y against Y
+# (Fig. 2), and a chondrite-normalised spider (Fig. 3).
+#
+# Two things follow, and both were wrong here before.
+#
+# **Figure 2 draws no adakite field.**  Its adakites are plotted as
+# crosses and nothing encloses them.  What it does draw is three
+# labelled fields -- boninite, island-arc andesite-dacite-rhyolite and
+# MORB -- four model melting curves, and an AFC trend arrow.  The
+# dashed "adakite boundary" that used to be here, and the "Sr/Y > 40"
+# in its citation, are in neither the figure nor the text.
+#
+# What the paper does give for adakites is a list of numbers, in the
+# second paragraph of page 663: "low Y and HREE relative to island-arc
+# ADRs (for example, Y and Yb <= 18 and 1.9 p.p.m., respectively), high
+# Sr relative to island-arc ADR (rarely <400 p.p.m.)", together with
+# SiO2 >= 56 %, Al2O3 >= 15 % and usually MgO < 3 %.  Those two trace
+# thresholds are exact, quotable, and are what both diagrams now draw.
+#
+# **There is no Yb against La/Yb figure in this paper at all.**
+# Rollinson & Pease (2021) list one in their table of discrimination
+# diagrams, attributed to Defant & Drummond (1990) and marked
+# "unevaluated", and that is where the attribution here came from.  It
+# cannot be reproduced from this source because it is not in it; see
+# DefantDrummondYbLaYb below.
+
+#: Figure 2's own frame.  It was (0, 50) by (0, 200) here, so a sample
+#: landed at less than half its published Y and more than twice its
+#: published Sr/Y relative to anything drawn on it.
+DD_FIG2_X_RANGE = (0, 25)
+DD_FIG2_Y_RANGE = (0, 500)
+
+#: "Y and Yb <= 18 and 1.9 p.p.m., respectively" — page 663.  Adakites
+#: lie to the left of these on the two diagrams.
+DD_ADAKITE_Y_MAX = 18.0
+DD_ADAKITE_YB_MAX = 1.9
+
+#: Island-arc andesite-dacite-rhyolite field, measured off Figure 2.
+#: The axes were calibrated on their own tick labels (residuals 1.5 px
+#: in Y and 1.7 px in Sr/Y, against 83 px per unit of Y and 3.1 px per
+#: unit of Sr/Y), then the dashes of the outline were located as
+#: connected components and their centroids converted.  Good to about
+#: 0.3 in Y and 3 in Sr/Y; it is a 1990 half-tone scan and the outline
+#: is dashed through a dense scatter.
+DD_ISLAND_ARC_ADR = (
+    (17.9, 3.0), (17.9, 32.1), (18.4, 48.0), (19.1, 58.7), (20.0, 59.6),
+    (21.0, 52.9), (21.9, 44.3), (22.7, 36.7), (23.5, 31.0), (24.3, 26.0),
+    (25.0, 21.0), (25.0, 3.0),
+)
+
+#: MORB field, the solid bar along the foot of Figure 2.  This one is
+#: exact rather than approximate: it is filled, so its edges were read
+#: as the longest unbroken runs of ink, giving Y 19.97-25.01 and Sr/Y
+#: -1.8 to 15.2.  It starts on the Y = 20 gridline and runs off the
+#: right-hand edge of the frame.
+DD_MORB_FIELD = (20.0, 25.0, 0.0, 15.0)
+
+# The boninite field of Figure 2 is deliberately **not** drawn.  Its
+# outline does not resolve unambiguously in the scan: the long dashed
+# line at Sr/Y ~ 49 that runs right from about Y = 2 may be its top
+# edge or may be a separate boundary, and the two readings give fields
+# of quite different extent.  Guessing which would be inventing a
+# boundary, which is the fault this diagram already had.
+
 
 class DefantDrummondYSrY(Diagram):
     key = "defant_drummond_YSrY"
-    title = "Y vs Sr/Y — Defant & Drummond (1990)"
-    citation = ("Defant & Drummond (1990). Adakites: Sr/Y > 40 at low Y "
-                "(<≈18 ppm). Classic arc andesite-dacite-rhyolite (ADR) "
-                "below.")
+    title = "Sr/Y vs Y — Defant & Drummond (1990)"
+    citation = ("Defant & Drummond (1990) Fig. 2, fields measured off "
+                "the published figure. The paper draws no adakite "
+                "envelope — its adakites are plotted as crosses — so "
+                "the line shown is its stated threshold instead: "
+                "adakites have Y ≤ 18 ppm, with Sr rarely below "
+                "400 ppm, against island-arc andesite-dacite-rhyolite "
+                "at higher Y and lower Sr/Y. The boninite field of "
+                "Fig. 2 is not reproduced; its outline does not resolve "
+                "in the scan.")
     x_label = "Y (ppm)"
     y_label = "Sr/Y"
-    x_range = (0, 50)
-    y_range = (0, 200)
+    x_range = DD_FIG2_X_RANGE
+    y_range = DD_FIG2_Y_RANGE
 
     def _compute_xy(self, df):
         sr = resolve_column(df, ["Sr"])
@@ -507,27 +579,40 @@ class DefantDrummondYSrY(Diagram):
         if not (sr and y):
             return None, None
         y_s = pd.to_numeric(df[y], errors="coerce")
+        y_s = y_s.where(y_s > 0)
         return y_s, pd.to_numeric(df[sr], errors="coerce") / y_s
 
     def _draw_background(self, ax, options):
-        # Approximate adakite boundary (curved): goes through (0, ~120) -> (18, 40) -> (45, 20)
-        x_curve = np.array([0, 6, 12, 18, 30, 45])
-        y_curve = np.array([120, 80, 55, 40, 28, 20])
-        ax.plot(x_curve, y_curve, color="#444", lw=1.2, linestyle="--")
-        ax.text(5, 130, "Adakites", fontsize=11, color="#333", style="italic")
-        ax.text(28, 60, "Classic arc ADR", fontsize=10, color="#333",
-                style="italic")
+        xs = [p[0] for p in DD_ISLAND_ARC_ADR] + [DD_ISLAND_ARC_ADR[0][0]]
+        ys = [p[1] for p in DD_ISLAND_ARC_ADR] + [DD_ISLAND_ARC_ADR[0][1]]
+        ax.plot(xs, ys, color="#444", lw=1.1, linestyle="--", zorder=0)
+        lo, hi, bot, top = DD_MORB_FIELD
+        ax.fill_between([lo, hi], [bot, bot], [top, top], color="#222",
+                        zorder=0)
+        ax.axvline(DD_ADAKITE_Y_MAX, color="#444", lw=1.2, zorder=0)
+        ax.text(DD_ADAKITE_Y_MAX - 0.5, 430, "adakite: Y ≤ 18 ppm",
+                fontsize=9, color="#333", style="italic", ha="right",
+                va="center", zorder=0)
+        ax.text(21.4, 72, "Island arc ADR", fontsize=9, color="#333",
+                style="italic", ha="center", va="bottom", zorder=0)
+        ax.text(22.5, 7.0, "MORB", fontsize=8, color="#fff",
+                style="italic", ha="center", va="center", zorder=0)
 
 
 class DefantDrummondYbLaYb(Diagram):
     key = "defant_drummond_YbLaYb"
-    title = "Yb vs La/Yb — Defant & Drummond (1990)"
-    citation = ("Defant & Drummond (1990). Adakites: La/Yb > 20 at low Yb "
-                "(<≈1.9 ppm). Classic ADR shows lower La/Yb at higher Yb.")
+    title = "La/Yb vs Yb — Defant & Drummond (1990)"
+    citation = ("Defant & Drummond (1990) give the threshold drawn here "
+                "— adakites have Yb ≤ 1.9 ppm — on page 663. They "
+                "do not publish this diagram: their paper's three "
+                "figures are Y or Yb against slab age, Sr/Y against Y, "
+                "and a spider. Rollinson & Pease (2021) list a Yb–La/Yb "
+                "diagram under this reference, marked unevaluated, "
+                "which is where the attribution came from. No field is "
+                "drawn and the axes follow the data, because there is "
+                "no published figure here to take either from.")
     x_label = "Yb (ppm)"
     y_label = "La/Yb"
-    x_range = (0, 6)
-    y_range = (0, 80)
 
     def _compute_xy(self, df):
         la = resolve_column(df, ["La"])
@@ -535,15 +620,15 @@ class DefantDrummondYbLaYb(Diagram):
         if not (la and yb):
             return None, None
         yb_s = pd.to_numeric(df[yb], errors="coerce")
+        yb_s = yb_s.where(yb_s > 0)
         return yb_s, pd.to_numeric(df[la], errors="coerce") / yb_s
 
     def _draw_background(self, ax, options):
-        x_curve = np.array([0, 0.6, 1.2, 1.9, 3.0, 6.0])
-        y_curve = np.array([60, 42, 30, 20, 12, 6])
-        ax.plot(x_curve, y_curve, color="#444", lw=1.2, linestyle="--")
-        ax.text(0.4, 55, "Adakites", fontsize=11, color="#333", style="italic")
-        ax.text(3.5, 25, "Classic arc ADR", fontsize=10, color="#333",
-                style="italic")
+        ax.axvline(DD_ADAKITE_YB_MAX, color="#444", lw=1.2, zorder=0)
+        ax.text(DD_ADAKITE_YB_MAX, 0.98, "adakite: Yb ≤ 1.9 ppm",
+                transform=ax.get_xaxis_transform(), fontsize=9,
+                color="#333", style="italic", ha="right", va="top",
+                rotation=90, zorder=0)
 
 
 # ---------------------------------------------------------------------------
