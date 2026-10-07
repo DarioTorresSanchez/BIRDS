@@ -304,14 +304,6 @@ including what is still unverified.
   which ones, and a hollow triangle on the frame edge points the way
   each one went. The frames are untouched: widening one would move
   boundaries that are only defined inside it.
-- **The Map view froze** on a slow basemap. contextily fetches tiles one
-  at a time through `requests.get` with no timeout, from the redraw, on
-  the GUI thread; one measured CartoDB Positron fetch took 1204 s
-  against 3.5 s for Esri on the same extent. The download now runs on a
-  worker thread behind a 25 s deadline and takes eight tiles at a time,
-  which also cut the healthy path from 3.5 s to 1.3 s.
-- A joblib cache warning from contextily, harmless but alarming, is
-  filtered.
 - **Correlation heatmap**: axis labels were dropped once the matrix
   passed 30 elements, and a full analysis runs to 34, so in practice
   the axes came out with no element names at all.
@@ -322,6 +314,32 @@ including what is still unverified.
   (1903) norm.** The SINCLAS, Verma & Rivera-Gómez (2013) and Hutchison
   variants are gone, with the titanite/perovskite chain and the
   sulphide, carbonate, halide and fluoride minerals.
+- **The Map view plots longitude against latitude.** It used to draw on
+  Web Mercator, and only because that is the projection the removed
+  web map tiles come in. It now plots degrees directly with the aspect
+  ratio fixed at the frame's centre latitude — the equirectangular
+  projection, true along every meridian and along that parallel — and
+  takes the length of a degree from the WGS-84 ellipsoid rather than
+  from 111 km, for the scale bar, the aspect ratio and the smallest
+  frame drawn. Annotations in sessions saved by the earlier view were
+  stored in Mercator metres; they are converted on load instead of
+  landing off the frame.
+
+### Removed
+
+- **Web basemaps, and everything that existed to serve them.** The
+  satellite, topographic and grayscale backgrounds of the Map view
+  came from third-party tile servers whose terms of use do not suit
+  software registered and distributed by an institution, needed a
+  network connection to draw at all, and changed under a figure from
+  one export to the next. With them go the `contextily` dependency,
+  the tile download with its timeout and worker thread, the warning
+  filter for its cache, and the tests for all three. Nothing in
+  B.I.R.D.S now needs the network once installed, and
+  `tests/test_map_view.py` fails if any code, dependency or user
+  document mentions a background map again. The Map view is to become
+  a spatial-analysis view, with ordinary kriging, in place of the
+  background it had.
 
 ### Known issues
 

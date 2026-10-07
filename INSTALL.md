@@ -30,7 +30,7 @@ a terminal; each one is shown on its own line so it can be copied directly.
 | **Python** | 3.9 or later (3.11 recommended) |
 | **Memory** | 4 GB RAM minimum, 8 GB recommended for large datasets |
 | **Disk space** | ~500 MB including Python and the scientific libraries |
-| **Internet** | Needed only for installation, and for the Map view's basemap tiles |
+| **Internet** | Needed only for installation |
 
 ---
 
@@ -348,13 +348,12 @@ Double-click `birds.bat` to launch. Right-click it → **Send to → Desktop
 
 ## Optional dependencies
 
-Everything in `requirements.txt` installs by default. Three entries matter
+Everything in `requirements.txt` installs by default. Two entries matter
 only for specific features, and the application degrades gracefully without
 them:
 
 | Package | Needed for | Without it |
 |---|---|---|
-| `contextily` | Basemap tiles in the Map view | The Map view cannot draw a background map |
 | `pyproj` | UTM coordinate conversion | Falls back to a Snyder series expansion (~1 m accuracy) |
 | `mgrs` | MGRS coordinate input | The MGRS option is disabled |
 
@@ -458,8 +457,8 @@ Upgrade the build tooling first, then retry:
 python3 -m pip install --upgrade pip setuptools wheel
 ```
 
-If a single optional package is the culprit — usually `contextily`, `pyproj`
-or `mgrs` — remove its line from `requirements.txt` and reinstall. See
+If a single optional package is the culprit — usually `pyproj` or `mgrs` —
+remove its line from `requirements.txt` and reinstall. See
 [Optional dependencies](#optional-dependencies).
 
 ### Fonts look wrong or matplotlib warns about a missing family

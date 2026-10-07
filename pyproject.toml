@@ -43,8 +43,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# The Map view degrades gracefully without these — see INSTALL.md.
-map = ["contextily>=1.5", "pyproj>=3.4", "mgrs>=1.4"]
+# Coordinate parsers for the Map view; it degrades gracefully without
+# them — see INSTALL.md.
+map = ["pyproj>=3.4", "mgrs>=1.4"]
 test = ["pytest>=7.0"]
 dev = ["pytest>=7.0", "ruff>=0.4"]
 

@@ -1,30 +1,35 @@
 """Geospatial sample-location map view.
 
-A matplotlib-based map that plots the position of every sample on top
-of a web basemap (Esri WorldImagery, Esri WorldTopoMap or CartoDB
-Positron). Samples are coloured per group using the shared
-:class:`PlotStyle`, so the visual identity matches every other plot in
-B.I.R.D.S.
+Plots every sample at its longitude and latitude, coloured per group
+with the shared :class:`PlotStyle`, so the visual identity matches
+every other plot in B.I.R.D.S.  There is no background map: the axes
+are the coordinates themselves, and nothing is fetched from anywhere.
+
+Why plain longitude/latitude rather than a projection?
+    Plotting degrees directly, with the aspect ratio fixed at the centre
+    latitude, *is* a projection -- the equirectangular one, with that
+    latitude as its standard parallel.  Distances come out true along
+    every meridian and along that parallel, which over the tens to
+    hundreds of kilometres a field area spans is as good as any
+    projection gets, and the axes read in the units the data were
+    recorded in.  Anything that needs real distances -- the scale bar
+    here, and the geostatistics to come -- works them out on the
+    WGS-84 ellipsoid rather than reading them off the axes.
 
 Why matplotlib (and not Folium / Leaflet)?
-    The Map view is meant to live alongside the publication-grade
-    plots (TAS, REE, tectonic DFs). Keeping it as a matplotlib figure
-    lets the user export it through the existing Export-plot pipeline
-    (PNG / PDF / SVG with the chosen DPI). For an interactive
-    "Google-Earth-style" view the user can still export a Folium HTML
-    later, but the default is consistent with the rest of the app.
+    The Map view lives alongside the publication-grade plots (TAS, REE,
+    tectonic DFs) and exports through the same pipeline (PNG / PDF / SVG
+    at the chosen DPI).
 """
 
 from __future__ import annotations
 
-import warnings as _warnings
 from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QApplication,
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
@@ -43,7 +48,7 @@ from PySide6.QtWidgets import (
 )
 
 from .. import coords as _coords
-from ..diagrams.templates.base import get_groups, resolve_column
+from ..diagrams.templates.base import get_groups
 from .annotation_controller import AnnotationController, nearest_sample
 from .plot_canvas import PlotCanvas
 
@@ -64,201 +69,93 @@ _FMT_LABELS = (
 
 
 # ---------------------------------------------------------------------------
-# contextily is optional — we let the view fall back to "no basemap"
-# silently when it (or internet) is unavailable.
+# Distances on the WGS-84 ellipsoid
 # ---------------------------------------------------------------------------
+#
+# The scale bar, the smallest frame drawn and the aspect ratio all need
+# to know how long a degree is at a given latitude.  On the ellipsoid a
+# degree of latitude and a degree of longitude differ, and both vary
+# with latitude, so each is computed rather than taken as 111 km.
 
-try:
-    import contextily as _cx
-    _HAS_CTX = True
-except ImportError:                                          # pragma: no cover
-    _cx = None
-    _HAS_CTX = False
+#: WGS-84 semi-major axis (km) and first eccentricity squared.
+_WGS84_A_KM = 6378.137
+_WGS84_E2 = 0.00669437999014
+
+#: A degree of longitude is never taken as shorter than this fraction
+#: of a degree of latitude.  It goes to nothing at the poles, where an
+#: aspect ratio or a scale bar built on it would blow up.
+_POLAR_FLOOR = 0.05
 
 
-def silence_joblib_cache_noise() -> None:
-    """Hide one joblib message that contextily's tile cache produces.
+def km_per_degree_lat(lat_deg: float) -> float:
+    """Length of one degree of latitude along the meridian at *lat_deg*.
 
-    contextily memoises its tile fetcher with joblib, and joblib now and
-    then decides the cached function is not the one it cached::
-
-        Possible name collisions between functions '_fetch_tile'
-        (contextily/tile.py:-1) and '_fetch_tile' (contextily/tile.py:327)
-
-    The -1 is joblib failing to read the function's source line when it
-    wrote the cache entry, so the comparison against the real line 327
-    cannot match.
-
-    It is cosmetic.  joblib's own answer to a mismatch is to drop the
-    entry and call the function again, which here costs one re-downloaded
-    tile; nothing reaches the map wrong.  But it lands in the terminal as
-    a wall of library traceback that reads like a crash, so it is
-    filtered rather than left to alarm people.
-
-    Filtered on joblib's own category *and* the message, so every other
-    joblib warning still gets through.  Not on ``module``: that argument
-    matches the module a warning is attributed to, which depends on the
-    stacklevel joblib passes, and getting it wrong filters nothing while
-    looking like it works.
-
-    A function rather than a bare call at import so it can be tested --
-    warnings filters are global state that pytest resets around every
-    test -- and called once below rather than around each fetch, since
-    the fetch runs on a worker thread and toggling a global filter there
-    would race with the GUI thread.
+    (π/180)·M(φ), with M the meridional radius of curvature: 110.57 km
+    at the equator, 111.69 km at the poles.
     """
-    try:
-        from joblib.memory import JobLibCollisionWarning as collision
-    except Exception:                                      # pragma: no cover
-        return
-    _warnings.filterwarnings(
-        "ignore", message=".*[Nn]ame collisions between functions.*",
-        category=collision,
-    )
+    s2 = np.sin(np.radians(lat_deg)) ** 2
+    m = _WGS84_A_KM * (1.0 - _WGS84_E2) / (1.0 - _WGS84_E2 * s2) ** 1.5
+    return float(np.radians(1.0) * m)
 
 
-if _HAS_CTX:
-    silence_joblib_cache_noise()
+def km_per_degree_lon(lat_deg: float) -> float:
+    """Length of one degree of longitude along the parallel at *lat_deg*.
 
-
-# Friendly labels → contextily provider object
-def _basemap_provider(name: str):
-    if not _HAS_CTX or name == "None":
-        return None
-    table = {
-        "Satellite (Esri WorldImagery)":  _cx.providers.Esri.WorldImagery,
-        "Topographic (Esri WorldTopoMap)": _cx.providers.Esri.WorldTopoMap,
-        "Light grayscale (CartoDB Positron)": _cx.providers.CartoDB.Positron,
-    }
-    return table.get(name)
-
-
-_BASEMAPS = (
-    "Satellite (Esri WorldImagery)",
-    "Topographic (Esri WorldTopoMap)",
-    "Light grayscale (CartoDB Positron)",
-    "None",
-)
-
-#: Seconds to wait for a whole basemap before giving up on it.
-#:
-#: contextily fetches tiles one at a time through ``requests.get`` with
-#: no timeout at all (``contextily.tile._retryer``), and ``add_basemap``
-#: does not forward ``n_connections`` or ``max_retries``, so there is no
-#: way to bound it from the outside.  Called straight from the redraw,
-#: as it used to be, a slow provider takes the whole interface with it:
-#: measured on one 30 km extent, Esri returned in 3.5 s while CartoDB
-#: Positron took 1204 s -- twenty minutes of frozen window with no
-#: feedback and no way to cancel.
-BASEMAP_TIMEOUT_S = 25.0
-
-#: Per-socket timeout while tiles are being fetched, so an abandoned
-#: fetch eventually dies instead of holding a thread for ever.
-_TILE_SOCKET_TIMEOUT_S = 8.0
-
-#: Tiles fetched at once.  contextily defaults to 1, which is what makes
-#: a slow provider so slow; a handful of connections is well within what
-#: these tile servers allow.
-_TILE_CONNECTIONS = 8
-
-
-def _fetch_basemap(bounds, provider, timeout_s: float = BASEMAP_TIMEOUT_S,
-                   on_tick=None):
-    """Download basemap tiles for *bounds*, or give up after *timeout_s*.
-
-    Returns ``(image, extent)`` ready for ``imshow``, or ``None`` when
-    the tiles did not arrive in time or the provider refused them.
-
-    The download runs on a worker thread purely so it can be abandoned:
-    a Python thread cannot be killed, and ``requests.get`` without a
-    timeout would otherwise hold the caller for as long as the server
-    feels like it.  Nothing touches matplotlib here -- ``bounds2img``
-    returns a plain array, and the caller draws it on the GUI thread,
-    where all the other artists are made.
-
-    The thread is a daemon, which is the point of not using
-    ``ThreadPoolExecutor``: its workers are not daemons, so an
-    abandoned fetch would keep the interpreter from exiting and closing
-    the app would hang on the download we just walked away from.  The
-    socket timeout bounds each tile as well, so the orphan unwinds on
-    its own instead of sitting there for the life of the process.
+    (π/180)·N(φ)·cos φ, with N the prime-vertical radius of curvature:
+    111.32 km at the equator, 55.80 km at 60°.  Floored near the poles.
     """
-    import socket
-    import threading
-    import time
+    phi = np.radians(lat_deg)
+    n = _WGS84_A_KM / np.sqrt(1.0 - _WGS84_E2 * np.sin(phi) ** 2)
+    exact = float(np.radians(1.0) * n * np.cos(phi))
+    return max(exact, _POLAR_FLOOR * km_per_degree_lat(lat_deg))
 
-    west, south, east, north = bounds
-    outcome: dict = {}
 
-    def _work():
-        previous = socket.getdefaulttimeout()
-        socket.setdefaulttimeout(_TILE_SOCKET_TIMEOUT_S)
-        try:
-            outcome["tiles"] = _cx.bounds2img(
-                west, south, east, north, zoom="auto", source=provider,
-                ll=False, n_connections=_TILE_CONNECTIONS, max_retries=1,
-            )
-        except Exception:                                  # noqa: BLE001
-            # No internet, blocked CDN, provider out of tiles at this
-            # zoom.  Left as a miss; the caller says so on the figure.
-            pass
-        finally:
-            socket.setdefaulttimeout(previous)
+def map_aspect(lat0_deg: float) -> float:
+    """Axes aspect that draws a ground square at *lat0_deg* as a square.
 
-    worker = threading.Thread(target=_work, name="birds-basemap",
-                              daemon=True)
-    worker.start()
-    if on_tick is None:
-        worker.join(timeout_s)
-    else:
-        # Wait in slices so the caller can keep its window painting.
-        deadline = time.monotonic() + timeout_s
-        while worker.is_alive() and time.monotonic() < deadline:
-            worker.join(0.05)
-            on_tick()
-    return outcome.get("tiles")
+    matplotlib's aspect is how much longer one y unit is on screen than
+    one x unit.  A degree of latitude is km_per_degree_lat long on the
+    ground and a degree of longitude km_per_degree_lon, so their ratio
+    is the stretch.  On a sphere it is 1/cos(lat0); the ellipsoid moves
+    it by under 0.7 %, which costs nothing to get right.
+    """
+    return km_per_degree_lat(lat0_deg) / km_per_degree_lon(lat0_deg)
+
+
+#: Smallest frame drawn, in km each way, so a single sample or a tight
+#: cluster still gets a frame wide enough to read and to carry a scale
+#: bar that means something.
+MIN_FRAME_KM = 5.0
+
+
+def map_frame(lons, lats, *, pad: float):
+    """Axis limits for samples at *lons*, *lats*, and the standard parallel.
+
+    Returns ``(lon_min, lon_max, lat_min, lat_max, lat0)``.  Each span is
+    first widened, about its centre, to at least ``MIN_FRAME_KM`` on the
+    ground -- measured on the ellipsoid, so the minimum is the same
+    distance east-west as north-south -- and then padded by *pad* of
+    itself on either side.  *lat0* is the frame's centre latitude.
+    """
+    lon_lo, lon_hi = float(np.min(lons)), float(np.max(lons))
+    lat_lo, lat_hi = float(np.min(lats)), float(np.max(lats))
+    lat0 = (lat_lo + lat_hi) / 2.0
+    min_dlon = MIN_FRAME_KM / km_per_degree_lon(lat0)
+    min_dlat = MIN_FRAME_KM / km_per_degree_lat(lat0)
+    if lon_hi - lon_lo < min_dlon:
+        mid = (lon_lo + lon_hi) / 2.0
+        lon_lo, lon_hi = mid - min_dlon / 2.0, mid + min_dlon / 2.0
+    if lat_hi - lat_lo < min_dlat:
+        mid = (lat_lo + lat_hi) / 2.0
+        lat_lo, lat_hi = mid - min_dlat / 2.0, mid + min_dlat / 2.0
+    dlon, dlat = lon_hi - lon_lo, lat_hi - lat_lo
+    return (lon_lo - pad * dlon, lon_hi + pad * dlon,
+            lat_lo - pad * dlat, lat_hi + pad * dlat, lat0)
 
 
 # ---------------------------------------------------------------------------
-# Geographic helpers
+# Scale bar, north arrow, tick labels
 # ---------------------------------------------------------------------------
-
-# Earth radius used by EPSG:3857 (sphere, not WGS-84 ellipsoid)
-_R_EARTH = 6_378_137.0
-
-
-def _wgs84_to_web_mercator(lon: pd.Series, lat: pd.Series
-                           ) -> Tuple[pd.Series, pd.Series]:
-    """Transform WGS-84 lon/lat (deg) into Web Mercator (EPSG:3857) metres."""
-    lat = lat.clip(-85.05112878, 85.05112878)  # Web Mercator limit
-    x = _R_EARTH * np.radians(lon)
-    y = _R_EARTH * np.log(np.tan(np.pi / 4.0 + np.radians(lat) / 2.0))
-    return x, y
-
-
-_LAT_ALIASES = ("Latitude", "Lat", "lat", "LAT", "Y", "y_coord",
-                "Latitud", "latitud", "y")
-_LON_ALIASES = ("Longitude", "Lon", "lon", "Lng", "lng", "LONG", "LON",
-                "X", "x_coord", "Longitud", "longitud", "x")
-
-
-def _resolve_latlon(df: pd.DataFrame
-                    ) -> Tuple[Optional[str], Optional[str]]:
-    """Return (lat_col, lon_col) using a generous list of synonyms."""
-    return (resolve_column(df, _LAT_ALIASES),
-            resolve_column(df, _LON_ALIASES))
-
-
-def _mercator_cos_phi(y_centre: float) -> float:
-    """Latitude-contraction factor at Web-Mercator y-coordinate *y_centre*.
-
-    Inverse of the EPSG:3857 forward projection: 1° of longitude at
-    latitude φ corresponds to ``cos(φ) × 1° × R_EARTH`` metres of
-    ground distance. Floor at 0.05 to avoid singularities near the
-    polar clip (±85°).
-    """
-    return max(np.cos(np.arctan(np.sinh(y_centre / _R_EARTH))), 0.05)
-
 
 def _nice_round(value: float) -> float:
     """Round *value* to the closest 1 / 2 / 5 × 10ⁿ "tidy" number.
@@ -280,42 +177,52 @@ def _nice_round(value: float) -> float:
     return 10 * mag
 
 
-def _auto_scale_length_km(x_min: float, x_max: float,
-                          y_centre: float, *,
-                          target_fraction: float = 0.20) -> float:
-    """Compute a tidy scale-bar length from the current axes extent."""
-    width_km = (x_max - x_min) * _mercator_cos_phi(y_centre) / 1000.0
+def auto_scale_length_km(lon_min: float, lon_max: float, lat0: float, *,
+                         target_fraction: float = 0.20) -> float:
+    """A tidy scale-bar length, about a fifth of the frame's width."""
+    width_km = (lon_max - lon_min) * km_per_degree_lon(lat0)
     return _nice_round(width_km * target_fraction)
 
 
-def _add_scale_bar(ax, *, length_km: float, fraction_pad: float = 0.04
-                    ) -> tuple:
-    """Draw a horizontal scale bar and return ``(line_artist, text_artist)``
-    so the caller can keep references and remove them on the next redraw.
+def _add_scale_bar(ax, *, length_km: float, lat0: float,
+                   fraction_pad: float = 0.04) -> tuple:
+    """Draw a horizontal scale bar and return ``(line, text)`` so the
+    caller can remove them on the next redraw.
+
+    The bar is measured along the parallel *lat0*, the standard parallel
+    the aspect ratio was set for, which is where an east-west length on
+    this map is exactly true.
     """
     x_min, x_max = ax.get_xlim()
     y_min, y_max = ax.get_ylim()
-    bar_metres = (length_km * 1000.0) / _mercator_cos_phi((y_min + y_max) / 2.0)
+    bar_deg = length_km / km_per_degree_lon(lat0)
     x_start = x_min + fraction_pad * (x_max - x_min)
     y_pos = y_min + 0.05 * (y_max - y_min)
-    line, = ax.plot([x_start, x_start + bar_metres], [y_pos, y_pos],
+    line, = ax.plot([x_start, x_start + bar_deg], [y_pos, y_pos],
                     color="black", linewidth=3, solid_capstyle="butt",
                     zorder=10)
     label = f"{length_km:g} km" if length_km < 10 else f"{int(length_km)} km"
-    text = ax.text(x_start + bar_metres / 2.0,
-                   y_pos + 0.012 * (y_max - y_min),
-                   label, ha="center", va="bottom",
-                   fontsize=9, color="black",
-                   bbox=dict(facecolor="white", edgecolor="none",
-                             alpha=0.75, pad=1.4), zorder=11)
+    # Lifted off the bar by a fixed distance on screen.  As a fraction of
+    # the axes height it collapsed on a shallow frame, and the label's
+    # white box sat on top of the bar it was labelling.
+    text = ax.annotate(label, xy=(x_start + bar_deg / 2.0, y_pos),
+                       xytext=(0, 4), textcoords="offset points",
+                       ha="center", va="bottom", fontsize=9, color="black",
+                       bbox=dict(facecolor="white", edgecolor="none",
+                                 alpha=0.75, pad=1.4), zorder=11)
     return line, text
 
 
 def _add_north_arrow(ax) -> None:
-    """Draw a small north arrow in the upper-right corner."""
+    """Draw a small north arrow in the upper-right corner.
+
+    Its length is fixed on screen.  As a fraction of the axes it shrank
+    with the frame's height, and a wide, shallow map flattened it to a
+    smudge.
+    """
     ax.annotate(
-        "N", xy=(0.95, 0.93), xytext=(0.95, 0.83),
-        xycoords="axes fraction", textcoords="axes fraction",
+        "N", xy=(0.95, 0.96), xytext=(0, -30),
+        xycoords="axes fraction", textcoords="offset points",
         ha="center", va="center", fontsize=12, fontweight="bold",
         color="black",
         arrowprops=dict(facecolor="black", edgecolor="black",
@@ -335,11 +242,70 @@ def _format_deg(value: float, *, axis: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Reading sessions saved before the view plotted plain degrees
+# ---------------------------------------------------------------------------
+#
+# Earlier versions drew this view in spherical Mercator (EPSG:3857), in
+# metres, and stored every map annotation in those metres.  Read as
+# degrees they would land thousands of degrees off the frame and simply
+# vanish, so they are converted once, when such a session is restored.
+# New sessions are marked ``axes_crs = "lonlat"`` and never converted.
+
+AXES_CRS = "lonlat"
+_LEGACY_SPHERE_R_M = 6_378_137.0
+
+
+def _legacy_metres_to_lonlat(x, y) -> Tuple[float, float]:
+    lon = np.degrees(float(x) / _LEGACY_SPHERE_R_M)
+    lat = np.degrees(2.0 * np.arctan(np.exp(float(y) / _LEGACY_SPHERE_R_M))
+                     - np.pi / 2.0)
+    return float(lon), float(lat)
+
+
+def migrate_annotations_to_lonlat(entries):
+    """Convert serialised map annotations from legacy metres to degrees.
+
+    Works on the plain dicts a session stores, before they are rebuilt
+    into annotation objects.  A sample label's offset is converted by
+    converting the label position and subtracting, since a fixed offset
+    in metres is not a fixed offset in degrees.  An entry that will not
+    convert is passed through untouched rather than dropped.
+    """
+    if not entries:
+        return entries
+    out = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            out.append(entry)
+            continue
+        e = dict(entry)
+        kind = e.get("kind")
+        try:
+            if kind in ("line", "arrow"):
+                e["x1"], e["y1"] = _legacy_metres_to_lonlat(e["x1"], e["y1"])
+                e["x2"], e["y2"] = _legacy_metres_to_lonlat(e["x2"], e["y2"])
+            elif kind == "text":
+                e["x"], e["y"] = _legacy_metres_to_lonlat(e["x"], e["y"])
+            elif kind == "sample":
+                px, py = float(e["px"]), float(e["py"])
+                tx = px + float(e.get("dx", 0.0))
+                ty = py + float(e.get("dy", 0.0))
+                plon, plat = _legacy_metres_to_lonlat(px, py)
+                tlon, tlat = _legacy_metres_to_lonlat(tx, ty)
+                e["px"], e["py"] = plon, plat
+                e["dx"], e["dy"] = tlon - plon, tlat - plat
+        except (KeyError, TypeError, ValueError):
+            e = dict(entry)
+        out.append(e)
+    return out
+
+
+# ---------------------------------------------------------------------------
 # MapView widget
 # ---------------------------------------------------------------------------
 
 class MapView(QWidget):
-    """Plot sample locations on a web basemap."""
+    """Plot sample locations on longitude/latitude axes."""
 
     def __init__(self, data_manager, plot_style,
                  parent: QWidget | None = None) -> None:
@@ -356,6 +322,9 @@ class MapView(QWidget):
         self._ax = None
         self._cid_x: int | None = None
         self._cid_y: int | None = None
+        # Standard parallel of the current frame: the latitude the
+        # aspect ratio was set for, and the one the scale bar is true at.
+        self._lat0: float = 0.0
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -428,13 +397,6 @@ class MapView(QWidget):
         splitter.addWidget(right)
         splitter.setSizes([460, 820])
         self.annotation_ctl.bind_canvas(self.canvas)
-
-        if not _HAS_CTX:
-            self.subtitle_label.setText(
-                self.subtitle_label.text()
-                + "  ⚠  contextily is not installed — the basemap will be "
-                  "skipped (run: pip install contextily)."
-            )
 
     # ------------------------------------------------------------------ UI
     def _build_controls(self, parent: QWidget) -> None:
@@ -544,27 +506,6 @@ class MapView(QWidget):
 
         layout.addWidget(coord_box)
 
-        # ---- Basemap ------------------------------------------------------
-        base_box = QGroupBox("Basemap")
-        bv = _wrap(base_box)
-        bf = _compact_form()
-        self.basemap_combo = QComboBox()
-        for name in _BASEMAPS:
-            self.basemap_combo.addItem(name)
-        if not _HAS_CTX:
-            for i in range(self.basemap_combo.count()):
-                if self.basemap_combo.itemText(i) != "None":
-                    self.basemap_combo.model().item(i).setEnabled(False)
-            self.basemap_combo.setCurrentText("None")
-        bf.addRow("Style:", self.basemap_combo)
-        self.basemap_alpha = QDoubleSpinBox()
-        self.basemap_alpha.setRange(0.0, 1.0)
-        self.basemap_alpha.setSingleStep(0.05)
-        self.basemap_alpha.setValue(1.0)
-        bf.addRow("Basemap opacity:", self.basemap_alpha)
-        bv.addLayout(bf)
-        layout.addWidget(base_box)
-
         # ---- Markers ------------------------------------------------------
         mark_box = QGroupBox("Markers")
         mv = _wrap(mark_box)
@@ -631,8 +572,7 @@ class MapView(QWidget):
         layout.addWidget(ann_box)
 
         # Annotation toolkit (lines / arrows / text / sample identifier).
-        # Map clicks fire in Web-Mercator metres but the resolver maps
-        # back to lat/lon transparently for the user-visible label.
+        # Clicks arrive in degrees, the same units the axes are drawn in.
         self.annotation_ctl = AnnotationController(
             self, sample_resolver=self._resolve_sample)
         layout.addWidget(self.annotation_ctl.group)
@@ -722,9 +662,6 @@ class MapView(QWidget):
         self.update_plot()
 
     def update_plot(self) -> None:
-        if getattr(self, "_fetching_basemap", False):
-            # Re-entered from the event pump during a tile download.
-            return
         df = self.data.df
         fig = self.canvas.figure
         fig.clear()
@@ -757,7 +694,7 @@ class MapView(QWidget):
 
         # Plot per group ----------------------------------------------------
         any_data = False
-        all_x, all_y = [], []
+        all_lon, all_lat = [], []
         for label, sub, gs in get_groups(df, self.plot_style):
             if gs is not None and not getattr(gs, "visible", True):
                 continue
@@ -770,11 +707,10 @@ class MapView(QWidget):
             lon = lon[mask]
             if lat.empty:
                 continue
-            x, y = _wgs84_to_web_mercator(lon, lat)
             color = gs.color if gs else "#1f77b4"
             marker = gs.marker if gs else "o"
             ax.scatter(
-                x, y,
+                lon, lat,
                 s=(self.marker_size.value() ** 2),
                 alpha=self.marker_alpha.value(),
                 c=color, marker=marker, label=label,
@@ -782,8 +718,8 @@ class MapView(QWidget):
                 linewidths=0.5 if self.marker_edge_chk.isChecked() else 0,
                 zorder=5,
             )
-            all_x.extend(x.tolist())
-            all_y.extend(y.tolist())
+            all_lon.extend(lon.tolist())
+            all_lat.extend(lat.tolist())
             any_data = True
 
         if not any_data:
@@ -804,73 +740,16 @@ class MapView(QWidget):
             return
 
         # Extent -----------------------------------------------------------
-        x_min, x_max = float(min(all_x)), float(max(all_x))
-        y_min, y_max = float(min(all_y)), float(max(all_y))
-        dx = max(x_max - x_min, 1.0)
-        dy = max(y_max - y_min, 1.0)
-        pad = self.padding_pct.value() / 100.0
-        # Guarantee a minimum size (~5 km) so the basemap zoom level is sane
-        min_size = 5_000.0
-        if dx < min_size:
-            mid = (x_min + x_max) / 2.0
-            x_min, x_max = mid - min_size / 2, mid + min_size / 2
-            dx = x_max - x_min
-        if dy < min_size:
-            mid = (y_min + y_max) / 2.0
-            y_min, y_max = mid - min_size / 2, mid + min_size / 2
-            dy = y_max - y_min
-        ax.set_xlim(x_min - pad * dx, x_max + pad * dx)
-        ax.set_ylim(y_min - pad * dy, y_max + pad * dy)
-        ax.set_aspect("equal")
+        lon_min, lon_max, lat_min, lat_max, lat0 = map_frame(
+            all_lon, all_lat, pad=self.padding_pct.value() / 100.0)
+        ax.set_xlim(lon_min, lon_max)
+        ax.set_ylim(lat_min, lat_max)
+        # Equirectangular, with the frame's centre latitude as the
+        # standard parallel: a ground square there draws as a square.
+        ax.set_aspect(map_aspect(lat0))
+        self._lat0 = lat0
 
-        # Basemap ----------------------------------------------------------
-        basemap_name = self.basemap_combo.currentText()
-        provider = _basemap_provider(basemap_name)
-        if provider is not None:
-            # The axes are already Web Mercator -- the view projects the
-            # coordinates itself -- so the tiles need no warping and we
-            # can imshow them straight, which keeps every matplotlib call
-            # on this thread while the download happens off it.
-            left, right = ax.get_xlim()
-            bottom, top = ax.get_ylim()
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            # Pumping events keeps the window painting instead of going
-            # grey, but it also lets the user press Update again and
-            # re-enter this method; the flag turns that into a no-op.
-            self._fetching_basemap = True
-            try:
-                fetched = _fetch_basemap(
-                    (left, bottom, right, top), provider,
-                    on_tick=QApplication.processEvents)
-            finally:
-                self._fetching_basemap = False
-                QApplication.restoreOverrideCursor()
-            if fetched is None:
-                ax.text(
-                    0.5, 0.97,
-                    f"⚠  Basemap unavailable — {basemap_name} did not "
-                    f"respond within {BASEMAP_TIMEOUT_S:.0f} s",
-                    transform=ax.transAxes, ha="center", va="top",
-                    fontsize=8, color="#a04c2e",
-                    bbox=dict(facecolor="white", edgecolor="#a04c2e",
-                              alpha=0.85, pad=2),
-                )
-            else:
-                image, extent = fetched
-                ax.imshow(image, extent=extent, interpolation="bilinear",
-                          alpha=self.basemap_alpha.value(), zorder=0)
-                # imshow retargets the view at the tile mosaic, which is
-                # always a little larger than what was asked for.
-                ax.set_xlim(left, right)
-                ax.set_ylim(bottom, top)
-                attribution = (provider.get("attribution")
-                               if hasattr(provider, "get") else None)
-                if attribution:
-                    ax.text(0.005, 0.005, attribution,
-                            transform=ax.transAxes, ha="left", va="bottom",
-                            fontsize=7, color="#333", alpha=0.85, zorder=6)
-
-        # Grid (lat/lon ticks in degrees on a Web-Mercator axes) -----------
+        # Grid (ticks in degrees with their hemisphere) --------------------
         self._tick_in_degrees(ax)
         if self.grid_chk.isChecked():
             ax.grid(True, which="major", linestyle=":", linewidth=0.6,
@@ -903,18 +782,18 @@ class MapView(QWidget):
                           framealpha=0.85, facecolor="white",
                           edgecolor="#666")
 
-        ax.set_xlabel("")
-        ax.set_ylabel("")
+        ax.set_xlabel("Longitude")
+        ax.set_ylabel("Latitude")
         fig.tight_layout()
-        # Replay user annotations on the map axis.  Note: their (x, y)
-        # coordinates are in Web-Mercator metres, matching the axis.
+        # Replay user annotations; their coordinates are degrees, like
+        # the axes.
         self.annotation_ctl.draw(ax)
         from .brushing import draw_selection_overlay
         draw_selection_overlay(self)
         self.canvas.draw()
 
     def _selection_points(self, names):
-        """Web-Mercator coordinates of the selected samples."""
+        """(lon, lat) of the selected samples, in the axes' own units."""
         from .brushing import names_series
         df = self.data.df
         axes = self.canvas.figure.axes
@@ -923,28 +802,22 @@ class MapView(QWidget):
         lat, lon, err = self._resolve_coords()
         if err is not None or lat is None or lon is None:
             return []
-        xs, ys = _wgs84_to_web_mercator(lon, lat)
         nm = names_series(df)
-        m = nm.isin(names) & xs.notna() & ys.notna()
-        return [(axes[0], list(zip(xs[m], ys[m])))]
+        m = nm.isin(names) & lon.notna() & lat.notna()
+        return [(axes[0], list(zip(lon[m], lat[m])))]
 
     def _resolve_sample(self, x: float, y: float):
-        """Sample resolver — finds the data row whose lat/lon, projected
-        to Web-Mercator, lands closest to the user's click (also in
-        Web-Mercator metres)."""
+        """The data row whose (lon, lat) lands closest to a click."""
         df = self.data.df
         if df is None or df.empty:
             return None
         lat, lon, err = self._resolve_coords()
         if err is not None or lat is None or lon is None:
             return None
-        # Project the dataset's lat/lon into Web-Mercator so distances
-        # are in the same space as the click coordinates.
-        xs, ys = _wgs84_to_web_mercator(lon, lat)
         axes = self.canvas.figure.axes
         if not axes:
             return None
-        return nearest_sample(df, xs, ys, x, y,
+        return nearest_sample(df, lon, lat, x, y,
                               axes[0].get_xlim(), axes[0].get_ylim())
 
     # ---------------------------------------------------------- live scale
@@ -990,13 +863,11 @@ class MapView(QWidget):
 
         if self.scale_auto_chk.isChecked():
             x_min, x_max = ax.get_xlim()
-            y_min, y_max = ax.get_ylim()
-            length_km = _auto_scale_length_km(
-                x_min, x_max, (y_min + y_max) / 2.0)
+            length_km = auto_scale_length_km(x_min, x_max, self._lat0)
         else:
             length_km = float(self.scale_length.value())
 
-        line, text = _add_scale_bar(ax, length_km=length_km)
+        line, text = _add_scale_bar(ax, length_km=length_km, lat0=self._lat0)
         self._scale_artists = [line, text]
 
     def export_plot(self) -> None:
@@ -1142,28 +1013,24 @@ class MapView(QWidget):
 
     @staticmethod
     def _tick_in_degrees(ax) -> None:
-        """Replace the EPSG:3857 metre ticks with the equivalent decimal-
-        degree labels (no projection change, just a cosmetic relabel).
-        """
-        from matplotlib.ticker import FuncFormatter
+        """Label the degree ticks with their hemisphere (19.43° N)."""
+        from matplotlib.ticker import FuncFormatter, MaxNLocator
 
-        def _x_to_lon(x, _pos):
-            lon = np.degrees(x / _R_EARTH)
-            return _format_deg(lon, axis="lon")
-
-        def _y_to_lat(y, _pos):
-            lat = np.degrees(2.0 * np.arctan(np.exp(y / _R_EARTH))
-                             - np.pi / 2.0)
-            return _format_deg(lat, axis="lat")
-
-        ax.xaxis.set_major_formatter(FuncFormatter(_x_to_lon))
-        ax.yaxis.set_major_formatter(FuncFormatter(_y_to_lat))
-        for t in ax.get_xticklabels():
-            t.set_fontsize(8)
-        for t in ax.get_yticklabels():
-            t.set_fontsize(8)
-            t.set_rotation(90)
-            t.set_ha("center")
+        # "99.25° W" is a long label; at matplotlib's default density a
+        # narrow frame ran them together.
+        for axis, bins in ((ax.xaxis, 5), (ax.yaxis, 6)):
+            axis.set_major_locator(
+                MaxNLocator(nbins=bins, steps=[1, 2, 2.5, 5, 10]))
+        ax.xaxis.set_major_formatter(
+            FuncFormatter(lambda v, _pos: _format_deg(v, axis="lon")))
+        ax.yaxis.set_major_formatter(
+            FuncFormatter(lambda v, _pos: _format_deg(v, axis="lat")))
+        # Horizontal on both axes.  Latitude labels used to be turned on
+        # end, which on a wide, shallow frame -- the shape a true-scale
+        # map takes when samples spread east-west -- ran them into each
+        # other.  tick_params rather than the label objects, so it holds
+        # for whatever ticks the layout settles on.
+        ax.tick_params(axis="both", labelsize=8)
 
     def _empty(self, ax, message: str) -> None:
         ax.text(0.5, 0.5, message, ha="center", va="center",
@@ -1194,9 +1061,10 @@ class MapView(QWidget):
             "suffix_lat": self.suffix_lat_combo.currentText(),
             "suffix_lon": self.suffix_lon_combo.currentText(),
             "mgrs": self.mgrs_combo.currentText(),
+            # Units of every stored coordinate below -- see
+            # migrate_annotations_to_lonlat for why this is recorded.
+            "axes_crs": AXES_CRS,
             # Styling
-            "basemap": self.basemap_combo.currentText(),
-            "basemap_alpha": ws.spin_state(self.basemap_alpha),
             "marker_size": ws.spin_state(self.marker_size),
             "marker_alpha": ws.spin_state(self.marker_alpha),
             "marker_edge": ws.check_state(self.marker_edge_chk),
@@ -1244,9 +1112,6 @@ class MapView(QWidget):
         ws.restore_combo(self.suffix_lon_combo,
                          {"text": state.get("suffix_lon", "")})
         ws.restore_combo(self.mgrs_combo, {"text": state.get("mgrs", "")})
-        ws.restore_combo(self.basemap_combo,
-                         {"text": state.get("basemap", "")})
-        ws.restore_spin(self.basemap_alpha, state.get("basemap_alpha"))
         ws.restore_spin(self.marker_size, state.get("marker_size"))
         ws.restore_spin(self.marker_alpha, state.get("marker_alpha"))
         ws.restore_check(self.marker_edge_chk, state.get("marker_edge"))
@@ -1258,4 +1123,7 @@ class MapView(QWidget):
         ws.restore_spin(self.scale_length, state.get("scale_length"))
         ws.restore_check(self.north_chk, state.get("north"))
         ws.restore_check(self.legend_chk, state.get("legend"))
-        self.annotation_ctl.restore(state.get("annotations"))
+        annotations = state.get("annotations")
+        if state.get("axes_crs") != AXES_CRS:
+            annotations = migrate_annotations_to_lonlat(annotations)
+        self.annotation_ctl.restore(annotations)

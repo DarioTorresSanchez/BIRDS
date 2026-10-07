@@ -297,8 +297,8 @@ class BirdsMainWindow(QMainWindow):
         menu = bar.addMenu("&Map")
         act_locations = QAction("Sample locations…", self)
         act_locations.setStatusTip(
-            "Plot the geographic position of every sample on a web "
-            "basemap (satellite, topographic or light grayscale)."
+            "Plot the geographic position of every sample on longitude/"
+            "latitude axes."
         )
         act_locations.triggered.connect(self._open_map)
         menu.addAction(act_locations)

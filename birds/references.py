@@ -377,10 +377,9 @@ REFERENCES: List[Section] = [
          "Geodetic System 1984 (WGS-84): Its definition and "
          "relationships with local geodetic systems* (NGA.STND.0036_1.0.0_"
          "WGS84). NGA Office of Geomatics.",
-         "WGS-84 datum (EPSG:4326), used for all map coordinates."),
-        ("OGC. (2007). *OGC web map service — implementation specification "
-         "WMS 1.3.0*. Open Geospatial Consortium.",
-         "EPSG:3857 (Web Mercator) used for basemap rendering."),
+         "WGS-84 datum (EPSG:4326) and ellipsoid, used for all map "
+         "coordinates and for the lengths of a degree behind the scale "
+         "bar and the map's aspect ratio."),
         ("Defense Mapping Agency. (1990). *The universal grids: Universal "
          "Transverse Mercator (UTM) and Universal Polar Stereographic "
          "(UPS)* (TM 8358.2). Department of Defense.",

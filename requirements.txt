@@ -4,8 +4,6 @@ pandas>=2.0
 numpy>=1.24
 openpyxl>=3.1
 scipy>=1.10
-# Optional — required only by the Map view (geospatial visualisation)
-contextily>=1.5
 # Coordinate-format parsers for the Map view (UTM + MGRS).  Without
 # pyproj, the view falls back to a Snyder series expansion (~1 m
 # accuracy).  Without mgrs, the MGRS option is disabled.
