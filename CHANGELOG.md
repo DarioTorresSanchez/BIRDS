@@ -18,14 +18,35 @@ including what is still unverified.
 
 ### Added
 
+- **Spatial analysis in the Map view: ordinary kriging of any numeric
+  column.** Five tabs over the canvas — the samples, the kriged
+  estimate, its uncertainty, the variogram, and the cross-validation —
+  with the first three drawn as maps on the same longitude/latitude
+  axes, scale bar and annotations as before. Each group is kriged on
+  its own by default, because a pluton and its host are not one random
+  field and kriging across the contact paints a gradient that is not
+  there; pooling them is one choice away. Concentrations are kriged as
+  logarithms and shown as the median; every group shares one colour
+  scale; each surface is clipped to its own samples' hull, with an
+  optional buffer, since beyond it kriging only extrapolates. The
+  variogram can be fitted or set by hand per group, starting from the
+  fitted values. Under the plot a summary gives each group's model,
+  samples used and cross-validation skill, and says in plain words
+  what to doubt: too few samples by Webster & Oliver (1992), samples
+  left out or folded together, a range that never levels off, an
+  ill-conditioned system, surfaces that overlap. **Export grid for a
+  GIS** writes the estimate and its standard deviation per group as
+  ESRI ASCII grids in WGS-84 degrees, each with its `.prj`, and a text
+  file recording what they hold and how they were made. Samples can
+  also be coloured by the variable instead of by group.
 - **A geostatistics engine for the Map view** (`birds/geostats.py`):
   the experimental variogram, spherical, exponential and Gaussian
   models fitted by weighted least squares, ordinary kriging,
   leave-one-out cross-validation, a prediction grid clipped to the
   samples' convex hull, and export to an ESRI ASCII grid with its
-  `.prj` for QGIS or ArcGIS. numpy and scipy only. Not yet reachable
-  from the interface. Distances are taken through the Earth, between
-  points on the WGS-84 ellipsoid, so no projection distorts them;
+  `.prj` for QGIS or ArcGIS. numpy and scipy only. Distances are
+  taken through the Earth, between points on the WGS-84 ellipsoid, so
+  no projection distorts them;
   "range" means the effective range in all three models;
   concentrations are kriged as logarithms by default and reported as
   the median with its 95 % interval; coincident samples are folded
@@ -327,6 +348,14 @@ including what is still unverified.
 - **Correlation heatmap**: axis labels were dropped once the matrix
   passed 30 elements, and a full analysis runs to 34, so in practice
   the axes came out with no element names at all.
+- **Map view: "Auto-fit to samples" did nothing.** It was saved and
+  restored with the session and read by nothing else. Unticked, it now
+  keeps the frame on screen — zoomed or panned — through an update,
+  and a session brings that frame back.
+- **Map view: coordinate columns restored from a session were lost**
+  as soon as the view was opened, which filled the selectors again
+  from the column names. Choices are now kept while the columns are
+  the same.
 
 ### Changed
 
@@ -360,9 +389,8 @@ including what is still unverified.
   filter for its cache, and the tests for all three. Nothing in
   B.I.R.D.S now needs the network once installed, and
   `tests/test_map_view.py` fails if any code, dependency or user
-  document mentions a background map again. The Map view is to become
-  a spatial-analysis view, with ordinary kriging, in place of the
-  background it had.
+  document mentions a background map again. In place of the
+  background, the view now kriges (see Added).
 
 ### Known issues
 

@@ -123,6 +123,9 @@ class VariogramModel:
             raise ValueError("the nugget cannot be negative")
         if not np.isfinite(self.sill) or self.sill < self.nugget:
             raise ValueError("the sill cannot be below the nugget")
+        if not self.sill > 0:
+            # γ ≡ 0 makes every kriging matrix singular.
+            raise ValueError("the sill has to be above zero")
         if not np.isfinite(self.range_km) or self.range_km <= 0:
             raise ValueError("the range has to be a positive distance")
 
@@ -596,6 +599,70 @@ def analyse(lon, lat, values, *,
         variogram=emp, fit=fit, kriging=system,
         cross_validation=cross_validate(system),
     )
+
+
+# ---------------------------------------------------------------------------
+# One analysis per group, or one for all of them
+# ---------------------------------------------------------------------------
+
+#: The label a pooled analysis goes under.
+POOLED_LABEL = "All groups pooled"
+
+
+@dataclass(frozen=True)
+class GroupAnalysis:
+    """The outcome for one group: an analysis, or the reason there is none."""
+
+    label: str
+    n_input: int
+    analysis: Optional[SpatialAnalysis] = None
+    error: Optional[str] = None
+
+
+def analyse_groups(groups, *, pooled: bool = False,
+                   model: str = "spherical", transform: str = "log",
+                   overrides: Optional[dict] = None,
+                   n_lags: Optional[int] = None,
+                   max_lag_km: Optional[float] = None) -> list:
+    """Run :func:`analyse` over each group, or once over all of them.
+
+    *groups* is a sequence of ``(label, lon, lat, values)``.  Kriging
+    each group on its own is the default, because samples from two
+    units -- a pluton and its host, two lava sequences -- are not one
+    random field, and kriging across the contact draws a smooth
+    gradient that is not there.  *pooled* puts every sample into one
+    analysis under :data:`POOLED_LABEL`.
+
+    *overrides* maps a label to a :class:`VariogramModel` used exactly
+    as given.  A group that cannot be analysed -- too few samples, a
+    constant value -- comes back with its reason in ``error`` rather
+    than stopping the others.
+    """
+    overrides = overrides or {}
+    items = [(label, np.asarray(lon, float).ravel(),
+              np.asarray(lat, float).ravel(),
+              np.asarray(values, float).ravel())
+             for label, lon, lat, values in groups]
+    if pooled:
+        if items:
+            items = [(POOLED_LABEL,
+                      np.concatenate([i[1] for i in items]),
+                      np.concatenate([i[2] for i in items]),
+                      np.concatenate([i[3] for i in items]))]
+        else:
+            items = [(POOLED_LABEL, np.empty(0), np.empty(0), np.empty(0))]
+    out = []
+    for label, lon, lat, values in items:
+        try:
+            result = analyse(lon, lat, values,
+                             model=overrides.get(label, model),
+                             transform=transform, n_lags=n_lags,
+                             max_lag_km=max_lag_km)
+        except ValueError as exc:
+            out.append(GroupAnalysis(label, len(values), error=str(exc)))
+        else:
+            out.append(GroupAnalysis(label, len(values), analysis=result))
+    return out
 
 
 # ---------------------------------------------------------------------------

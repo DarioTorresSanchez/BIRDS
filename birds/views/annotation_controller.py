@@ -65,6 +65,10 @@ class AnnotationController:
         self.sample_resolver = sample_resolver
         self.redraw_method = redraw_method
         self.annotations: list = []
+        #: False while the view shows axes the annotations do not belong
+        #: to -- a map view's variogram, say -- so a click there neither
+        #: adds nor deletes anything.
+        self.enabled = True
         self._mode = ANN_MODE_NONE
         self._pending: Optional[tuple[float, float]] = None
         self.group = AnnotationGroup()
@@ -120,7 +124,7 @@ class AnnotationController:
         self._pending = None
 
     def _on_click(self, event) -> None:
-        if event.inaxes is None:
+        if event.inaxes is None or not self.enabled:
             return
         # Modifier+left-click belongs to cross-view brushing (see
         # birds/views/brushing.py) — never treat it as an annotation.

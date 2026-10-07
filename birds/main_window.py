@@ -295,10 +295,10 @@ class BirdsMainWindow(QMainWindow):
     # ---- Map menu ----------------------------------------------------------
     def _build_map_menu(self, bar: QMenuBar) -> None:
         menu = bar.addMenu("&Map")
-        act_locations = QAction("Sample locations…", self)
+        act_locations = QAction("Sample locations and kriging…", self)
         act_locations.setStatusTip(
             "Plot the geographic position of every sample on longitude/"
-            "latitude axes."
+            "latitude axes, and krige any numeric column across them."
         )
         act_locations.triggered.connect(self._open_map)
         menu.addAction(act_locations)
@@ -307,7 +307,7 @@ class BirdsMainWindow(QMainWindow):
         self.stack.setCurrentWidget(self.map)
         self.map.plot_style = self.style
         self.map.show_map()
-        self.statusBar().showMessage("Map — sample locations")
+        self.statusBar().showMessage("Map — sample locations and kriging")
 
     # ---- Data menu ----------------------------------------------------------
     def _build_data_menu(self, bar: QMenuBar) -> None:

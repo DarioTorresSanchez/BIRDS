@@ -27,6 +27,7 @@ from birds.geostats import (
     MARGINAL_N,
     MIN_SAMPLES,
     MODELS,
+    POOLED_LABEL,
     RELIABLE_N,
     WGS84_PRJ,
     Z95,
@@ -34,6 +35,7 @@ from birds.geostats import (
     OrdinaryKriging,
     VariogramModel,
     analyse,
+    analyse_groups,
     back_transform,
     cross_validate,
     empirical_variogram,
@@ -142,6 +144,7 @@ def test_a_model_never_decreases_with_distance(kind):
     ("spherical", -0.1, 1.0, 1.0),
     ("spherical", 0.5, 0.4, 1.0),
     ("spherical", 0.0, 1.0, 0.0),
+    ("spherical", 0.0, 0.0, 1.0),
 ])
 def test_an_impossible_model_is_refused(args):
     with pytest.raises(ValueError):
@@ -581,3 +584,67 @@ def test_merge_coincident_leaves_distinct_samples_alone():
     out = merge_coincident(lon, lat, np.array([1.0, 2.0, 3.0]))
     assert out[3] == 0
     assert out[2] == pytest.approx([1.0, 2.0, 3.0])
+
+
+# ---------------------------------------------------------------------------
+# Each group on its own, or all of them pooled
+# ---------------------------------------------------------------------------
+
+def _two_units():
+    """A pluton and its host, side by side, with different levels."""
+    a_lon, a_lat, a_x, _ay, _ = _field(n=30, seed=1)
+    b_lon, b_lat, b_x, _by, _ = _field(n=25, seed=2, lon0=-98.3)
+    return [("Pluton", a_lon, a_lat, np.exp(1.0 + a_x / 25.0)),
+            ("Host", b_lon, b_lat, np.exp(3.0 + b_x / 25.0))]
+
+
+def test_each_group_is_kriged_from_its_own_samples_only():
+    groups = _two_units()
+    out = analyse_groups(groups)
+    assert [r.label for r in out] == ["Pluton", "Host"]
+    for r, (_label, lon, lat, values) in zip(out, groups):
+        alone = analyse(lon, lat, values)
+        assert r.n_input == len(values)
+        assert np.sort(r.analysis.lon) == pytest.approx(np.sort(lon))
+        assert r.analysis.model == alone.model
+
+
+def test_pooling_puts_every_sample_into_one_analysis():
+    out = analyse_groups(_two_units(), pooled=True)
+    assert [r.label for r in out] == [POOLED_LABEL]
+    assert out[0].n_input == 55
+    assert out[0].analysis.n == 55
+
+
+def test_a_group_that_cannot_be_kriged_does_not_stop_the_others():
+    groups = _two_units()
+    _label, lon, lat, values = groups[0]
+    groups.append(("Dyke", lon[:3], lat[:3], values[:3]))
+    out = analyse_groups(groups)
+    assert out[0].analysis is not None and out[1].analysis is not None
+    assert out[2].analysis is None
+    assert out[2].n_input == 3
+    assert "at least" in out[2].error
+
+
+def test_a_model_set_by_hand_applies_to_its_group_only():
+    mine = VariogramModel("exponential", 0.0, 0.5, 12.0)
+    out = analyse_groups(_two_units(), overrides={"Host": mine})
+    assert out[1].analysis.model is mine
+    assert out[0].analysis.fit.message != "set by hand"
+
+
+def test_the_settings_reach_every_group():
+    out = analyse_groups(_two_units(), model="gaussian", transform="none",
+                         n_lags=6, max_lag_km=20.0)
+    for r in out:
+        assert r.analysis.model.kind == "gaussian"
+        assert r.analysis.transform == "none"
+        assert r.analysis.variogram.max_lag_km == 20.0
+        assert len(r.analysis.variogram.lag_km) <= 6
+
+
+def test_pooling_nothing_reports_rather_than_fails():
+    out = analyse_groups([], pooled=True)
+    assert out[0].label == POOLED_LABEL
+    assert out[0].analysis is None and out[0].n_input == 0

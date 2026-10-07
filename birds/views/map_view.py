@@ -1,9 +1,16 @@
-"""Geospatial sample-location map view.
+"""Geospatial view: sample locations and their spatial analysis.
 
 Plots every sample at its longitude and latitude, coloured per group
 with the shared :class:`PlotStyle`, so the visual identity matches
 every other plot in B.I.R.D.S.  There is no background map: the axes
 are the coordinates themselves, and nothing is fetched from anywhere.
+
+On the same axes the view kriges one variable -- ordinary kriging, each
+group on its own unless the user pools them -- and shows the estimate,
+its uncertainty, the variogram behind it and how well it predicts the
+samples it was built from.  The arithmetic is in :mod:`birds.geostats`
+and the drawing in :mod:`birds.views.spatial_plots`; this module is the
+widget that wires them to the data.
 
 Why plain longitude/latitude rather than a projection?
     Plotting degrees directly, with the aspect ratio fixed at the centre
@@ -12,8 +19,8 @@ Why plain longitude/latitude rather than a projection?
     every meridian and along that parallel, which over the tens to
     hundreds of kilometres a field area spans is as good as any
     projection gets, and the axes read in the units the data were
-    recorded in.  Anything that needs real distances -- the scale bar
-    here, and the geostatistics to come -- works them out on the
+    recorded in.  Anything that needs real distances -- the scale bar,
+    and every distance the kriging uses -- works them out on the
     WGS-84 ellipsoid rather than reading them off the axes.
 
 Why matplotlib (and not Folium / Leaflet)?
@@ -24,10 +31,12 @@ Why matplotlib (and not Folium / Leaflet)?
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
+from matplotlib.colors import LogNorm, Normalize
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -43,6 +52,8 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QSplitter,
     QStackedWidget,
+    QTabBar,
+    QTextBrowser,
     QVBoxLayout,
     QWidget,
 )
@@ -50,8 +61,28 @@ from PySide6.QtWidgets import (
 from .. import coords as _coords
 from ..coords import km_per_degree_lat, km_per_degree_lon
 from ..diagrams.templates.base import get_groups
+from ..geostats import (
+    MIN_SAMPLES,
+    MODELS,
+    VariogramModel,
+    analyse_groups,
+    make_grid,
+)
 from .annotation_controller import AnnotationController, nearest_sample
 from .plot_canvas import PlotCanvas
+from .spatial_plots import (
+    ESTIMATE_CMAP,
+    attach_colorbar,
+    draw_cross_validation,
+    draw_surface,
+    draw_variogram,
+    kriged_name,
+    safe_file_name,
+    summary_html,
+    surface_label,
+    surface_layers,
+    write_kriged_grids,
+)
 
 
 # Coordinate-format keys used internally and in the format dropdown.
@@ -67,6 +98,22 @@ _FMT_LABELS = (
     (_FMT_SUFFIX,  "Decimal with N/S/E/W suffix (e.g. 19.42N)"),
     (_FMT_MGRS,    "MGRS grid (e.g. 14QMG5780012345)"),
 )
+
+# What the canvas can show, in tab order.  The first three are maps --
+# longitude against latitude -- and carry the scale bar, the north
+# arrow, the annotations and the brushing; the other two are graphs.
+_DISPLAYS = (
+    ("samples",     "Samples"),
+    ("estimate",    "Kriged estimate"),
+    ("uncertainty", "Uncertainty"),
+    ("variogram",   "Variogram"),
+    ("cv",          "Cross-validation"),
+)
+_MAP_DISPLAYS = ("samples", "estimate", "uncertainty")
+
+#: Smallest sill the parameter boxes accept: a variogram that is zero
+#: everywhere makes the kriging system singular.
+_MIN_SILL = 1e-6
 
 
 # ---------------------------------------------------------------------------
@@ -287,13 +334,30 @@ def migrate_annotations_to_lonlat(entries):
 # ---------------------------------------------------------------------------
 
 class MapView(QWidget):
-    """Plot sample locations on longitude/latitude axes."""
+    """Sample locations on longitude/latitude axes, and their kriging."""
 
     def __init__(self, data_manager, plot_style,
                  parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.data = data_manager
         self.plot_style = plot_style
+
+        # Spatial analysis.  Results are recomputed on every update --
+        # a few hundred samples krige in well under a second -- so they
+        # can never be stale.  ``_overrides`` holds variogram parameters
+        # set by hand, label -> (nugget, sill, range_km), for the
+        # (variable, transform) in ``_overrides_for``; they mean nothing
+        # for another variable and are dropped when it changes.
+        self._results: list = []
+        self._styles: dict = {}
+        self._overrides: dict = {}
+        self._overrides_for: tuple = ("", "")
+        self._pending_param_group = ""
+        # The columns the selectors were last filled from, so that
+        # re-entering the view keeps the user's choices.
+        self._populated_for: tuple = ()
+        # The last map frame drawn, kept for when auto-fit is off.
+        self._last_map_limits: Optional[tuple] = None
 
         # Artists for the live scale bar; cleared on every redraw so the
         # zoom-/pan-triggered callback can replace them without leaking.
@@ -374,8 +438,25 @@ class MapView(QWidget):
         sep.setFrameShape(QFrame.Shape.HLine)
         rl.addWidget(sep)
 
+        self.display_tabs = QTabBar()
+        self.display_tabs.setExpanding(False)
+        self.display_tabs.setDrawBase(False)
+        for _key, label in _DISPLAYS:
+            self.display_tabs.addTab(label)
+        self.display_tabs.currentChanged.connect(
+            lambda _i: self.update_plot())
+        rl.addWidget(self.display_tabs)
+
         self.canvas = PlotCanvas()
         rl.addWidget(self.canvas, stretch=1)
+
+        # What the analysis found, and what to doubt about it.
+        self.summary = QTextBrowser()
+        self.summary.setOpenLinks(False)
+        self.summary.setMaximumHeight(170)
+        self.summary.setStyleSheet("QTextBrowser { font-size: 11px; }")
+        self.summary.setVisible(False)
+        rl.addWidget(self.summary)
         splitter.addWidget(right)
         splitter.setSizes([460, 820])
         self.annotation_ctl.bind_canvas(self.canvas)
@@ -488,6 +569,9 @@ class MapView(QWidget):
 
         layout.addWidget(coord_box)
 
+        # ---- Spatial analysis ---------------------------------------------
+        layout.addWidget(self._build_spatial_box(_wrap, _compact_form))
+
         # ---- Markers ------------------------------------------------------
         mark_box = QGroupBox("Markers")
         mv = _wrap(mark_box)
@@ -504,6 +588,13 @@ class MapView(QWidget):
         self.marker_edge_chk = QCheckBox("Black outline around markers")
         self.marker_edge_chk.setChecked(True)
         mf.addRow("", self.marker_edge_chk)
+        self.colour_by_value_chk = QCheckBox(
+            "Colour by the analysed variable")
+        self.colour_by_value_chk.setToolTip(
+            "On the Samples tab, colour each marker by its value of the "
+            "variable chosen under Spatial analysis instead of by group. "
+            "Samples without a value are drawn hollow.")
+        mf.addRow("", self.colour_by_value_chk)
         mv.addLayout(mf)
         layout.addWidget(mark_box)
 
@@ -513,6 +604,9 @@ class MapView(QWidget):
         ef = _compact_form()
         self.auto_extent_chk = QCheckBox("Auto-fit to samples")
         self.auto_extent_chk.setChecked(True)
+        self.auto_extent_chk.setToolTip(
+            "Off: keep the frame as it is now — zoomed or panned — when "
+            "the map is updated. The kriging grid covers that frame.")
         ef.addRow("", self.auto_extent_chk)
         self.padding_pct = QSpinBox()
         self.padding_pct.setRange(0, 200)
@@ -560,6 +654,140 @@ class MapView(QWidget):
         layout.addWidget(self.annotation_ctl.group)
 
         layout.addStretch(1)
+
+    def _build_spatial_box(self, _wrap, _compact_form) -> QGroupBox:
+        """Controls of the kriging: what, how, and on what grid."""
+        box = QGroupBox("Spatial analysis — ordinary kriging")
+        v = _wrap(box)
+
+        f = _compact_form()
+        self.variable_combo = QComboBox()
+        self.variable_combo.setToolTip(
+            "The numeric column to interpolate. Coordinate columns are "
+            "left out of the list.")
+        f.addRow("Variable:", self.variable_combo)
+        self.transform_combo = QComboBox()
+        self.transform_combo.addItem("Logarithm — concentrations", "log")
+        self.transform_combo.addItem("None — krige the values as they are",
+                                     "none")
+        self.transform_combo.setToolTip(
+            "Concentrations are skewed and cannot go below zero, so they "
+            "are kriged as ln(value) and brought back as the median "
+            "estimate. Values at or below zero are left out. Use None "
+            "for a variable that can be negative, such as an isotope "
+            "ratio in epsilon units.")
+        f.addRow("Transform:", self.transform_combo)
+        self.pooling_combo = QComboBox()
+        self.pooling_combo.addItem("Each group on its own", False)
+        self.pooling_combo.addItem("All groups pooled", True)
+        self.pooling_combo.setToolTip(
+            "Samples from two units — a pluton and its host, two lava "
+            "sequences — are not one random field, and kriging across "
+            "the contact draws a gradient that is not there. Pool them "
+            "only when the groups are not separate bodies.")
+        f.addRow("Groups:", self.pooling_combo)
+        self.model_combo = QComboBox()
+        for kind in MODELS:
+            self.model_combo.addItem(kind.capitalize(), kind)
+        self.model_combo.setToolTip(
+            "Shape of the variogram model fitted to every group. The "
+            "range is the effective one, where the model reaches 95 % "
+            "of its sill.")
+        f.addRow("Variogram model:", self.model_combo)
+        self.lags_spin = QSpinBox()
+        self.lags_spin.setRange(0, 40)
+        self.lags_spin.setSpecialValueText("Auto")
+        self.lags_spin.setToolTip(
+            "Distance classes of the experimental variogram. Auto aims "
+            "for about 30 pairs of samples in each.")
+        f.addRow("Lag classes:", self.lags_spin)
+        self.max_lag_spin = QDoubleSpinBox()
+        self.max_lag_spin.setRange(0.0, 20000.0)
+        self.max_lag_spin.setDecimals(1)
+        self.max_lag_spin.setSuffix(" km")
+        self.max_lag_spin.setSpecialValueText("Auto")
+        self.max_lag_spin.setToolTip(
+            "Longest distance the variogram is computed to. Auto is half "
+            "the largest distance between two samples.")
+        f.addRow("Maximum lag:", self.max_lag_spin)
+        v.addLayout(f)
+
+        # Variogram parameters, fitted or set by hand, one group at a time.
+        params = QGroupBox("Variogram parameters")
+        pv = _wrap(params)
+        pf = _compact_form()
+        self.param_group_combo = QComboBox()
+        self.param_group_combo.setToolTip(
+            "The group whose parameters are shown below. The list fills "
+            "once the map has been updated with a variable chosen.")
+        pf.addRow("Group:", self.param_group_combo)
+        self.auto_fit_chk = QCheckBox("Fit automatically")
+        self.auto_fit_chk.setChecked(True)
+        self.auto_fit_chk.setEnabled(False)
+        self.auto_fit_chk.setToolTip(
+            "Untick to set nugget, sill and range by hand for this group, "
+            "starting from the fitted values.")
+        pf.addRow("", self.auto_fit_chk)
+        self.nugget_spin = QDoubleSpinBox()
+        self.sill_spin = QDoubleSpinBox()
+        for spin in (self.nugget_spin, self.sill_spin):
+            spin.setRange(0.0, 1e9)
+            spin.setDecimals(6)
+            spin.setSingleStep(0.01)
+        self.range_spin = QDoubleSpinBox()
+        self.range_spin.setRange(0.001, 1e5)
+        self.range_spin.setDecimals(3)
+        self.range_spin.setSuffix(" km")
+        pf.addRow("Nugget:", self.nugget_spin)
+        pf.addRow("Sill:", self.sill_spin)
+        pf.addRow("Range:", self.range_spin)
+        for spin in (self.nugget_spin, self.sill_spin, self.range_spin):
+            spin.setEnabled(False)
+            spin.setKeyboardTracking(False)
+            spin.editingFinished.connect(self._on_parameter_edited)
+        pv.addLayout(pf)
+        v.addWidget(params)
+        self.param_group_combo.currentIndexChanged.connect(
+            lambda _i: self._sync_parameter_spins())
+        self.auto_fit_chk.toggled.connect(self._on_auto_fit_toggled)
+
+        # The surface: grid, where it is drawn, and how.
+        sf = _compact_form()
+        self.cells_spin = QSpinBox()
+        self.cells_spin.setRange(20, 400)
+        self.cells_spin.setValue(100)
+        self.cells_spin.setToolTip(
+            "Cells along the longer side of the frame. More cells, a "
+            "smoother picture and a slower update.")
+        sf.addRow("Grid cells across:", self.cells_spin)
+        self.clip_chk = QCheckBox("Clip to each group's sample hull")
+        self.clip_chk.setChecked(True)
+        self.clip_chk.setToolTip(
+            "Beyond the outermost samples kriging only extrapolates, "
+            "drifting back to the mean. Clipped, the surface shows only "
+            "where there are data around it.")
+        sf.addRow("", self.clip_chk)
+        self.buffer_spin = QDoubleSpinBox()
+        self.buffer_spin.setRange(0.0, 1000.0)
+        self.buffer_spin.setDecimals(2)
+        self.buffer_spin.setSuffix(" km")
+        self.buffer_spin.setToolTip(
+            "Let the clipped surface run this far past the hull.")
+        sf.addRow("Hull buffer:", self.buffer_spin)
+        self.clip_chk.toggled.connect(self.buffer_spin.setEnabled)
+        self.contours_chk = QCheckBox("Contour lines on the estimate")
+        sf.addRow("", self.contours_chk)
+        v.addLayout(sf)
+
+        self.export_grid_btn = QPushButton("Export grid for a GIS (.asc)…")
+        self.export_grid_btn.setToolTip(
+            "Write the kriged estimate and its standard deviation as "
+            "ESRI ASCII grids in WGS-84 degrees, one pair per group, "
+            "with a .prj each and a text file describing them. QGIS and "
+            "ArcGIS open them directly.")
+        self.export_grid_btn.clicked.connect(self.export_grid)
+        v.addWidget(self.export_grid_btn)
+        return box
 
     # ------------------------------------------------------------------
     # Coordinate-page builders (used inside _build_controls above)
@@ -643,68 +871,151 @@ class MapView(QWidget):
         self._populate_coords()
         self.update_plot()
 
+    def _display(self) -> str:
+        return _DISPLAYS[max(self.display_tabs.currentIndex(), 0)][0]
+
+    def _variable(self) -> str:
+        return self.variable_combo.currentText().strip()
+
+    def _transform(self) -> str:
+        return self.transform_combo.currentData() or "log"
+
+    def _pooled(self) -> bool:
+        return bool(self.pooling_combo.currentData())
+
+    def _model_kind(self) -> str:
+        return self.model_combo.currentData() or "spherical"
+
     def update_plot(self) -> None:
-        df = self.data.df
         fig = self.canvas.figure
+        display = self._display()
+        is_map = display in _MAP_DISPLAYS
+        kept = self._kept_view()
+        self._disconnect_view_callbacks()
         fig.clear()
         # ``fig.clear()`` invalidates every artist on the previous axes —
         # forget about the scale-bar pair so the live-update code never
         # tries to .remove() a dead artist.
         self._scale_artists = []
+        self._ax = None
         ax = fig.add_subplot(111)
+        # Annotations live in degrees; on a variogram they would land in
+        # kilometres and semivariance, so they are off there.
+        self.annotation_ctl.enabled = is_map
+        self._set_titles(display)
+        self.summary.setVisible(display != "samples")
+        self.summary.clear()
 
-        if df is None or df.empty:
-            self._empty(ax, "Load a dataset (Data → Import) to plot a map.")
+        samples, message = self._collect()
+        if message is not None:
+            self._empty(ax, message)
             self.canvas.draw()
             return
 
+        results = None
+        if display != "samples":
+            results = self._analysis(samples)
+            if results is None:
+                self._empty(ax, "Choose a variable to krige "
+                                "(Spatial analysis → Variable).")
+                self.canvas.draw()
+                return
+
+        overlaps = ()
+        if is_map:
+            lon_min, lon_max, lat_min, lat_max, lat0 = (
+                kept if kept is not None else self._frame(samples))
+            ax.set_xlim(lon_min, lon_max)
+            ax.set_ylim(lat_min, lat_max)
+            # Equirectangular, with the frame's centre latitude as the
+            # standard parallel: a ground square there draws as a square.
+            ax.set_aspect(map_aspect(lat0))
+            self._lat0 = lat0
+            self._last_map_limits = (lon_min, lon_max, lat_min, lat_max,
+                                     lat0)
+
+        if display == "samples":
+            self._draw_samples(ax, samples)
+        elif display in ("estimate", "uncertainty"):
+            which = "estimate" if display == "estimate" else "sd"
+            grid = make_grid(*ax.get_xlim(), *ax.get_ylim(),
+                             cells_across=self.cells_spin.value())
+            layers, overlaps = surface_layers(
+                results, grid, clip=self.clip_chk.isChecked(),
+                buffer_km=self.buffer_spin.value())
+            mesh = draw_surface(ax, layers, grid, which=which,
+                                transform=self._transform(),
+                                contours=self.contours_chk.isChecked())
+            if mesh is not None:
+                attach_colorbar(ax, mesh, surface_label(
+                    self._variable(), which=which,
+                    transform=self._transform()))
+            else:
+                ax.text(0.5, 0.5, "No group could be kriged — see below.",
+                        transform=ax.transAxes, ha="center", va="center",
+                        color="#a04c2e", fontsize=10)
+            self._draw_sample_markers(ax, samples)
+        elif display == "variogram":
+            draw_variogram(ax, results, self._styles,
+                           variable=self._variable(),
+                           transform=self._transform())
+        else:
+            draw_cross_validation(ax, results, self._styles,
+                                  variable=self._variable(),
+                                  transform=self._transform())
+
+        if results is not None:
+            self.summary.setHtml(summary_html(
+                results, variable=self._variable(),
+                transform=self._transform(), overlaps=overlaps,
+                manual_labels=tuple(self._override_models())))
+        if is_map:
+            self._finish_map(ax)
+        fig.tight_layout()
+        if is_map:
+            # Replay user annotations; their coordinates are degrees,
+            # like the axes.
+            self.annotation_ctl.draw(ax)
+            from .brushing import draw_selection_overlay
+            draw_selection_overlay(self)
+        self.canvas.draw()
+
+    # ------------------------------------------------------------------
+    # Pieces of update_plot
+    # ------------------------------------------------------------------
+    def _collect(self):
+        """``(samples, None)``, or ``(None, message)`` when there is nothing
+        to draw.
+
+        Each sample entry is ``(label, sub, style, lon, lat)`` for one
+        visible group, with every row of the group kept -- coordinates
+        that did not parse are NaN -- so the analysis can count them.
+        """
+        df = self.data.df
+        if df is None or df.empty:
+            return None, "Load a dataset (Data → Import) to plot a map."
         # Parse coordinates once for the whole dataset using the selected
-        # format.  This gives us lat/lon Series we then slice per group.
+        # format, then slice per group.
         lat_all, lon_all, err = self._resolve_coords()
         if err is not None:
-            self._empty(ax, err)
-            self.canvas.draw()
-            return
+            return None, err
         if lat_all is None or lat_all.dropna().empty:
-            self._empty(
-                ax,
-                "No samples could be parsed in the selected format.\n"
-                "Check the column choices and that values are valid.",
-            )
-            self.canvas.draw()
-            return
-
-        # Plot per group ----------------------------------------------------
-        any_data = False
-        all_lon, all_lat = [], []
+            return None, ("No samples could be parsed in the selected "
+                          "format.\nCheck the column choices and that "
+                          "values are valid.")
+        samples = []
         for label, sub, gs in get_groups(df, self.plot_style):
             if gs is not None and not getattr(gs, "visible", True):
                 continue
-            # Slice the pre-parsed series — preserves df.index alignment.
             lat = lat_all.loc[sub.index]
             lon = lon_all.loc[sub.index]
-            mask = lat.notna() & lon.notna() & lat.between(-90, 90) \
-                   & lon.between(-180, 180)
-            lat = lat[mask]
-            lon = lon[mask]
-            if lat.empty:
-                continue
-            color = gs.color if gs else "#1f77b4"
-            marker = gs.marker if gs else "o"
-            ax.scatter(
-                lon, lat,
-                s=(self.marker_size.value() ** 2),
-                alpha=self.marker_alpha.value(),
-                c=color, marker=marker, label=label,
-                edgecolors="black" if self.marker_edge_chk.isChecked() else "none",
-                linewidths=0.5 if self.marker_edge_chk.isChecked() else 0,
-                zorder=5,
-            )
-            all_lon.extend(lon.tolist())
-            all_lat.extend(lat.tolist())
-            any_data = True
-
-        if not any_data:
+            ok = (lat.notna() & lon.notna() & lat.between(-90, 90)
+                  & lon.between(-180, 180))
+            lat = lat.where(ok)
+            lon = lon.where(ok)
+            if ok.any():
+                samples.append((label, sub, gs, lon, lat))
+        if not samples:
             # The coordinate columns parsed, but nothing survived the
             # range check.  Name the columns when the parser labelled the
             # series (decimal degrees); the UTM and MGRS parsers build
@@ -712,74 +1023,343 @@ class MapView(QWidget):
             # than reaching for names that do not exist here.
             lat_name = getattr(lat_all, "name", None) or "latitude"
             lon_name = getattr(lon_all, "name", None) or "longitude"
-            self._empty(
-                ax,
+            return None, (
                 f"No usable coordinates in '{lat_name}' / '{lon_name}'.\n"
                 "Make sure the values are numeric and inside "
-                "[-90, 90] × [-180, 180].",
-            )
-            self.canvas.draw()
-            return
+                "[-90, 90] × [-180, 180].")
+        return samples, None
 
-        # Extent -----------------------------------------------------------
-        lon_min, lon_max, lat_min, lat_max, lat0 = map_frame(
-            all_lon, all_lat, pad=self.padding_pct.value() / 100.0)
-        ax.set_xlim(lon_min, lon_max)
-        ax.set_ylim(lat_min, lat_max)
-        # Equirectangular, with the frame's centre latitude as the
-        # standard parallel: a ground square there draws as a square.
-        ax.set_aspect(map_aspect(lat0))
-        self._lat0 = lat0
+    def _frame(self, samples):
+        lons = np.concatenate([lon.dropna().to_numpy()
+                               for _l, _s, _g, lon, _la in samples])
+        lats = np.concatenate([lat.dropna().to_numpy()
+                               for _l, _s, _g, _lo, lat in samples])
+        return map_frame(lons, lats, pad=self.padding_pct.value() / 100.0)
 
-        # Grid (ticks in degrees with their hemisphere) --------------------
+    def _kept_view(self):
+        """The current map frame, when the user has turned auto-fit off.
+
+        Read before the figure is cleared, so a zoom or pan on the canvas
+        survives the next update.  It used to be a checkbox that was saved
+        and restored and that nothing read.
+        """
+        if self.auto_extent_chk.isChecked():
+            return None
+        if self._ax is not None:
+            x0, x1 = self._ax.get_xlim()
+            y0, y1 = self._ax.get_ylim()
+            self._last_map_limits = (x0, x1, y0, y1, self._lat0)
+        return self._last_map_limits
+
+    def _analysis(self, samples):
+        """Krige the chosen variable, per group or pooled; None if no
+        variable is chosen."""
+        variable = self._variable()
+        if not variable:
+            return None
+        if (variable, self._transform()) != self._overrides_for:
+            self._overrides.clear()
+            self._overrides_for = (variable, self._transform())
+        groups = []
+        for label, sub, _gs, lon, lat in samples:
+            if variable in sub.columns:
+                values = pd.to_numeric(sub[variable], errors="coerce")
+            else:
+                values = pd.Series(np.nan, index=sub.index)
+            groups.append((label, lon.to_numpy(float), lat.to_numpy(float),
+                           values.to_numpy(float)))
+        results = analyse_groups(
+            groups, pooled=self._pooled(), model=self._model_kind(),
+            transform=self._transform(),
+            overrides=self._override_models(),
+            n_lags=self.lags_spin.value() or None,
+            max_lag_km=self.max_lag_spin.value() or None)
+        self._results = results
+        self._styles = {label: gs for label, _s, gs, _lo, _la in samples}
+        self._refresh_parameter_selector(results)
+        return results
+
+    def _draw_samples(self, ax, samples) -> None:
+        """Markers per group -- coloured by group, or by the variable."""
+        size = self.marker_size.value() ** 2
+        edge = self.marker_edge_chk.isChecked()
+        variable = self._variable()
+        by_value = self.colour_by_value_chk.isChecked() and variable
+        norm = None
+        if by_value:
+            pooled = pd.concat([pd.to_numeric(sub[variable], errors="coerce")
+                                for _l, sub, _g, _lo, _la in samples
+                                if variable in sub.columns])
+            finite = pooled[np.isfinite(pooled)]
+            if finite.empty:
+                by_value = False
+            elif self._transform() == "log" and finite.min() > 0:
+                norm = LogNorm(vmin=finite.min(), vmax=finite.max())
+            else:
+                norm = Normalize(vmin=finite.min(), vmax=finite.max())
+        mappable = None
+        for label, sub, gs, lon, lat in samples:
+            ok = lon.notna() & lat.notna()
+            marker = gs.marker if gs else "o"
+            common = dict(s=size, alpha=self.marker_alpha.value(),
+                          marker=marker, label=label, zorder=5,
+                          edgecolors="black" if edge else "none",
+                          linewidths=0.5 if edge else 0)
+            if by_value:
+                v = (pd.to_numeric(sub[variable], errors="coerce")
+                     if variable in sub.columns
+                     else pd.Series(np.nan, index=sub.index))
+                has = ok & np.isfinite(v)
+                # Colour is the value here, so the legend shows each
+                # group's marker alone, uncoloured.
+                common["label"] = "_nolegend_"
+                mappable = ax.scatter(lon[has], lat[has], c=v[has],
+                                      cmap=ESTIMATE_CMAP, norm=norm, **common)
+                ax.scatter([], [], s=size, marker=marker, facecolors="white",
+                           edgecolors="black", linewidths=0.6, label=label)
+                gaps = ok & ~np.isfinite(v)
+                if gaps.any():
+                    ax.scatter(lon[gaps], lat[gaps], s=size, marker=marker,
+                               facecolors="none", edgecolors="#999",
+                               linewidths=0.8, zorder=5)
+            else:
+                ax.scatter(lon[ok], lat[ok],
+                           c=gs.color if gs else "#1f77b4", **common)
+        if mappable is not None:
+            attach_colorbar(ax, mappable, variable)
+
+    def _draw_sample_markers(self, ax, samples) -> None:
+        """Where the data are, over a surface: small, white, outlined."""
+        size = max(self.marker_size.value() - 2, 3) ** 2
+        for label, _sub, gs, lon, lat in samples:
+            ok = lon.notna() & lat.notna()
+            ax.scatter(lon[ok], lat[ok], s=size,
+                       marker=gs.marker if gs else "o", facecolors="white",
+                       edgecolors="black", linewidths=0.6, label=label,
+                       zorder=5)
+
+    def _finish_map(self, ax) -> None:
+        """Ticks, grid, scale bar, north arrow and legend of a map display."""
         self._tick_in_degrees(ax)
         if self.grid_chk.isChecked():
             ax.grid(True, which="major", linestyle=":", linewidth=0.6,
                     color="#666", alpha=0.6)
         else:
             ax.grid(False)
-
-        # Scale bar & north arrow ------------------------------------------
-        # ``fig.clear()`` dropped the previous axes; bind the live-update
-        # callbacks to the new one (matplotlib stores them on the axes,
-        # not on the figure, so we have to re-connect after every redraw).
-        # We track the CIDs so we can disconnect when the user toggles
-        # the scale bar off or before the next redraw.
+        # matplotlib keeps axes callbacks on the axes, so the live
+        # scale-bar hooks are re-bound to every new one.
         self._ax = ax
-        self._disconnect_view_callbacks()
         if self.scale_chk.isChecked():
             self._redraw_scale_bar()
             self._cid_x = ax.callbacks.connect("xlim_changed",
-                                                self._on_view_changed)
+                                               self._on_view_changed)
             self._cid_y = ax.callbacks.connect("ylim_changed",
-                                                self._on_view_changed)
+                                               self._on_view_changed)
         if self.north_chk.isChecked():
             _add_north_arrow(ax)
-
-        # Legend -----------------------------------------------------------
         if self.legend_chk.isChecked():
             handles, labels = ax.get_legend_handles_labels()
             if handles:
                 ax.legend(handles, labels, loc="lower right", fontsize=9,
                           framealpha=0.85, facecolor="white",
                           edgecolor="#666")
-
         ax.set_xlabel("Longitude")
         ax.set_ylabel("Latitude")
-        fig.tight_layout()
-        # Replay user annotations; their coordinates are degrees, like
-        # the axes.
-        self.annotation_ctl.draw(ax)
-        from .brushing import draw_selection_overlay
-        draw_selection_overlay(self)
-        self.canvas.draw()
 
+    def _set_titles(self, display: str) -> None:
+        variable = self._variable() or "—"
+        kn = kriged_name(variable, self._transform())
+        how = ("all groups pooled" if self._pooled()
+               else "each group on its own")
+        if not self.clip_chk.isChecked():
+            clip = ""
+        elif self._pooled():
+            clip = ", clipped to the samples' hull"
+        else:
+            clip = ", clipped to each group's sample hull"
+        title, subtitle = {
+            "samples": (
+                "Sample locations",
+                "Geographic distribution of the imported samples, "
+                + (f"coloured by {variable}."
+                   if self.colour_by_value_chk.isChecked() and
+                   self._variable()
+                   else "coloured by group (Edit plot → Group columns).")),
+            "estimate": (
+                f"Kriged {variable}",
+                ("Median estimate from ordinary kriging of " + kn
+                 if self._transform() == "log"
+                 else "Ordinary-kriging estimate of " + kn)
+                + f", {how}{clip}."),
+            "uncertainty": (
+                f"Uncertainty of kriged {variable}",
+                f"Kriging standard deviation of {kn}, {how}{clip}. It "
+                "grows away from the samples, and says where the "
+                "estimate can be trusted."),
+            "variogram": (
+                f"Variogram of {kn}",
+                "Experimental semivariance by distance — point size by "
+                "the number of pairs — with the fitted model."),
+            "cv": (
+                f"Cross-validation of {variable}",
+                "Each sample predicted from all the others. Points near "
+                "the 1 : 1 line mean the spatial model predicts well."),
+        }[display]
+        self.title_label.setText(title)
+        self.subtitle_label.setText(subtitle)
+
+    # ------------------------------------------------------------------
+    # Variogram parameters set by hand
+    # ------------------------------------------------------------------
+    def _override_models(self) -> dict:
+        """The hand-set parameters, as models of the kind chosen above."""
+        out = {}
+        for label, (nugget, sill, range_km) in self._overrides.items():
+            try:
+                out[label] = VariogramModel(self._model_kind(), nugget,
+                                            sill, range_km)
+            except ValueError:
+                continue
+        return out
+
+    def _refresh_parameter_selector(self, results) -> None:
+        labels = [r.label for r in results]
+        current = (self.param_group_combo.currentText()
+                   or self._pending_param_group)
+        self.param_group_combo.blockSignals(True)
+        self.param_group_combo.clear()
+        self.param_group_combo.addItems(labels)
+        if current in labels:
+            self.param_group_combo.setCurrentText(current)
+        self.param_group_combo.blockSignals(False)
+        self._pending_param_group = ""
+        self._sync_parameter_spins()
+
+    def _selected_result(self):
+        label = self.param_group_combo.currentText()
+        for r in self._results:
+            if r.label == label:
+                return r
+        return None
+
+    def _sync_parameter_spins(self) -> None:
+        """Show the selected group's parameters: fitted, or set by hand."""
+        label = self.param_group_combo.currentText()
+        manual = label in self._overrides
+        widgets = (self.auto_fit_chk, self.nugget_spin, self.sill_spin,
+                   self.range_spin)
+        for w in widgets:
+            w.blockSignals(True)
+        self.auto_fit_chk.setChecked(not manual)
+        if manual:
+            nugget, sill, range_km = self._overrides[label]
+        else:
+            r = self._selected_result()
+            m = r.analysis.model if r is not None and r.analysis else None
+            nugget, sill, range_km = ((m.nugget, m.sill, m.range_km)
+                                      if m is not None else (0.0, 0.0, 1.0))
+        self.nugget_spin.setValue(nugget)
+        self.sill_spin.setMinimum(max(nugget, _MIN_SILL))
+        self.sill_spin.setValue(sill)
+        self.range_spin.setValue(range_km)
+        for spin in widgets[1:]:
+            spin.setEnabled(manual)
+        self.auto_fit_chk.setEnabled(bool(label))
+        for w in widgets:
+            w.blockSignals(False)
+
+    def _on_auto_fit_toggled(self, checked: bool) -> None:
+        label = self.param_group_combo.currentText()
+        if not label:
+            return
+        if checked:
+            self._overrides.pop(label, None)
+            self.update_plot()
+        else:
+            # Start from exactly what was fitted, so nothing moves until
+            # the user changes a number.
+            r = self._selected_result()
+            m = r.analysis.model if r is not None and r.analysis else None
+            self._overrides[label] = (
+                (m.nugget, m.sill, m.range_km) if m is not None else
+                (self.nugget_spin.value(), self.sill_spin.value(),
+                 self.range_spin.value()))
+            self._overrides_for = (self._variable(), self._transform())
+            self._sync_parameter_spins()
+
+    def _on_parameter_edited(self) -> None:
+        label = self.param_group_combo.currentText()
+        if not label or label not in self._overrides:
+            return
+        self.sill_spin.setMinimum(max(self.nugget_spin.value(), _MIN_SILL))
+        params = (self.nugget_spin.value(), self.sill_spin.value(),
+                  self.range_spin.value())
+        # A spin box shows the stored value rounded; unless the user
+        # changed what it shows, keep the stored one.
+        old = self._overrides[label]
+        spins = (self.nugget_spin, self.sill_spin, self.range_spin)
+        params = tuple(
+            o if abs(p - o) <= 0.5 * 10.0 ** -s.decimals() else p
+            for o, p, s in zip(old, params, spins))
+        if params != self._overrides[label]:
+            self._overrides[label] = params
+            self.update_plot()
+
+    # ------------------------------------------------------------------
+    # Export of the kriged grid
+    # ------------------------------------------------------------------
+    def export_grid(self) -> None:
+        """Write the kriged surfaces as ESRI ASCII grids for a GIS.
+
+        One estimate and one standard-deviation grid per group -- or one
+        pair, pooled -- on the frame and cell size the map shows, clipped
+        the same way, with a .prj each and a text file saying what is in
+        them.
+        """
+        from PySide6.QtWidgets import QFileDialog, QMessageBox
+
+        samples, message = self._collect()
+        if message is not None:
+            QMessageBox.information(self, "Export grid", message)
+            return
+        results = self._analysis(samples)
+        if results is None or not any(r.analysis for r in results):
+            QMessageBox.information(
+                self, "Export grid",
+                "Nothing has been kriged yet: choose a variable, and check "
+                "the summary under the Kriged estimate tab.")
+            return
+        variable = self._variable()
+        path_str, _ = QFileDialog.getSaveFileName(
+            self, "Export kriged grid", f"{safe_file_name(variable)}_kriged.asc",
+            "ESRI ASCII grid (*.asc)")
+        if not path_str:
+            return
+        kept = self._kept_view()
+        lon_min, lon_max, lat_min, lat_max, _lat0 = (
+            kept if kept is not None else self._frame(samples))
+        grid = make_grid(lon_min, lon_max, lat_min, lat_max,
+                         cells_across=self.cells_spin.value())
+        written = write_kriged_grids(
+            Path(path_str), results, grid, variable=variable,
+            transform=self._transform(), clip=self.clip_chk.isChecked(),
+            buffer_km=self.buffer_spin.value(),
+            manual_labels=tuple(self._override_models()))
+        QMessageBox.information(
+            self, "Export grid",
+            "Written:\n" + "\n".join(p.name for p in written)
+            + f"\n\nin {Path(path_str).parent}")
+
+    # ------------------------------------------------------------------
+    # Selection and identification work on the map displays only
+    # ------------------------------------------------------------------
     def _selection_points(self, names):
         """(lon, lat) of the selected samples, in the axes' own units."""
         from .brushing import names_series
         df = self.data.df
         axes = self.canvas.figure.axes
-        if df is None or df.empty or not axes:
+        if (df is None or df.empty or not axes
+                or self._display() not in _MAP_DISPLAYS):
             return []
         lat, lon, err = self._resolve_coords()
         if err is not None or lat is None or lon is None:
@@ -791,7 +1371,8 @@ class MapView(QWidget):
     def _resolve_sample(self, x: float, y: float):
         """The data row whose (lon, lat) lands closest to a click."""
         df = self.data.df
-        if df is None or df.empty:
+        if (df is None or df.empty
+                or self._display() not in _MAP_DISPLAYS):
             return None
         lat, lon, err = self._resolve_coords()
         if err is not None or lat is None or lon is None:
@@ -863,8 +1444,15 @@ class MapView(QWidget):
     # ------------------------------------------------------------------ impl
     def _populate_coords(self) -> None:
         """Fill every coordinate combo box from the current dataframe and
-        guess sensible defaults per format from column-name aliases."""
+        guess sensible defaults per format from column-name aliases.
+
+        When the columns are the ones the boxes were last filled from,
+        the choices already made are kept: re-entering the view, or a
+        session restored before it, must not put the guesses back.
+        """
         df = self.data.df
+        columns = (tuple(str(c) for c in df.columns)
+                   if df is not None and not df.empty else ())
 
         # Every combo gets every column — the user can pick anything.
         all_combos = (
@@ -875,6 +1463,9 @@ class MapView(QWidget):
             self.suffix_lat_combo, self.suffix_lon_combo,
             self.mgrs_combo,
         )
+        same = bool(columns) and columns == self._populated_for
+        previous = {c: c.currentText() for c in all_combos} if same else {}
+        self._populated_for = columns
         for c in all_combos:
             c.blockSignals(True)
             c.clear()
@@ -882,6 +1473,7 @@ class MapView(QWidget):
         if df is None or df.empty:
             for c in all_combos:
                 c.blockSignals(False)
+            self._populate_variables(df, keep=False)
             return
 
         for col in df.columns:
@@ -916,9 +1508,37 @@ class MapView(QWidget):
                 _coords.resolve_column(df, _coords.LON_ALIASES))
         _select(self.mgrs_combo,
                 _coords.resolve_column(df, _coords.MGRS_ALIASES))
+        for combo, text in previous.items():
+            i = combo.findText(text)
+            if i >= 0:
+                combo.setCurrentIndex(i)
 
         for c in all_combos:
             c.blockSignals(False)
+        self._populate_variables(df, keep=same)
+
+    def _populate_variables(self, df, *, keep: bool) -> None:
+        """Numeric columns that can be kriged, coordinates left out."""
+        previous = self.variable_combo.currentText() if keep else ""
+        self.variable_combo.blockSignals(True)
+        self.variable_combo.clear()
+        if df is not None and not df.empty:
+            coordinate_columns = {
+                _coords.resolve_column(df, aliases)
+                for aliases in (_coords.LAT_ALIASES, _coords.LON_ALIASES,
+                                _coords.EASTING_ALIASES,
+                                _coords.NORTHING_ALIASES,
+                                _coords.ZONE_ALIASES)}
+            for col in df.columns:
+                if col in coordinate_columns:
+                    continue
+                values = pd.to_numeric(df[col], errors="coerce")
+                if values.notna().sum() >= MIN_SAMPLES and values.nunique() > 1:
+                    self.variable_combo.addItem(str(col), col)
+        i = self.variable_combo.findText(previous) if previous else -1
+        self.variable_combo.setCurrentIndex(
+            i if i >= 0 else (0 if self.variable_combo.count() else -1))
+        self.variable_combo.blockSignals(False)
 
     def _resolve_coords(self) -> Tuple[Optional[pd.Series],
                                         Optional[pd.Series],
@@ -1059,12 +1679,48 @@ class MapView(QWidget):
             "north": ws.check_state(self.north_chk),
             "legend": ws.check_state(self.legend_chk),
             "annotations": self.annotation_ctl.serialize(),
+            "frame": self._current_frame(),
+            # Spatial analysis
+            "display": self._display(),
+            "variable": self._variable(),
+            "transform": self._transform(),
+            "pooled": self._pooled(),
+            "model": self._model_kind(),
+            "overrides": {label: list(p)
+                          for label, p in self._overrides.items()},
+            "param_group": self.param_group_combo.currentText(),
+            "lags": ws.spin_state(self.lags_spin),
+            "max_lag_km": ws.spin_state(self.max_lag_spin),
+            "cells": ws.spin_state(self.cells_spin),
+            "clip": ws.check_state(self.clip_chk),
+            "buffer_km": ws.spin_state(self.buffer_spin),
+            "contours": ws.check_state(self.contours_chk),
+            "colour_by_value": ws.check_state(self.colour_by_value_chk),
         }
+
+    def _current_frame(self):
+        """The map frame on screen, as (lon_min, lon_max, lat_min,
+        lat_max, lat0) -- what auto-fit off keeps -- or None."""
+        if self._ax is not None:
+            x0, x1 = self._ax.get_xlim()
+            y0, y1 = self._ax.get_ylim()
+            return [float(x0), float(x1), float(y0), float(y1),
+                    float(self._lat0)]
+        if self._last_map_limits is not None:
+            return [float(v) for v in self._last_map_limits]
+        return None
 
     def restore(self, state: dict) -> None:
         from .. import widget_state as ws
         if not state:
             return
+        # Fill the selectors from the data first, so the saved column
+        # choices have something to be restored into.
+        self._populate_coords()
+        # The axes on screen belong to whatever was open before; their
+        # frame must not stand in for the session's.
+        self._disconnect_view_callbacks()
+        self._ax = None
         # Coordinate format dropdown
         fmt = state.get("fmt", _FMT_DECIMAL)
         idx = self.format_combo.findData(fmt)
@@ -1109,3 +1765,45 @@ class MapView(QWidget):
         if state.get("axes_crs") != AXES_CRS:
             annotations = migrate_annotations_to_lonlat(annotations)
         self.annotation_ctl.restore(annotations)
+        frame = state.get("frame")
+        try:
+            self._last_map_limits = (tuple(float(v) for v in frame)
+                                     if frame and len(frame) == 5 else None)
+        except (TypeError, ValueError):
+            self._last_map_limits = None
+
+        # Spatial analysis.  Every key is optional: sessions saved before
+        # the view kriged have none of them.
+        ws.restore_combo(self.variable_combo,
+                         {"text": state.get("variable", "")})
+        for combo, key in ((self.transform_combo, "transform"),
+                           (self.pooling_combo, "pooled"),
+                           (self.model_combo, "model")):
+            if key in state:
+                i = combo.findData(state[key])
+                if i >= 0:
+                    combo.setCurrentIndex(i)
+        overrides = {}
+        for label, params in (state.get("overrides") or {}).items():
+            try:
+                nugget, sill, range_km = (float(p) for p in params)
+            except (TypeError, ValueError):
+                continue
+            overrides[str(label)] = (nugget, sill, range_km)
+        self._overrides = overrides
+        self._overrides_for = (self._variable(), self._transform())
+        self._pending_param_group = str(state.get("param_group") or "")
+        ws.restore_spin(self.lags_spin, state.get("lags"))
+        ws.restore_spin(self.max_lag_spin, state.get("max_lag_km"))
+        ws.restore_spin(self.cells_spin, state.get("cells"))
+        ws.restore_check(self.clip_chk, state.get("clip"))
+        ws.restore_spin(self.buffer_spin, state.get("buffer_km"))
+        ws.restore_check(self.contours_chk, state.get("contours"))
+        ws.restore_check(self.colour_by_value_chk,
+                         state.get("colour_by_value"))
+        keys = [k for k, _label in _DISPLAYS]
+        if state.get("display") in keys:
+            # Quietly: the main window redraws once the session is in.
+            self.display_tabs.blockSignals(True)
+            self.display_tabs.setCurrentIndex(keys.index(state["display"]))
+            self.display_tabs.blockSignals(False)
