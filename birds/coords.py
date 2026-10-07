@@ -66,6 +66,63 @@ DMS_LON_ALIASES = ("Lon_DMS", "Longitude_DMS", "Longitud_DMS",
                    "Lng_DMS", "Long_DMS")
 
 
+# ---------------------------------------------------------------------------
+# The WGS-84 ellipsoid
+# ---------------------------------------------------------------------------
+#
+# One definition for the whole program.  The UTM fallback below, the Map
+# view's aspect ratio and scale bar, and the distances the geostatistics
+# work on all read these; they used to be typed out in two places.
+
+#: Defining constants: semi-major axis (m) and flattening.
+WGS84_A_M = 6378137.0
+WGS84_F = 1.0 / 298.257223563
+#: First eccentricity squared, derived rather than typed.
+WGS84_E2 = WGS84_F * (2.0 - WGS84_F)
+
+
+def km_per_degree_lat(lat_deg):
+    """Length of one degree of latitude along the meridian at *lat_deg*.
+
+    (π/180)·M(φ), with M the meridional radius of curvature: 110.57 km
+    at the equator, 111.69 km at the poles.  Accepts arrays.
+    """
+    s2 = np.sin(np.radians(lat_deg)) ** 2
+    m_km = (WGS84_A_M / 1000.0) * (1.0 - WGS84_E2) \
+        / (1.0 - WGS84_E2 * s2) ** 1.5
+    return np.radians(1.0) * m_km
+
+
+def km_per_degree_lon(lat_deg):
+    """Length of one degree of longitude along the parallel at *lat_deg*.
+
+    (π/180)·N(φ)·cos φ, with N the prime-vertical radius of curvature:
+    111.32 km at the equator, 55.80 km at 60°, nothing at the poles.
+    Accepts arrays.
+    """
+    phi = np.radians(lat_deg)
+    n_km = (WGS84_A_M / 1000.0) / np.sqrt(1.0 - WGS84_E2 * np.sin(phi) ** 2)
+    return np.radians(1.0) * n_km * np.cos(phi)
+
+
+def geodetic_to_ecef_km(lon_deg, lat_deg) -> np.ndarray:
+    """Earth-centred Cartesian coordinates, in km, of points on the ellipsoid.
+
+    Returns an ``(n, 3)`` array.  The straight-line distance between two
+    of these is the chord through the Earth, which differs from the
+    distance along the surface by under one part in 10⁵ at 100 km and
+    one in 10³ at 1000 km -- and, unlike a map projection, distorts
+    nothing anywhere on the globe.
+    """
+    lon = np.radians(np.asarray(lon_deg, dtype=float).ravel())
+    lat = np.radians(np.asarray(lat_deg, dtype=float).ravel())
+    n_km = (WGS84_A_M / 1000.0) / np.sqrt(1.0 - WGS84_E2 * np.sin(lat) ** 2)
+    x = n_km * np.cos(lat) * np.cos(lon)
+    y = n_km * np.cos(lat) * np.sin(lon)
+    z = n_km * (1.0 - WGS84_E2) * np.sin(lat)
+    return np.column_stack([x, y, z])
+
+
 def _empty(df: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
     nan = pd.Series([np.nan] * len(df), index=df.index, dtype=float)
     return nan.copy(), nan.copy()
@@ -184,11 +241,9 @@ def _from_utm_fallback(df, easting_col, northing_col,
     else:
         hems = pd.Series(["N"] * len(df), index=df.index)
 
-    # WGS-84 ellipsoid
-    a = 6378137.0
-    f = 1 / 298.257223563
+    a = WGS84_A_M
     k0 = 0.9996
-    e2 = f * (2 - f)
+    e2 = WGS84_E2
     ep2 = e2 / (1 - e2)
 
     lat_out = pd.Series(np.nan, index=df.index, dtype=float)

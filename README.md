@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-2605%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-2679%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -435,6 +435,7 @@ What the suite covers, and why those things and not others:
 | **Verma centroids** | Every discriminant function evaluated at its paper's own group means has to return that paper's own published centroid — 60 of them. This is what found ten wrong coefficients that a digit-by-digit check had scored 95–100 % |
 | **Verma probabilities** | The triple point of a panel must be the circumcentre of its three group centroids, which is where all three settings come out equally likely. The triple points come from the figure captions and the centroids from elsewhere in the same papers, so neither is checking itself |
 | **Reference materials** | USGS BHVO-2, BCR-2 and AGV-2 through the whole chain: classification, norm, chondrite-normalised pattern, and — for the two whose setting is not in dispute — tectonic discrimination |
+| **Kriging** | Exact answers to machine precision: the data honoured, weights summing to one, the mean with variance c₀(1 + 1/n) when there is no spatial structure, and the Brownian bridge from a linear variogram. The one-inverse cross-validation equals n refits. On a smooth field kriging must remove nearly all the error of guessing the mean, and on noise none of it |
 | **Map** | The length of a degree on the WGS-84 ellipsoid matches the standard table to its own rounding, a ground square draws as a square at any latitude, the scale bar is as long as it says, and sessions saved by the earlier view have their annotations converted rather than lost. Nothing in what ships may mention a background map |
 | **Sample accounting** | A sample outside a published frame is reported as such and not counted among the plotted, the categories stay disjoint so the total keeps adding up, and a diagram whose axis runs backwards is read in the right direction |
 

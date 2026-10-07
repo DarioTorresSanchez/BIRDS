@@ -48,6 +48,7 @@ from PySide6.QtWidgets import (
 )
 
 from .. import coords as _coords
+from ..coords import km_per_degree_lat, km_per_degree_lon
 from ..diagrams.templates.base import get_groups
 from .annotation_controller import AnnotationController, nearest_sample
 from .plot_canvas import PlotCanvas
@@ -69,45 +70,25 @@ _FMT_LABELS = (
 
 
 # ---------------------------------------------------------------------------
-# Distances on the WGS-84 ellipsoid
+# Lengths of a degree, for drawing
 # ---------------------------------------------------------------------------
 #
 # The scale bar, the smallest frame drawn and the aspect ratio all need
-# to know how long a degree is at a given latitude.  On the ellipsoid a
-# degree of latitude and a degree of longitude differ, and both vary
-# with latitude, so each is computed rather than taken as 111 km.
+# to know how long a degree is at a given latitude.  They take it from
+# the WGS-84 ellipsoid in birds.coords, not from 111 km: a degree of
+# latitude and a degree of longitude differ, and both vary with
+# latitude.
 
-#: WGS-84 semi-major axis (km) and first eccentricity squared.
-_WGS84_A_KM = 6378.137
-_WGS84_E2 = 0.00669437999014
-
-#: A degree of longitude is never taken as shorter than this fraction
-#: of a degree of latitude.  It goes to nothing at the poles, where an
-#: aspect ratio or a scale bar built on it would blow up.
+#: For drawing, a degree of longitude is never taken as shorter than
+#: this fraction of a degree of latitude.  It goes to nothing at the
+#: poles, where an aspect ratio or a scale bar built on it would blow up.
 _POLAR_FLOOR = 0.05
 
 
-def km_per_degree_lat(lat_deg: float) -> float:
-    """Length of one degree of latitude along the meridian at *lat_deg*.
-
-    (π/180)·M(φ), with M the meridional radius of curvature: 110.57 km
-    at the equator, 111.69 km at the poles.
-    """
-    s2 = np.sin(np.radians(lat_deg)) ** 2
-    m = _WGS84_A_KM * (1.0 - _WGS84_E2) / (1.0 - _WGS84_E2 * s2) ** 1.5
-    return float(np.radians(1.0) * m)
-
-
-def km_per_degree_lon(lat_deg: float) -> float:
-    """Length of one degree of longitude along the parallel at *lat_deg*.
-
-    (π/180)·N(φ)·cos φ, with N the prime-vertical radius of curvature:
-    111.32 km at the equator, 55.80 km at 60°.  Floored near the poles.
-    """
-    phi = np.radians(lat_deg)
-    n = _WGS84_A_KM / np.sqrt(1.0 - _WGS84_E2 * np.sin(phi) ** 2)
-    exact = float(np.radians(1.0) * n * np.cos(phi))
-    return max(exact, _POLAR_FLOOR * km_per_degree_lat(lat_deg))
+def _drawn_km_per_degree_lon(lat_deg: float) -> float:
+    """km_per_degree_lon, floored near the poles for drawing."""
+    return max(float(km_per_degree_lon(lat_deg)),
+               _POLAR_FLOOR * float(km_per_degree_lat(lat_deg)))
 
 
 def map_aspect(lat0_deg: float) -> float:
@@ -119,7 +100,8 @@ def map_aspect(lat0_deg: float) -> float:
     is the stretch.  On a sphere it is 1/cos(lat0); the ellipsoid moves
     it by under 0.7 %, which costs nothing to get right.
     """
-    return km_per_degree_lat(lat0_deg) / km_per_degree_lon(lat0_deg)
+    return float(km_per_degree_lat(lat0_deg)) / _drawn_km_per_degree_lon(
+        lat0_deg)
 
 
 #: Smallest frame drawn, in km each way, so a single sample or a tight
@@ -140,8 +122,8 @@ def map_frame(lons, lats, *, pad: float):
     lon_lo, lon_hi = float(np.min(lons)), float(np.max(lons))
     lat_lo, lat_hi = float(np.min(lats)), float(np.max(lats))
     lat0 = (lat_lo + lat_hi) / 2.0
-    min_dlon = MIN_FRAME_KM / km_per_degree_lon(lat0)
-    min_dlat = MIN_FRAME_KM / km_per_degree_lat(lat0)
+    min_dlon = MIN_FRAME_KM / _drawn_km_per_degree_lon(lat0)
+    min_dlat = MIN_FRAME_KM / float(km_per_degree_lat(lat0))
     if lon_hi - lon_lo < min_dlon:
         mid = (lon_lo + lon_hi) / 2.0
         lon_lo, lon_hi = mid - min_dlon / 2.0, mid + min_dlon / 2.0
@@ -180,7 +162,7 @@ def _nice_round(value: float) -> float:
 def auto_scale_length_km(lon_min: float, lon_max: float, lat0: float, *,
                          target_fraction: float = 0.20) -> float:
     """A tidy scale-bar length, about a fifth of the frame's width."""
-    width_km = (lon_max - lon_min) * km_per_degree_lon(lat0)
+    width_km = (lon_max - lon_min) * _drawn_km_per_degree_lon(lat0)
     return _nice_round(width_km * target_fraction)
 
 
@@ -195,7 +177,7 @@ def _add_scale_bar(ax, *, length_km: float, lat0: float,
     """
     x_min, x_max = ax.get_xlim()
     y_min, y_max = ax.get_ylim()
-    bar_deg = length_km / km_per_degree_lon(lat0)
+    bar_deg = length_km / _drawn_km_per_degree_lon(lat0)
     x_start = x_min + fraction_pad * (x_max - x_min)
     y_pos = y_min + 0.05 * (y_max - y_min)
     line, = ax.plot([x_start, x_start + bar_deg], [y_pos, y_pos],

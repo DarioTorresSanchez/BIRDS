@@ -68,12 +68,24 @@ def test_a_degree_of_latitude_lengthens_toward_the_pole():
     assert km_per_degree_lat(90) == pytest.approx(111.694, abs=0.001)
 
 
-def test_a_degree_of_longitude_never_reaches_zero():
-    """It does on the ground, at the pole; the floor keeps the aspect
-    ratio and the scale bar finite."""
-    assert km_per_degree_lon(90) > 0
+def test_the_drawing_never_divides_by_a_vanishing_degree():
+    """On the ground a degree of longitude is nothing at the pole, and
+    birds.coords says so; the drawing floors it so the aspect ratio and
+    the scale bar stay finite."""
+    assert km_per_degree_lon(90) == pytest.approx(0.0, abs=1e-9)
     assert np.isfinite(map_aspect(90))
     assert map_aspect(90) == pytest.approx(20.0)
+
+
+def test_the_map_reads_the_one_definition_of_the_ellipsoid():
+    """It used to carry its own copy of the WGS-84 constants."""
+    from birds import coords
+    from birds.views import map_view
+
+    assert map_view.km_per_degree_lat is coords.km_per_degree_lat
+    assert map_view.km_per_degree_lon is coords.km_per_degree_lon
+    assert not hasattr(map_view, "_WGS84_A_KM")
+    assert coords.WGS84_E2 == pytest.approx(0.00669437999014, abs=1e-14)
 
 
 # ---------------------------------------------------------------------------

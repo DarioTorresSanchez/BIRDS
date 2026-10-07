@@ -18,6 +18,26 @@ including what is still unverified.
 
 ### Added
 
+- **A geostatistics engine for the Map view** (`birds/geostats.py`):
+  the experimental variogram, spherical, exponential and Gaussian
+  models fitted by weighted least squares, ordinary kriging,
+  leave-one-out cross-validation, a prediction grid clipped to the
+  samples' convex hull, and export to an ESRI ASCII grid with its
+  `.prj` for QGIS or ArcGIS. numpy and scipy only. Not yet reachable
+  from the interface. Distances are taken through the Earth, between
+  points on the WGS-84 ellipsoid, so no projection distorts them;
+  "range" means the effective range in all three models;
+  concentrations are kriged as logarithms by default and reported as
+  the median with its 95 % interval; coincident samples are folded
+  together; and the variogram's reliability is judged against Webster
+  & Oliver's (1992) sample sizes. Checked against exact answers rather
+  than another program: kriging honours the data, its weights sum to
+  one, with no spatial structure it returns the mean with variance
+  c₀(1 + 1/n), and with a linear variogram it reproduces the Brownian
+  bridge to machine precision. The one-inverse cross-validation
+  (Dubrule 1983) equals refitting n times to 10⁻¹⁵. On a smooth field
+  it removes 98–100 % of the error of guessing the mean; on noise,
+  none, and its variance says so.
 - **Posterior probability of each tectonic setting** in the statistics
   table, for seven of the eight Verma coefficient sets, following Verma
   & Agrawal (2011) eqs (1)–(12). Verma et al. (2012) publishes neither
@@ -324,6 +344,9 @@ including what is still unverified.
   frame drawn. Annotations in sessions saved by the earlier view were
   stored in Mercator metres; they are converted on load instead of
   landing off the frame.
+- **The WGS-84 ellipsoid is defined once**, in `birds.coords`. The UTM
+  fallback and the Map view each carried their own copy of its
+  constants; the fallback still agrees with pyproj to 10⁻⁹ degrees.
 
 ### Removed
 
