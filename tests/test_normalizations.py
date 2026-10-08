@@ -102,6 +102,56 @@ class TestChalcophile:
         assert not is_chalcophile_normaliser(name)
 
 
+class TestPublishedMetalValues:
+    """Ni-Cu-PGE values pinned to the page they were read from.
+
+    In ng/g as printed; the table holds ppm.  Checking them found the
+    Fischer-Gödde primitive-mantle Au at 1.0 where the paper gives 1.7,
+    and a CI entry credited to Horan et al. (2003) whose numbers that
+    paper does not contain.
+    """
+
+    @pytest.mark.parametrize("metal, ng_g", [
+        # Fischer-Gödde et al. (2011), Chem. Geol. 280, Table 3 and §5.3.
+        ("Ir", 3.5), ("Rh", 1.2), ("Pt", 7.6), ("Pd", 7.1), ("Re", 0.35),
+        ("Au", 1.7),
+    ])
+    def test_fischer_godde_primitive_mantle(self, metal, ng_g):
+        table = CHALCOPHILE_NORMS["Primitive Mantle (Fischer-Gödde et al. 2011)"]
+        assert table[metal] * 1000 == pytest.approx(ng_g, rel=1e-9)
+
+    @pytest.mark.parametrize("metal, ng_g", [
+        # Fischer-Gödde et al. (2010), GCA 74, Table 3, "Mean CI".
+        ("Re", 40.7), ("Os", 491), ("Ir", 462), ("Ru", 688), ("Pt", 943),
+        ("Rh", 133), ("Pd", 563), ("Au", 149),
+    ])
+    def test_fischer_godde_ci_chondrite(self, metal, ng_g):
+        table = CHALCOPHILE_NORMS["CI Chondrite (Fischer-Gödde et al. 2010)"]
+        assert table[metal] * 1000 == pytest.approx(ng_g, rel=1e-9)
+
+    @pytest.mark.parametrize("metal, ng_g", [
+        # Becker et al. (2006) as quoted by Fischer-Gödde et al. (2011).
+        ("Ir", 3.5), ("Pt", 7.6), ("Pd", 7.1), ("Re", 0.35),
+    ])
+    def test_becker_primitive_upper_mantle(self, metal, ng_g):
+        table = CHALCOPHILE_NORMS["Primitive Upper Mantle (Becker et al. 2006)"]
+        assert table[metal] * 1000 == pytest.approx(ng_g, rel=1e-9)
+
+    @pytest.mark.parametrize("name", [
+        n for n in CHALCOPHILE_NORMS if "Mantle" in n])
+    def test_primitive_mantle_nickel(self, name):
+        """0.196 wt.% Ni in the bulk silicate Earth (McDonough 2014a, in
+        Rollinson & Pease 2021, Table 3.2a)."""
+        assert CHALCOPHILE_NORMS[name]["Ni"] == pytest.approx(1960.0)
+
+    def test_a_session_saved_under_the_old_ci_name_still_finds_it(self):
+        from birds.normalizations import current_name
+        old = "CI Chondrite (Horan et al. 2003 / McDonough & Sun 1995)"
+        assert old not in CHALCOPHILE_NORMS
+        assert current_name(old) in CHALCOPHILE_NORMS
+        assert current_name("Boynton (1984)") == "Boynton (1984)"
+
+
 def test_categories_expose_every_normaliser():
     listed = {n for names in normaliser_categories().values() for n in names}
     assert listed == set(ALL_NAMES)
@@ -124,6 +174,9 @@ class TestBibliography:
         "168-169",                        # Verma et al. 2013 acid
         "Barnes",                         # Ni-Cu-PGE normalisers
         "Becker",
+        "10.1016/j.gca.2009.09.024",      # Fischer-Gödde et al. 2010
+        "10.1016/j.chemgeo.2010.11.024",  # Fischer-Gödde et al. 2011
+        "10.1016/S0009-2541(02)00405-9",  # Horan et al. 2003
     ])
     def test_verified_citations_present(self, fragment):
         from birds.references import REFERENCES
@@ -136,8 +189,27 @@ class TestBibliography:
         "UBIA",           # diagram removed
         "543783",         # wrong DOI
         "931-948",        # wrong page range
+        "6027-6048",      # Fischer-Gödde: not the chondrite paper
+        "10.1016/j.gca.2011.07.038",
+        "element concentrations in chondrites",   # Horan: wrong title
     ])
     def test_removed_or_wrong_citations_absent(self, fragment):
         from birds.references import REFERENCES
         blob = " ".join(c for _, items in REFERENCES for c, _ in items)
         assert fragment not in blob
+
+
+def test_the_spider_view_restores_a_renamed_reference(qapp):
+    """A session saved before the CI entry was renamed must reopen on
+    the same reference, not silently on the default."""
+    from birds.data_manager import DataManager
+    from birds.normalizations import current_name
+    from birds.plot_style import PlotStyle
+    from birds.views.spider import SpiderView
+
+    old = "CI Chondrite (Horan et al. 2003 / McDonough & Sun 1995)"
+    view = SpiderView(DataManager(), PlotStyle())
+    view.restore({"mode": "multielement",
+                  "multielement": {"normaliser": old}})
+    combo = view._controls["multielement"].norm_combo
+    assert combo.currentText() == current_name(old)

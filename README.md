@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-2762%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-2817%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -188,8 +188,8 @@ Bulk Continental Crust (Rudnick & Gao 2014), NASC (Gromet et al. 1984).
 
 **Ni-Cu-PGE metals (5)** — Primitive Mantle (Barnes & Maier 1999),
 Primitive Upper Mantle (Becker et al. 2006), Primitive Mantle
-(Fischer-Gödde et al. 2011), CI Chondrite (Horan et al. 2003), Depleted
-MORB Mantle (Salters & Stracke 2004). These carry their own x-axis —
+(Fischer-Gödde et al. 2011), CI Chondrite (Fischer-Gödde et al. 2010),
+Depleted MORB Mantle (Salters & Stracke 2004). These carry their own x-axis —
 Ni · Os · Ir · Ru · Rh · Pt · Pd · Au · Cu, ordered by compatibility with
 sulphide liquid rather than by incompatibility — and are offered in both
 the REE and the multi-element tabs, so a magmatic-sulphide study can sit
@@ -494,11 +494,14 @@ kriging.
 
 Known limitations worth stating plainly:
 
-- The **Ni-Cu-PGE reference values** are taken from the usual literature
-  compilations and have not been re-checked page by page against the
-  original papers. Pattern *shapes* are robust; verify the absolute
-  normalised level against the source before publishing. The module
-  carries the same warning in its docstring.
+- The **Ni-Cu-PGE reference values** are checked page by page only in
+  part. Verified: both Fischer-Gödde references (primitive mantle and CI
+  chondrite), the Ir, Pt, Pd and Re of Becker *et al.* (2006), and
+  primitive-mantle Ni. Not yet: Barnes & Maier (1999), the Os and Ru of
+  Becker *et al.*, every Cu value, CI Ni, and the depleted-mantle entry.
+  Pattern *shapes* are robust; verify the absolute normalised level
+  against the source before publishing. The module records the same,
+  reference by reference.
 - Validation against USGS reference materials BHVO-2, BCR-2 and AGV-2
   runs in `tests/test_usgs_reference_materials.py`, using the values in
   the USGS Reference Material Information Sheets (June 2022), which take

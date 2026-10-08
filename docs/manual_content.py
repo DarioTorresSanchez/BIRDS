@@ -307,17 +307,22 @@ SECTIONS = [
             "World Shale Average, UCC).",
             "9 multi-element references (Primitive Mantle ×2, CI "
             "Chondrite, N-MORB ×2, E-MORB, UCC, Bulk CC, NASC).",
-            "5 Ni-Cu-PGE metal references (Barnes & Maier 1999, Becker "
-            "et al. 2006, Fischer-Gödde et al. 2011, Horan et al. 2003, "
-            "Salters & Stracke 2004), drawn on their own axis — Ni, the "
-            "platinum-group metals, Au and Cu in order of compatibility "
-            "with sulphide liquid.",
+            "5 Ni-Cu-PGE metal references (primitive mantle after "
+            "Barnes & Maier 1999, Becker et al. 2006 and Fischer-Gödde "
+            "et al. 2011; CI chondrite after Fischer-Gödde et al. 2010; "
+            "depleted mantle after Salters & Stracke 2004), drawn on "
+            "their own axis — Ni, the platinum-group metals, Au and Cu in "
+            "order of compatibility with sulphide liquid.",
         ]},
         {"type": "note", "text":
-         "The Ni-Cu-PGE values were taken from compilations and have "
-         "not yet been checked against the original papers. The shape "
-         "of a pattern depends little on the choice; before publishing "
-         "its absolute level, check the value you normalise to."},
+         "Not every Ni-Cu-PGE value has been checked against its "
+         "paper yet. Verified: both Fischer-Gödde references, the Ir, "
+         "Pt, Pd and Re of Becker et al. (2006) and primitive-mantle Ni. "
+         "Not yet: Barnes & Maier (1999), every Cu value, CI Ni, the Os "
+         "and Ru of Becker et al. and the depleted-mantle entry. The "
+         "shape of a pattern depends little on the choice; before "
+         "publishing its absolute level, check the value you normalise "
+         "to."},
         {"type": "h2", "text": "Plot modes"},
         {"type": "bullet", "items": [
             "Individual sample lines (default).",

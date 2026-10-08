@@ -302,16 +302,23 @@ REFERENCES: List[Section] = [
          "et Cosmochimica Acta*, *70*(17), 4528-4550. "
          "https://doi.org/10.1016/j.gca.2006.06.004",
          "Primitive upper mantle HSE (Os, Ir, Ru, Pt, Pd, Re)."),
-        ("Fischer-Gödde, M., Becker, H., & Wombacher, F. (2011). Rhodium, "
+        ("Fischer-Gödde, M., Becker, H., & Wombacher, F. (2010). Rhodium, "
          "gold and other highly siderophile element abundances in "
          "chondritic meteorites. *Geochimica et Cosmochimica Acta*, "
-         "*75*(20), 6027-6048. "
-         "https://doi.org/10.1016/j.gca.2011.07.038",
+         "*74*, 356-379. https://doi.org/10.1016/j.gca.2009.09.024",
+         "CI chondrite HSE values (Table 3, mean CI)."),
+        ("Fischer-Gödde, M., Becker, H., & Wombacher, F. (2011). Rhodium, "
+         "gold and other highly siderophile elements in orogenic "
+         "peridotites and peridotite xenoliths. *Chemical Geology*, "
+         "*280*, 365-383. "
+         "https://doi.org/10.1016/j.chemgeo.2010.11.024",
          "Rh and Au completing the primitive-mantle HSE set."),
         ("Horan, M. F., Walker, R. J., Morgan, J. W., Grossman, J. N., & "
-         "Rubin, A. E. (2003). Highly siderophile element concentrations "
-         "in chondrites. *Chemical Geology*, *196*(1-4), 27-42.",
-         "CI chondrite HSE reference for metal/metal ratios."),
+         "Rubin, A. E. (2003). Highly siderophile elements in chondrites. "
+         "*Chemical Geology*, *196*, 5-20. "
+         "https://doi.org/10.1016/S0009-2541(02)00405-9",
+         "CI chondrite analyses within Fischer-Gödde et al.'s (2010) "
+         "mean."),
         ("Salters, V. J. M., & Stracke, A. (2004). Composition of the "
          "depleted mantle. *Geochemistry, Geophysics, Geosystems*, *5*(5), "
          "Q05B07. https://doi.org/10.1029/2003GC000597",

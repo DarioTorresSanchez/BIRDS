@@ -870,8 +870,9 @@ class SpiderView(QWidget):
         from .. import widget_state as ws
         if not state:
             return
+        from ..normalizations import current_name
         ws.restore_combo(ctrl.norm_combo,
-                         {"text": state.get("normaliser", "")})
+                         {"text": current_name(state.get("normaliser", ""))})
         if state.get("mode_summary"):
             ctrl.mode_summary.setChecked(True)
         elif state.get("mode_individual"):

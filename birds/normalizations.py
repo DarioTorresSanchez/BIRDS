@@ -224,13 +224,23 @@ MULTIELEMENT_NORMS: Dict[str, Mapping[str, float]] = {
 # directly as the sulphide's history — high R-factor, fractionation of
 # monosulphide solid solution, or a late-stage Cu-rich residue.
 #
+# Checked page by page, so far (2026-10-08): the two Fischer-Gödde
+# references, against Chem. Geol. 280 (2011) Table 3 and §5.3 and GCA 74
+# (2010) Table 3; Ir, Pt, Pd and Re of Becker et al. (2006) as quoted
+# there; and primitive-mantle Ni, 0.196 wt.% (McDonough 2014a, in
+# Rollinson & Pease 2021, Table 3.2a).  Checking found Au of the
+# Fischer-Gödde primitive mantle at 1.0 ng/g where the paper gives 1.7,
+# and a CI entry credited to Horan et al. (2003) whose values are not in
+# that paper, which reports single analyses only.
+#
 # .. warning::
-#    The reference values below are transcribed from the literature
-#    compilations and have **not** been re-checked against the original
-#    papers page by page. Verify them against the source before
-#    publishing a figure that depends on their absolute level; the
-#    *shape* of a pattern is far less sensitive to small differences
-#    between compilations than its absolute normalised value.
+#    Still unchecked: Barnes & Maier (1999) entire; Os and Ru of Becker
+#    et al. (2006); Cu everywhere and Ni of the CI chondrite; and the
+#    depleted-mantle entry, whose metals are identical to Barnes &
+#    Maier's except Cu -- suspicious for a different reservoir.  Verify
+#    them before publishing a figure that depends on their absolute
+#    level; the *shape* of a pattern is far less sensitive to the choice
+#    of reference than its absolute normalised value.
 
 # Order of decreasing compatibility in sulphide liquid (Barnes & Lightfoot
 # 2005; Barnes & Ripley 2016).  Ni and Cu bracket the noble metals.
@@ -244,40 +254,65 @@ CHALCOPHILE_ORDER_EXTENDED: Tuple[str, ...] = (
 )
 
 CHALCOPHILE_NORMS: Dict[str, Mapping[str, float]] = {
-    # The reference most Ni-Cu-PGE papers normalise to.
+    # The reference most Ni-Cu-PGE papers normalise to.  Not yet
+    # checked against the paper.
     "Primitive Mantle (Barnes & Maier 1999)": {
         "Ni": 1960.0, "Os": 0.0034, "Ir": 0.0032, "Ru": 0.0050,
         "Rh": 0.0009, "Pt": 0.0071, "Pd": 0.0039, "Au": 0.0010,
         "Cu": 30.0,
     },
-    # Primitive upper mantle from peridotite massifs and xenoliths.
-    # Becker et al. report no Rh or Au; Ni and Cu are carried over from
-    # McDonough & Sun (1995) so the axis does not break.
+    # Primitive upper mantle from peridotite massifs and xenoliths.  Ir,
+    # Pt, Pd and Re are the values Fischer-Gödde et al. (2011, Table 3)
+    # take from this paper; Os and Ru are not yet checked.  Becker et al.
+    # report no Rh or Au; Ni and Cu are carried over so the axis does
+    # not break.
     "Primitive Upper Mantle (Becker et al. 2006)": {
         "Ni": 1960.0, "Os": 0.0039, "Ir": 0.0035, "Ru": 0.0070,
         "Pt": 0.0076, "Pd": 0.0071, "Re": 0.00035, "Cu": 30.0,
     },
-    # Bulk-silicate-Earth HSE compilation.
+    # The primitive-mantle model of Fischer-Gödde et al. (2011, Chem.
+    # Geol. 280, Table 3 and §5.3): their Rh, 1.2 ± 0.2 ng/g, and Au,
+    # 1.7 ± 0.5 ng/g, with the Ir, Pt, Pd and Re of Becker et al.
+    # (2006).  Table 3 leaves out Os and Ru, which are Becker's too.
     "Primitive Mantle (Fischer-Gödde et al. 2011)": {
         "Ni": 1960.0, "Os": 0.0039, "Ir": 0.0035, "Ru": 0.0070,
-        "Rh": 0.0012, "Pt": 0.0076, "Pd": 0.0071, "Au": 0.0010,
-        "Cu": 30.0,
+        "Rh": 0.0012, "Pt": 0.0076, "Pd": 0.0071, "Re": 0.00035,
+        "Au": 0.0017, "Cu": 30.0,
     },
     # CI chondrite — the reference for metal/metal ratios and for
     # judging whether a sulphide liquid kept a chondritic HSE budget.
-    "CI Chondrite (Horan et al. 2003 / McDonough & Sun 1995)": {
-        "Ni": 10910.0, "Os": 0.490, "Ir": 0.469, "Ru": 0.690,
-        "Rh": 0.132, "Pt": 0.925, "Pd": 0.560, "Re": 0.0395,
-        "Au": 0.148, "Cu": 126.0,
+    # Fischer-Gödde et al. (2010, GCA 74, Table 3, "Mean CI"): Orgueil
+    # and Ivuna by isotope dilution -- theirs, Walker et al.'s (2002) and
+    # Horan et al.'s (2003) -- adjusted to a CI Ir of 462 ng/g.  Ni and
+    # Cu are carried over from the entry this replaced; their source is
+    # not yet identified.
+    "CI Chondrite (Fischer-Gödde et al. 2010)": {
+        "Ni": 10910.0, "Os": 0.491, "Ir": 0.462, "Ru": 0.688,
+        "Rh": 0.133, "Pt": 0.943, "Pd": 0.563, "Re": 0.0407,
+        "Au": 0.149, "Cu": 126.0,
     },
     # Depleted MORB mantle — the sensible reference for oceanic and
-    # ophiolite-hosted sulphide occurrences.
+    # ophiolite-hosted sulphide occurrences.  Not yet checked; see the
+    # warning above.
     "Depleted MORB Mantle (Salters & Stracke 2004)": {
         "Ni": 1960.0, "Os": 0.0034, "Ir": 0.0032, "Ru": 0.0050,
         "Rh": 0.0009, "Pt": 0.0071, "Pd": 0.0039, "Au": 0.0010,
         "Cu": 24.0,
     },
 }
+
+
+#: Names a reference used to carry, mapped to the name it carries now,
+#: so a session saved under the old name still finds it.
+RENAMED_NORMALISERS: Dict[str, str] = {
+    "CI Chondrite (Horan et al. 2003 / McDonough & Sun 1995)":
+        "CI Chondrite (Fischer-Gödde et al. 2010)",
+}
+
+
+def current_name(name: str) -> str:
+    """*name*, or the name that reference goes by now."""
+    return RENAMED_NORMALISERS.get(name, name)
 
 
 # ---------------------------------------------------------------------------

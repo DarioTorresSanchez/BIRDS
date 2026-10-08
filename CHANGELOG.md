@@ -376,6 +376,25 @@ including what is still unverified.
 - **Verma citations**: four were wrong in the bibliography and in the
   subtitles printed on the plots — wrong journal, wrong page range,
   reversed initials, a DOI one digit out.
+- **Ni-Cu-PGE normalisers, checked against three of their papers.** The
+  Fischer-Gödde *et al.* (2011) primitive mantle carried Au at 1.0 ng/g;
+  their Table 3 and §5.3 give 1.7 ± 0.5. It also gains their Re. The CI
+  chondrite was credited to Horan *et al.* (2003), but its numbers are
+  not in that paper, which reports single analyses of Orgueil and Ivuna
+  and no CI value; it is now the mean CI of Fischer-Gödde *et al.*
+  (2010, Table 3), which takes Horan's analyses in, and goes by that
+  name — sessions saved under the old one still find it. In the
+  bibliography the Horan entry had the wrong title and pages, and the
+  Fischer-Gödde chondrite paper was cited as GCA 75 (2011), 6027–6048:
+  it is GCA 74 (2010), 356–379, and the primitive-mantle Rh and Au come
+  from a second paper, Chem. Geol. 280 (2011), now listed too. Ir, Pt,
+  Pd and Re of Becker *et al.* (2006) agree with the values Fischer-Gödde
+  quote from it, and primitive-mantle Ni with McDonough (2014a). Still
+  unchecked, and said so in the module, the manual and the README:
+  Barnes & Maier (1999), the Os and Ru of Becker, every Cu value, CI Ni,
+  and the depleted-mantle entry, whose metals are identical to Barnes &
+  Maier's except Cu. `tests/test_normalizations.py` pins each verified
+  value to its table.
 
 #### Interface
 
