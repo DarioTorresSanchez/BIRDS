@@ -315,12 +315,10 @@ SECTIONS = [
             "order of compatibility with sulphide liquid.",
         ]},
         {"type": "note", "text":
-         "Every Ni-Cu-PGE value has been checked against its paper "
-         "except the Os and Ru of Becker et al. (2006) and the "
-         "depleted-mantle entry, whose Ni and noble metals are McDonough "
-         "& Sun's primitive mantle unchanged — use it with caution. The "
-         "primitive mantle often cited as Barnes & Maier (1999) is "
-         "McDonough & Sun's (1995) and is listed under their name."},
+         "Every Ni-Cu-PGE value has been checked page by page against "
+         "its paper. The primitive mantle often cited as Barnes & Maier "
+         "(1999) is McDonough & Sun's (1995), and is listed under their "
+         "name."},
         {"type": "h2", "text": "Plot modes"},
         {"type": "bullet", "items": [
             "Individual sample lines (default).",

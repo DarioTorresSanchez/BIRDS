@@ -400,11 +400,14 @@ including what is still unverified.
   values of the REE and multi-element tables credited to them. The
   primitive-mantle reservoir's majors were not theirs — 44.95 SiO₂,
   0.20 TiO₂, 0.13 MnO, 37.78 MgO — and are now pyrolite model 1 of
-  Table 4. Still unchecked, and said so in the module, the manual and
-  the README: the Os and Ru of Becker, and the depleted-mantle entry,
-  whose Ni and noble metals are McDonough & Sun's primitive mantle
-  unchanged. `tests/test_normalizations.py` pins each verified value to
-  its table.
+  Table 4. Against Becker *et al.* (2006): their Os and Ru are right,
+  and their primitive-mantle Au, 1.9 ± 0.6 ng/g, was missing — the
+  entry said they gave none. Against Salters & Stracke (2004), Table 6:
+  the depleted-mantle entry carried McDonough & Sun's *primitive*-mantle
+  noble metals and Cu 24 ppm, seven of its nine values wrong; it now
+  holds their depleted mantle, Re included. Every Ni-Cu-PGE value is now
+  checked, and `tests/test_normalizations.py` pins each to its table and
+  fails if a metal table holds a value tied to no page.
 
 #### Interface
 

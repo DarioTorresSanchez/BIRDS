@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-2824%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-2841%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -193,7 +193,10 @@ Depleted MORB Mantle (Salters & Stracke 2004). These carry their own x-axis —
 Ni · Os · Ir · Ru · Rh · Pt · Pd · Au · Cu, ordered by compatibility with
 sulphide liquid rather than by incompatibility — and are offered in both
 the REE and the multi-element tabs, so a magmatic-sulphide study can sit
-its metal pattern next to its REE pattern.
+its metal pattern next to its REE pattern. Every value is checked page by
+page against its paper and pinned to its table in
+`tests/test_normalizations.py`; the primitive mantle often cited as
+Barnes & Maier (1999) is McDonough & Sun's (1995), and goes by their name.
 
 Patterns can be drawn per sample or per group, with min–max / P10–P90 /
 P25–P75 envelopes, editable reservoir lines and full annotation support.
@@ -494,12 +497,6 @@ kriging.
 
 Known limitations worth stating plainly:
 
-- The **Ni-Cu-PGE reference values** are checked page by page against
-  their papers — McDonough & Sun (1995), Fischer-Gödde *et al.* (2010,
-  2011) and Horan *et al.* (2003) — except the Os and Ru of Becker *et
-  al.* (2006) and the depleted-mantle entry, whose Ni and noble metals
-  are McDonough & Sun's primitive mantle unchanged. Use that one with
-  caution. The module records the check reference by reference.
 - Validation against USGS reference materials BHVO-2, BCR-2 and AGV-2
   runs in `tests/test_usgs_reference_materials.py`, using the values in
   the USGS Reference Material Information Sheets (June 2022), which take

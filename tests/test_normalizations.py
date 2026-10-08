@@ -17,6 +17,9 @@ from birds.normalizations import (
     normaliser_categories,
 )
 
+#: ppb to ppm: the papers print noble metals in ng/g.
+_PPB = 1e-3
+
 ALL_GROUPS = (REE_CHONDRITES, REE_SHALES, MULTIELEMENT_NORMS,
               CHALCOPHILE_NORMS)
 ALL_NAMES = [n for g in ALL_GROUPS for n in g]
@@ -77,7 +80,7 @@ def test_duplicated_names_resolve_to_the_richest_table(name):
 class TestChalcophile:
     @pytest.mark.parametrize("name", list(CHALCOPHILE_NORMS))
     def test_axis_only_asks_for_metals_the_reference_has(self, name):
-        """Becker et al. report no Rh or Au — the axis must not invent them."""
+        """Becker et al. report no Rh — the axis must not invent it."""
         values = CHALCOPHILE_NORMS[name]
         assert set(chalcophile_order(name)) <= set(values)
 
@@ -130,23 +133,62 @@ class TestPublishedMetalValues:
         assert table[metal] * 1000 == pytest.approx(ng_g, rel=1e-9)
 
     @pytest.mark.parametrize("metal, ng_g", [
-        # Becker et al. (2006) as quoted by Fischer-Gödde et al. (2011).
-        ("Ir", 3.5), ("Pt", 7.6), ("Pd", 7.1), ("Re", 0.35),
+        # Becker et al. (2006), §5.3, pp. 4541-4542.  Rh not analysed.
+        ("Os", 3.9), ("Ir", 3.5), ("Ru", 7.0), ("Pt", 7.6), ("Pd", 7.1),
+        ("Re", 0.35), ("Au", 1.9),
     ])
     def test_becker_primitive_upper_mantle(self, metal, ng_g):
         table = CHALCOPHILE_NORMS["Primitive Upper Mantle (Becker et al. 2006)"]
         assert table[metal] * 1000 == pytest.approx(ng_g, rel=1e-9)
 
+    @pytest.mark.parametrize("metal, value", [
+        # Salters & Stracke (2004), Table 6: Ni and Cu in ppm, the rest
+        # in ppb.  The entry used to carry the primitive mantle's noble
+        # metals and Cu 24 -- seven of these nine wrong.
+        ("Ni", 1960), ("Cu", 30), ("Os", 2.99 * _PPB), ("Ir", 2.9 * _PPB),
+        ("Ru", 5.7 * _PPB), ("Rh", 1.0 * _PPB), ("Pt", 6.2 * _PPB),
+        ("Pd", 5.2 * _PPB), ("Re", 0.157 * _PPB), ("Au", 1.0 * _PPB),
+    ])
+    def test_salters_and_stracke_depleted_mantle(self, metal, value):
+        table = CHALCOPHILE_NORMS[
+            "Depleted MORB Mantle (Salters & Stracke 2004)"]
+        assert table[metal] == pytest.approx(value, rel=1e-9)
+
     @pytest.mark.parametrize("name", [
-        n for n in CHALCOPHILE_NORMS if "Mantle" in n])
+        n for n in CHALCOPHILE_NORMS if "Primitive" in n])
     def test_primitive_mantle_nickel_and_copper(self, name):
         """McDonough & Sun (1995), Table 5: Ni 1960, Cu 30 ppm.  Ni also
         agrees with McDonough (2014a), 0.196 wt.%, in Rollinson & Pease
-        (2021), Table 3.2a.  The depleted mantle's own Cu is unchecked."""
+        (2021), Table 3.2a."""
         table = CHALCOPHILE_NORMS[name]
         assert table["Ni"] == pytest.approx(PYROLITE["Ni"])
-        if "Depleted" not in name:
-            assert table["Cu"] == pytest.approx(PYROLITE["Cu"])
+        assert table["Cu"] == pytest.approx(PYROLITE["Cu"])
+
+    @pytest.mark.parametrize("name", list(CHALCOPHILE_NORMS))
+    def test_every_metal_reference_is_pinned_to_its_source(self, name):
+        """No metal table may hold a value the tests above do not tie to
+        a page -- which is how the unchecked ones went unnoticed."""
+        pinned = {
+            "Primitive Mantle, metals (McDonough & Sun 1995)": set(PYROLITE),
+            "Primitive Upper Mantle (Becker et al. 2006)":
+                {"Os", "Ir", "Ru", "Pt", "Pd", "Re", "Au", "Ni", "Cu"},
+            "Primitive Mantle (Fischer-Gödde et al. 2011)":
+                {"Ir", "Rh", "Pt", "Pd", "Re", "Au", "Ni", "Cu"},
+            "CI Chondrite (Fischer-Gödde et al. 2010)":
+                {"Re", "Os", "Ir", "Ru", "Pt", "Rh", "Pd", "Au", "Ni", "Cu"},
+            "Depleted MORB Mantle (Salters & Stracke 2004)":
+                {"Ni", "Cu", "Os", "Ir", "Ru", "Rh", "Pt", "Pd", "Re", "Au"},
+        }
+        assert name in pinned, f"{name} is pinned to no source"
+        unpinned = set(CHALCOPHILE_NORMS[name]) - pinned[name]
+        if name == "Primitive Mantle (Fischer-Gödde et al. 2011)":
+            # Os and Ru, which their Table 3 leaves out, are Becker's.
+            becker = CHALCOPHILE_NORMS[
+                "Primitive Upper Mantle (Becker et al. 2006)"]
+            for metal in ("Os", "Ru"):
+                assert CHALCOPHILE_NORMS[name][metal] == becker[metal]
+            unpinned -= {"Os", "Ru"}
+        assert not unpinned, unpinned
 
     def test_ci_nickel_and_copper(self):
         """McDonough & Sun (1995), Table 2.  They were 10910 and 126."""
@@ -173,7 +215,6 @@ class TestPublishedMetalValues:
 # (the paper prints Nb to U in ppb).  Every table B.I.R.D.S credits to
 # this paper must agree with them.
 
-_PPB = 1e-3
 CI = dict(
     K=550, Ti=440, P=1080, Sc=5.92, V=56, Cr=2650, Co=500, Ni=10500,
     Cu=120, Rb=2.30, Sr=7.25, Y=1.57,

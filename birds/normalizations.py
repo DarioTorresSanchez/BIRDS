@@ -224,27 +224,25 @@ MULTIELEMENT_NORMS: Dict[str, Mapping[str, float]] = {
 # directly as the sulphide's history — high R-factor, fractionation of
 # monosulphide solid solution, or a late-stage Cu-rich residue.
 #
-# Checked page by page against the papers (2026-10-08):
+# Every value below was checked page by page against its paper on
+# 2026-10-08, reading the rendered tables rather than the text layer:
 #
 # * McDonough & Sun (1995), Chem. Geol. 120: Table 5 ("Pyrolite") for
-#   every primitive-mantle Ni and Cu and for the whole first entry, and
-#   Table 2 for CI Ni and Cu;
+#   the first entry and every primitive-mantle Ni and Cu; Table 2 for CI
+#   Ni and Cu;
+# * Becker et al. (2006), GCA 70, §5.3 (pp. 4541-4542);
 # * Fischer-Gödde et al. (2011), Chem. Geol. 280, Table 3 and §5.3, and
 #   (2010), GCA 74, Table 3;
-# * Becker et al. (2006): Ir, Pt, Pd and Re, as Fischer-Gödde quote them.
+# * Salters & Stracke (2004), G-cubed 5, Table 6.
 #
-# Checking found the Fischer-Gödde primitive-mantle Au at 1.0 ng/g where
-# the paper gives 1.7; a CI entry credited to Horan et al. (2003) whose
-# numbers are not in that paper; CI Ni and Cu matching no column of
-# McDonough & Sun's Table 2; and a first entry credited to Barnes &
-# Maier (1999) that is McDonough & Sun's pyrolite to the last digit.
-#
-# .. warning::
-#    Still unchecked: Os and Ru of Becker et al. (2006), and the
-#    depleted-mantle entry -- whose Ni and noble metals are McDonough &
-#    Sun's *primitive* mantle unchanged, which no depleted-mantle
-#    estimate would be.  Verify them before publishing a figure that
-#    depends on their absolute level.
+# Checking found: the Fischer-Gödde primitive-mantle Au at 1.0 ng/g
+# where the paper gives 1.7; a CI entry credited to Horan et al. (2003)
+# whose numbers are not in that paper; CI Ni and Cu matching no column of
+# McDonough & Sun's Table 2; a first entry credited to Barnes & Maier
+# (1999) that is McDonough & Sun's pyrolite to the last digit; a
+# depleted-mantle entry that carried the *primitive* mantle's noble
+# metals, seven of its nine values wrong; and Becker et al.'s gold
+# estimate missing.
 
 # Order of decreasing compatibility in sulphide liquid (Barnes & Lightfoot
 # 2005; Barnes & Ripley 2016).  Ni and Cu bracket the noble metals.
@@ -266,14 +264,15 @@ CHALCOPHILE_NORMS: Dict[str, Mapping[str, float]] = {
         "Rh": 0.0009, "Pt": 0.0071, "Pd": 0.0039, "Au": 0.0010,
         "Cu": 30.0,
     },
-    # Primitive upper mantle from peridotite massifs and xenoliths.  Ir,
-    # Pt, Pd and Re are the values Fischer-Gödde et al. (2011, Table 3)
-    # take from this paper; Os and Ru are not yet checked.  Becker et al.
-    # report no Rh or Au; Ni and Cu are McDonough & Sun's (1995), so the
-    # axis does not break.
+    # Primitive upper mantle from peridotite massifs and xenoliths,
+    # Becker et al. (2006, §5.3): Os 3.9, Ir 3.5, Ru 7.0, Pt 7.6, Pd 7.1,
+    # Re 0.35 ng/g, and Au 1.9 ± 0.6 ng/g -- "relatively imprecise", from
+    # earlier analyses of the same samples.  Rh was not analysed.  Ni
+    # and Cu are McDonough & Sun's (1995), so the axis does not break.
     "Primitive Upper Mantle (Becker et al. 2006)": {
         "Ni": 1960.0, "Os": 0.0039, "Ir": 0.0035, "Ru": 0.0070,
-        "Pt": 0.0076, "Pd": 0.0071, "Re": 0.00035, "Cu": 30.0,
+        "Pt": 0.0076, "Pd": 0.0071, "Re": 0.00035, "Au": 0.0019,
+        "Cu": 30.0,
     },
     # The primitive-mantle model of Fischer-Gödde et al. (2011, Chem.
     # Geol. 280, Table 3 and §5.3): their Rh, 1.2 ± 0.2 ng/g, and Au,
@@ -299,13 +298,13 @@ CHALCOPHILE_NORMS: Dict[str, Mapping[str, float]] = {
         "Au": 0.149, "Cu": 120.0,
     },
     # Depleted MORB mantle — the sensible reference for oceanic and
-    # ophiolite-hosted sulphide occurrences.  Not yet checked: its Ni and
-    # noble metals are McDonough & Sun's primitive mantle, unchanged; see
-    # the warning above.
+    # ophiolite-hosted sulphide occurrences.  Salters & Stracke (2004),
+    # Table 6.  It used to carry McDonough & Sun's primitive-mantle noble
+    # metals and Cu 24: seven of nine values wrong.
     "Depleted MORB Mantle (Salters & Stracke 2004)": {
-        "Ni": 1960.0, "Os": 0.0034, "Ir": 0.0032, "Ru": 0.0050,
-        "Rh": 0.0009, "Pt": 0.0071, "Pd": 0.0039, "Au": 0.0010,
-        "Cu": 24.0,
+        "Ni": 1960.0, "Os": 0.00299, "Ir": 0.0029, "Ru": 0.0057,
+        "Rh": 0.0010, "Pt": 0.0062, "Pd": 0.0052, "Re": 0.000157,
+        "Au": 0.0010, "Cu": 30.0,
     },
 }
 

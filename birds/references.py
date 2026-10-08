@@ -295,7 +295,7 @@ REFERENCES: List[Section] = [
          "from new data on peridotite massifs and xenoliths. *Geochimica "
          "et Cosmochimica Acta*, *70*(17), 4528-4550. "
          "https://doi.org/10.1016/j.gca.2006.06.004",
-         "Primitive upper mantle HSE (Os, Ir, Ru, Pt, Pd, Re)."),
+         "Primitive upper mantle HSE (Os, Ir, Ru, Pt, Pd, Re, Au)."),
         ("Fischer-Gödde, M., Becker, H., & Wombacher, F. (2010). Rhodium, "
          "gold and other highly siderophile element abundances in "
          "chondritic meteorites. *Geochimica et Cosmochimica Acta*, "
@@ -316,7 +316,8 @@ REFERENCES: List[Section] = [
         ("Salters, V. J. M., & Stracke, A. (2004). Composition of the "
          "depleted mantle. *Geochemistry, Geophysics, Geosystems*, *5*(5), "
          "Q05B07. https://doi.org/10.1029/2003GC000597",
-         "Depleted MORB mantle reference for oceanic sulphide settings."),
+         "Depleted MORB mantle metals (Table 6) for oceanic sulphide "
+         "settings."),
         ("Barnes, S.-J., & Ripley, E. M. (2016). Highly siderophile and "
          "strongly chalcophile elements in magmatic ore deposits. "
          "*Reviews in Mineralogy and Geochemistry*, *81*(1), 725-774. "
