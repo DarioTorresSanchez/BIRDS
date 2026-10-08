@@ -376,7 +376,7 @@ including what is still unverified.
 - **Verma citations**: four were wrong in the bibliography and in the
   subtitles printed on the plots — wrong journal, wrong page range,
   reversed initials, a DOI one digit out.
-- **Ni-Cu-PGE normalisers, checked against three of their papers.** The
+- **Ni-Cu-PGE normalisers, checked against their papers.** The
   Fischer-Gödde *et al.* (2011) primitive mantle carried Au at 1.0 ng/g;
   their Table 3 and §5.3 give 1.7 ± 0.5. It also gains their Re. The CI
   chondrite was credited to Horan *et al.* (2003), but its numbers are
@@ -389,12 +389,22 @@ including what is still unverified.
   it is GCA 74 (2010), 356–379, and the primitive-mantle Rh and Au come
   from a second paper, Chem. Geol. 280 (2011), now listed too. Ir, Pt,
   Pd and Re of Becker *et al.* (2006) agree with the values Fischer-Gödde
-  quote from it, and primitive-mantle Ni with McDonough (2014a). Still
-  unchecked, and said so in the module, the manual and the README:
-  Barnes & Maier (1999), the Os and Ru of Becker, every Cu value, CI Ni,
-  and the depleted-mantle entry, whose metals are identical to Barnes &
-  Maier's except Cu. `tests/test_normalizations.py` pins each verified
-  value to its table.
+  quote from it. Against McDonough & Sun (1995) itself: the primitive
+  mantle credited to Barnes & Maier (1999) is McDonough & Sun's
+  pyrolite (Table 5) to the last digit, and is now listed under their
+  name, the old one still read from sessions — Barnes & Maier leave the
+  bibliography, since nothing in the program comes from them any more;
+  the CI Ni and Cu, 10910
+  and 126 ppm, matched no column of their Table 2 and are now its 10500
+  and 120; every primitive-mantle Ni and Cu is confirmed. So are all 73
+  values of the REE and multi-element tables credited to them. The
+  primitive-mantle reservoir's majors were not theirs — 44.95 SiO₂,
+  0.20 TiO₂, 0.13 MnO, 37.78 MgO — and are now pyrolite model 1 of
+  Table 4. Still unchecked, and said so in the module, the manual and
+  the README: the Os and Ru of Becker, and the depleted-mantle entry,
+  whose Ni and noble metals are McDonough & Sun's primitive mantle
+  unchanged. `tests/test_normalizations.py` pins each verified value to
+  its table.
 
 #### Interface
 

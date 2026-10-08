@@ -271,7 +271,8 @@ REFERENCES: List[Section] = [
         ("McDonough, W. F., & Sun, S.-s. (1995). The composition of the "
          "Earth. *Chemical Geology*, *120*(3-4), 223-253. "
          "https://doi.org/10.1016/0009-2541(94)00140-4",
-         "CI Chondrite multi-element reference."),
+         "CI chondrite and primitive mantle (Tables 2, 4, 5): REE, "
+         "multi-element and Ni-Cu-PGE normalisation, mantle reservoir."),
         ("Boynton, W. V. (1984). Cosmochemistry of the rare earth "
          "elements: Meteorite studies. In P. Henderson (Ed.), *Rare "
          "earth element geochemistry* (pp. 63-114). Elsevier.",
@@ -288,13 +289,6 @@ REFERENCES: List[Section] = [
          "major and trace element characteristics. *Geochimica et "
          "Cosmochimica Acta*, *48*(12), 2469-2482.",
          "NASC reference."),
-        ("Barnes, S.-J., & Maier, W. D. (1999). The fractionation of Ni, "
-         "Cu and the noble metals in silicate and sulphide liquids. In "
-         "R. R. Keays, C. M. Lesher, P. C. Lightfoot, & C. E. G. Farrow "
-         "(Eds.), *Dynamic processes in magmatic ore deposits and their "
-         "application to mineral exploration* (Geological Association of "
-         "Canada Short Course Notes 13, pp. 69-106).",
-         "Primitive-mantle metal values for Ni-Cu-PGE normalisation."),
         ("Becker, H., Horan, M. F., Walker, R. J., Gao, S., Lorand, "
          "J.-P., & Rudnick, R. L. (2006). Highly siderophile element "
          "composition of the Earth's primitive upper mantle: Constraints "

@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-2817%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-2824%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -186,7 +186,7 @@ O'Neill 2014), CI Chondrite (McDonough & Sun 1995), N-MORB and E-MORB
 (Sun & McDonough 1989), N-MORB mean (Arevalo & McDonough 2010), Upper and
 Bulk Continental Crust (Rudnick & Gao 2014), NASC (Gromet et al. 1984).
 
-**Ni-Cu-PGE metals (5)** — Primitive Mantle (Barnes & Maier 1999),
+**Ni-Cu-PGE metals (5)** — Primitive Mantle (McDonough & Sun 1995),
 Primitive Upper Mantle (Becker et al. 2006), Primitive Mantle
 (Fischer-Gödde et al. 2011), CI Chondrite (Fischer-Gödde et al. 2010),
 Depleted MORB Mantle (Salters & Stracke 2004). These carry their own x-axis —
@@ -494,14 +494,12 @@ kriging.
 
 Known limitations worth stating plainly:
 
-- The **Ni-Cu-PGE reference values** are checked page by page only in
-  part. Verified: both Fischer-Gödde references (primitive mantle and CI
-  chondrite), the Ir, Pt, Pd and Re of Becker *et al.* (2006), and
-  primitive-mantle Ni. Not yet: Barnes & Maier (1999), the Os and Ru of
-  Becker *et al.*, every Cu value, CI Ni, and the depleted-mantle entry.
-  Pattern *shapes* are robust; verify the absolute normalised level
-  against the source before publishing. The module records the same,
-  reference by reference.
+- The **Ni-Cu-PGE reference values** are checked page by page against
+  their papers — McDonough & Sun (1995), Fischer-Gödde *et al.* (2010,
+  2011) and Horan *et al.* (2003) — except the Os and Ru of Becker *et
+  al.* (2006) and the depleted-mantle entry, whose Ni and noble metals
+  are McDonough & Sun's primitive mantle unchanged. Use that one with
+  caution. The module records the check reference by reference.
 - Validation against USGS reference materials BHVO-2, BCR-2 and AGV-2
   runs in `tests/test_usgs_reference_materials.py`, using the values in
   the USGS Reference Material Information Sheets (June 2022), which take

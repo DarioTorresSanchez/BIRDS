@@ -139,17 +139,95 @@ class TestPublishedMetalValues:
 
     @pytest.mark.parametrize("name", [
         n for n in CHALCOPHILE_NORMS if "Mantle" in n])
-    def test_primitive_mantle_nickel(self, name):
-        """0.196 wt.% Ni in the bulk silicate Earth (McDonough 2014a, in
-        Rollinson & Pease 2021, Table 3.2a)."""
-        assert CHALCOPHILE_NORMS[name]["Ni"] == pytest.approx(1960.0)
+    def test_primitive_mantle_nickel_and_copper(self, name):
+        """McDonough & Sun (1995), Table 5: Ni 1960, Cu 30 ppm.  Ni also
+        agrees with McDonough (2014a), 0.196 wt.%, in Rollinson & Pease
+        (2021), Table 3.2a.  The depleted mantle's own Cu is unchecked."""
+        table = CHALCOPHILE_NORMS[name]
+        assert table["Ni"] == pytest.approx(PYROLITE["Ni"])
+        if "Depleted" not in name:
+            assert table["Cu"] == pytest.approx(PYROLITE["Cu"])
 
-    def test_a_session_saved_under_the_old_ci_name_still_finds_it(self):
+    def test_ci_nickel_and_copper(self):
+        """McDonough & Sun (1995), Table 2.  They were 10910 and 126."""
+        table = CHALCOPHILE_NORMS["CI Chondrite (Fischer-Gödde et al. 2010)"]
+        assert table["Ni"] == pytest.approx(CI["Ni"])
+        assert table["Cu"] == pytest.approx(CI["Cu"])
+
+    @pytest.mark.parametrize("old", [
+        "CI Chondrite (Horan et al. 2003 / McDonough & Sun 1995)",
+        "Primitive Mantle (Barnes & Maier 1999)",
+    ])
+    def test_a_session_saved_under_an_old_name_still_finds_it(self, old):
         from birds.normalizations import current_name
-        old = "CI Chondrite (Horan et al. 2003 / McDonough & Sun 1995)"
         assert old not in CHALCOPHILE_NORMS
         assert current_name(old) in CHALCOPHILE_NORMS
         assert current_name("Boynton (1984)") == "Boynton (1984)"
+
+
+# ---------------------------------------------------------------------------
+# McDonough & Sun (1995), Chem. Geol. 120, read from the rendered tables
+# ---------------------------------------------------------------------------
+#
+# Table 2, "This study" column, and Table 5, "Pyrolite" column, in ppm
+# (the paper prints Nb to U in ppb).  Every table B.I.R.D.S credits to
+# this paper must agree with them.
+
+_PPB = 1e-3
+CI = dict(
+    K=550, Ti=440, P=1080, Sc=5.92, V=56, Cr=2650, Co=500, Ni=10500,
+    Cu=120, Rb=2.30, Sr=7.25, Y=1.57,
+    Zr=3.82, Nb=240 * _PPB, Cs=190 * _PPB, Ba=2410 * _PPB, La=237 * _PPB,
+    Ce=613 * _PPB, Pr=92.8 * _PPB, Nd=457 * _PPB, Sm=148 * _PPB,
+    Eu=56.3 * _PPB, Gd=199 * _PPB, Tb=36.1 * _PPB, Dy=246 * _PPB,
+    Ho=54.6 * _PPB, Er=160 * _PPB, Tm=24.7 * _PPB, Yb=161 * _PPB,
+    Lu=24.6 * _PPB, Hf=103 * _PPB, Ta=13.6 * _PPB, Pb=2470 * _PPB,
+    Th=29 * _PPB, U=7.4 * _PPB, Re=40 * _PPB, Os=490 * _PPB,
+    Ir=455 * _PPB, Ru=710 * _PPB, Rh=130 * _PPB, Pt=1010 * _PPB,
+    Pd=550 * _PPB, Au=140 * _PPB,
+)
+PYROLITE = dict(
+    K=240, Ti=1205, P=90, Sc=16.2, V=82, Cr=2625, Co=105, Ni=1960,
+    Cu=30, Rb=0.600, Sr=19.9, Y=4.30,
+    Zr=10.5, Nb=658 * _PPB, Cs=21 * _PPB, Ba=6600 * _PPB, La=648 * _PPB,
+    Ce=1675 * _PPB, Pr=254 * _PPB, Nd=1250 * _PPB, Sm=406 * _PPB,
+    Eu=154 * _PPB, Gd=544 * _PPB, Tb=99 * _PPB, Dy=674 * _PPB,
+    Ho=149 * _PPB, Er=438 * _PPB, Tm=68 * _PPB, Yb=441 * _PPB,
+    Lu=67.5 * _PPB, Hf=283 * _PPB, Ta=37 * _PPB, Pb=150 * _PPB,
+    Th=79.5 * _PPB, U=20.3 * _PPB, Re=0.28 * _PPB, Os=3.4 * _PPB,
+    Ir=3.2 * _PPB, Ru=5.0 * _PPB, Rh=0.9 * _PPB, Pt=7.1 * _PPB,
+    Pd=3.9 * _PPB, Au=1.0 * _PPB,
+)
+#: Table 4, pyrolite model 1, wt.% (FeO is all the iron).
+PYROLITE_MAJORS = dict(SiO2=45.0, TiO2=0.201, Al2O3=4.45, FeOT=8.05,
+                       MnO=0.135, MgO=37.8, CaO=3.55, Na2O=0.36,
+                       K2O=0.029, P2O5=0.021)
+
+
+@pytest.mark.parametrize("table, reference", [
+    (REE_CHONDRITES["McDonough & Sun (1995) – CI"], CI),
+    (MULTIELEMENT_NORMS["CI Chondrite (McDonough & Sun 1995)"], CI),
+    (MULTIELEMENT_NORMS["Primitive Mantle (McDonough & Sun 1995)"], PYROLITE),
+    (CHALCOPHILE_NORMS["Primitive Mantle, metals (McDonough & Sun 1995)"],
+     PYROLITE),
+], ids=["REE CI", "multi-element CI", "multi-element PM", "metals PM"])
+def test_every_value_credited_to_mcdonough_and_sun_is_theirs(table,
+                                                            reference):
+    assert set(table) <= set(reference)
+    for element, value in table.items():
+        assert value == pytest.approx(reference[element], rel=1e-9), element
+
+
+def test_the_primitive_mantle_reservoir_is_mcdonough_and_suns():
+    """Its majors were 44.95 SiO2, 0.20 TiO2, 0.13 MnO and 37.78 MgO,
+    none of which the paper prints."""
+    from birds.reservoirs import RESERVOIRS
+
+    table = RESERVOIRS["Primitive mantle (McDonough & Sun 1995)"]
+    reference = {**PYROLITE, **PYROLITE_MAJORS}
+    assert set(table) <= set(reference)
+    for element, value in table.items():
+        assert value == pytest.approx(reference[element], rel=1e-9), element
 
 
 def test_categories_expose_every_normaliser():

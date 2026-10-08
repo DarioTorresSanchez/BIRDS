@@ -308,21 +308,19 @@ SECTIONS = [
             "9 multi-element references (Primitive Mantle ×2, CI "
             "Chondrite, N-MORB ×2, E-MORB, UCC, Bulk CC, NASC).",
             "5 Ni-Cu-PGE metal references (primitive mantle after "
-            "Barnes & Maier 1999, Becker et al. 2006 and Fischer-Gödde "
+            "McDonough & Sun 1995, Becker et al. 2006 and Fischer-Gödde "
             "et al. 2011; CI chondrite after Fischer-Gödde et al. 2010; "
             "depleted mantle after Salters & Stracke 2004), drawn on "
             "their own axis — Ni, the platinum-group metals, Au and Cu in "
             "order of compatibility with sulphide liquid.",
         ]},
         {"type": "note", "text":
-         "Not every Ni-Cu-PGE value has been checked against its "
-         "paper yet. Verified: both Fischer-Gödde references, the Ir, "
-         "Pt, Pd and Re of Becker et al. (2006) and primitive-mantle Ni. "
-         "Not yet: Barnes & Maier (1999), every Cu value, CI Ni, the Os "
-         "and Ru of Becker et al. and the depleted-mantle entry. The "
-         "shape of a pattern depends little on the choice; before "
-         "publishing its absolute level, check the value you normalise "
-         "to."},
+         "Every Ni-Cu-PGE value has been checked against its paper "
+         "except the Os and Ru of Becker et al. (2006) and the "
+         "depleted-mantle entry, whose Ni and noble metals are McDonough "
+         "& Sun's primitive mantle unchanged — use it with caution. The "
+         "primitive mantle often cited as Barnes & Maier (1999) is "
+         "McDonough & Sun's (1995) and is listed under their name."},
         {"type": "h2", "text": "Plot modes"},
         {"type": "bullet", "items": [
             "Individual sample lines (default).",

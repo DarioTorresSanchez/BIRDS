@@ -224,23 +224,27 @@ MULTIELEMENT_NORMS: Dict[str, Mapping[str, float]] = {
 # directly as the sulphide's history — high R-factor, fractionation of
 # monosulphide solid solution, or a late-stage Cu-rich residue.
 #
-# Checked page by page, so far (2026-10-08): the two Fischer-Gödde
-# references, against Chem. Geol. 280 (2011) Table 3 and §5.3 and GCA 74
-# (2010) Table 3; Ir, Pt, Pd and Re of Becker et al. (2006) as quoted
-# there; and primitive-mantle Ni, 0.196 wt.% (McDonough 2014a, in
-# Rollinson & Pease 2021, Table 3.2a).  Checking found Au of the
-# Fischer-Gödde primitive mantle at 1.0 ng/g where the paper gives 1.7,
-# and a CI entry credited to Horan et al. (2003) whose values are not in
-# that paper, which reports single analyses only.
+# Checked page by page against the papers (2026-10-08):
+#
+# * McDonough & Sun (1995), Chem. Geol. 120: Table 5 ("Pyrolite") for
+#   every primitive-mantle Ni and Cu and for the whole first entry, and
+#   Table 2 for CI Ni and Cu;
+# * Fischer-Gödde et al. (2011), Chem. Geol. 280, Table 3 and §5.3, and
+#   (2010), GCA 74, Table 3;
+# * Becker et al. (2006): Ir, Pt, Pd and Re, as Fischer-Gödde quote them.
+#
+# Checking found the Fischer-Gödde primitive-mantle Au at 1.0 ng/g where
+# the paper gives 1.7; a CI entry credited to Horan et al. (2003) whose
+# numbers are not in that paper; CI Ni and Cu matching no column of
+# McDonough & Sun's Table 2; and a first entry credited to Barnes &
+# Maier (1999) that is McDonough & Sun's pyrolite to the last digit.
 #
 # .. warning::
-#    Still unchecked: Barnes & Maier (1999) entire; Os and Ru of Becker
-#    et al. (2006); Cu everywhere and Ni of the CI chondrite; and the
-#    depleted-mantle entry, whose metals are identical to Barnes &
-#    Maier's except Cu -- suspicious for a different reservoir.  Verify
-#    them before publishing a figure that depends on their absolute
-#    level; the *shape* of a pattern is far less sensitive to the choice
-#    of reference than its absolute normalised value.
+#    Still unchecked: Os and Ru of Becker et al. (2006), and the
+#    depleted-mantle entry -- whose Ni and noble metals are McDonough &
+#    Sun's *primitive* mantle unchanged, which no depleted-mantle
+#    estimate would be.  Verify them before publishing a figure that
+#    depends on their absolute level.
 
 # Order of decreasing compatibility in sulphide liquid (Barnes & Lightfoot
 # 2005; Barnes & Ripley 2016).  Ni and Cu bracket the noble metals.
@@ -254,9 +258,10 @@ CHALCOPHILE_ORDER_EXTENDED: Tuple[str, ...] = (
 )
 
 CHALCOPHILE_NORMS: Dict[str, Mapping[str, float]] = {
-    # The reference most Ni-Cu-PGE papers normalise to.  Not yet
-    # checked against the paper.
-    "Primitive Mantle (Barnes & Maier 1999)": {
+    # McDonough & Sun (1995), Table 5, pyrolite: the primitive mantle most
+    # Ni-Cu-PGE papers normalise to.  It used to be credited to Barnes &
+    # Maier (1999), who did not originate these numbers.
+    "Primitive Mantle, metals (McDonough & Sun 1995)": {
         "Ni": 1960.0, "Os": 0.0034, "Ir": 0.0032, "Ru": 0.0050,
         "Rh": 0.0009, "Pt": 0.0071, "Pd": 0.0039, "Au": 0.0010,
         "Cu": 30.0,
@@ -264,8 +269,8 @@ CHALCOPHILE_NORMS: Dict[str, Mapping[str, float]] = {
     # Primitive upper mantle from peridotite massifs and xenoliths.  Ir,
     # Pt, Pd and Re are the values Fischer-Gödde et al. (2011, Table 3)
     # take from this paper; Os and Ru are not yet checked.  Becker et al.
-    # report no Rh or Au; Ni and Cu are carried over so the axis does
-    # not break.
+    # report no Rh or Au; Ni and Cu are McDonough & Sun's (1995), so the
+    # axis does not break.
     "Primitive Upper Mantle (Becker et al. 2006)": {
         "Ni": 1960.0, "Os": 0.0039, "Ir": 0.0035, "Ru": 0.0070,
         "Pt": 0.0076, "Pd": 0.0071, "Re": 0.00035, "Cu": 30.0,
@@ -273,7 +278,8 @@ CHALCOPHILE_NORMS: Dict[str, Mapping[str, float]] = {
     # The primitive-mantle model of Fischer-Gödde et al. (2011, Chem.
     # Geol. 280, Table 3 and §5.3): their Rh, 1.2 ± 0.2 ng/g, and Au,
     # 1.7 ± 0.5 ng/g, with the Ir, Pt, Pd and Re of Becker et al.
-    # (2006).  Table 3 leaves out Os and Ru, which are Becker's too.
+    # (2006).  Table 3 leaves out Os and Ru, which are Becker's too, and
+    # Ni and Cu, which are McDonough & Sun's (1995), as its footnote says.
     "Primitive Mantle (Fischer-Gödde et al. 2011)": {
         "Ni": 1960.0, "Os": 0.0039, "Ir": 0.0035, "Ru": 0.0070,
         "Rh": 0.0012, "Pt": 0.0076, "Pd": 0.0071, "Re": 0.00035,
@@ -284,16 +290,18 @@ CHALCOPHILE_NORMS: Dict[str, Mapping[str, float]] = {
     # Fischer-Gödde et al. (2010, GCA 74, Table 3, "Mean CI"): Orgueil
     # and Ivuna by isotope dilution -- theirs, Walker et al.'s (2002) and
     # Horan et al.'s (2003) -- adjusted to a CI Ir of 462 ng/g.  Ni and
-    # Cu are carried over from the entry this replaced; their source is
-    # not yet identified.
+    # Cu, which it does not measure, are McDonough & Sun's (1995, Table
+    # 2).  They were 10910 and 126 ppm, which matches none of that
+    # table's four columns.
     "CI Chondrite (Fischer-Gödde et al. 2010)": {
-        "Ni": 10910.0, "Os": 0.491, "Ir": 0.462, "Ru": 0.688,
+        "Ni": 10500.0, "Os": 0.491, "Ir": 0.462, "Ru": 0.688,
         "Rh": 0.133, "Pt": 0.943, "Pd": 0.563, "Re": 0.0407,
-        "Au": 0.149, "Cu": 126.0,
+        "Au": 0.149, "Cu": 120.0,
     },
     # Depleted MORB mantle — the sensible reference for oceanic and
-    # ophiolite-hosted sulphide occurrences.  Not yet checked; see the
-    # warning above.
+    # ophiolite-hosted sulphide occurrences.  Not yet checked: its Ni and
+    # noble metals are McDonough & Sun's primitive mantle, unchanged; see
+    # the warning above.
     "Depleted MORB Mantle (Salters & Stracke 2004)": {
         "Ni": 1960.0, "Os": 0.0034, "Ir": 0.0032, "Ru": 0.0050,
         "Rh": 0.0009, "Pt": 0.0071, "Pd": 0.0039, "Au": 0.0010,
@@ -307,6 +315,8 @@ CHALCOPHILE_NORMS: Dict[str, Mapping[str, float]] = {
 RENAMED_NORMALISERS: Dict[str, str] = {
     "CI Chondrite (Horan et al. 2003 / McDonough & Sun 1995)":
         "CI Chondrite (Fischer-Gödde et al. 2010)",
+    "Primitive Mantle (Barnes & Maier 1999)":
+        "Primitive Mantle, metals (McDonough & Sun 1995)",
 }
 
 

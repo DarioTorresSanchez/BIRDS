@@ -143,9 +143,11 @@ RESERVOIRS: Dict[str, Dict[str, float]] = {
     },
 
     # ── Mantle rocks ────────────────────────────────────────────────────
+    # Majors: Table 4, pyrolite model 1 (FeO is all the iron).  Traces:
+    # Table 5.  Both checked against the paper.
     "Primitive mantle (McDonough & Sun 1995)": {
-        "SiO2": 44.95, "TiO2": 0.20, "Al2O3": 4.45, "FeOT": 8.05,
-        "MnO": 0.13, "MgO": 37.78, "CaO": 3.55, "Na2O": 0.36, "K2O": 0.029,
+        "SiO2": 45.0, "TiO2": 0.201, "Al2O3": 4.45, "FeOT": 8.05,
+        "MnO": 0.135, "MgO": 37.8, "CaO": 3.55, "Na2O": 0.36, "K2O": 0.029,
         "P2O5": 0.021,
         "Cs": 0.021, "Rb": 0.6, "Ba": 6.6, "Th": 0.0795, "U": 0.0203,
         "Nb": 0.658, "K": 240, "La": 0.648, "Ce": 1.675, "Pb": 0.15,
