@@ -1070,13 +1070,37 @@ sign is read — AI < 0 is Al-deficient, peralkaline — and the sign is the
 same on either basis; Figure 3.9d is a quadrant sketch with no scale on
 its axes, so it cannot say which basis the magnitude should be on.
 
+**Panel (d)'s labels were wrong by the definitions.** It carried two:
+"metaluminous, silica-saturated" at FSSI = −2, which is
+silica-*under*saturated, and "peralkaline, silica-saturated" at
+AI = +0.4, which is not peralkaline — AI > 0 is Al adequate to
+excessive. The lower half had none. Figure 3.9d names all four
+quadrants, and those four names are what the panel now carries, one at
+the centre of each quadrant. Nothing else in the panel moved.
+
+Two misprints in Rollinson & Pease, noted so nobody copies them: the
+Figure 3.9 caption gives the ASI formula for AI, and Table 3.4 prints
+FSSI as Q − [Lc − 2(Ne + Kp)]/100 where the caption and the text both
+have + inside the bracket. The code follows the text. Whether the /100
+divides Q too changes nothing read off the panel: a CIPW norm never
+carries quartz and a feldspathoid together, so one term is always zero
+and the sign of FSSI is the same either way.
+
+**Not settled, and left alone**: the frames. Panel (c) runs ASI
+0.5–1.6 where Figure 3.9c runs 0.8–1.2, and panel (d) runs FSSI ±2.5
+and AI ±1 where real rocks fall within about ±0.6 and ±0.2, so they
+crowd the centre. Figure 3.9 is a redrawing and (d) has no scale, so
+neither gives a frame worth copying.
+
 `tests/test_frost_2001.py` pins the molar masses against the atomic
 weights, ASI = 1 for albite, orthoclase, anorthite, An₅₀ and a ternary
 feldspar, the agreement with `maniar_piccolli` over 200 random
 compositions, the apatite correction — adding apatite to a feldspar
 leaves it on 1 — and the granite above. Putting the cation basis back
 fails seven of them; P₂O₅ at 141.95 and a halved apatite correction
-fail one each.
+fail one each. It also pins the signs of AI and FSSI and that each of
+panel (d)'s four labels names the quadrant it sits in, which the old
+labels fail.
 
 ## Method
 

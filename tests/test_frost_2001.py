@@ -127,3 +127,54 @@ def test_a_granite_reads_the_same_on_both_diagrams():
     a_cnk, _ = get_diagram("maniar_piccolli")._compute_xy(df)
     assert float(asi.iloc[0]) == pytest.approx(float(a_cnk.iloc[0]))
     assert float(asi.iloc[0]) == pytest.approx(1.029, abs=0.001)
+
+
+# ---------------------------------------------------------------------------
+# Panel (d): AI against FSSI
+# ---------------------------------------------------------------------------
+
+def _ai_fssi(**row) -> tuple[float, float]:
+    ai, fssi = get_diagram(DIAGRAM)._ai_fssi(pd.DataFrame([row]))
+    return float(ai.iloc[0]), float(fssi.iloc[0])
+
+
+def test_the_signs_of_ai_and_fssi():
+    """AI < 0 is Al-deficient; FSSI < 0 is silica-undersaturated."""
+    mm = MOLAR_MASS
+    feldspar = {"Al2O3": mm["Al2O3"], "Na2O": mm["Na2O"], "K2O": 0.0}
+    ai, fssi = _ai_fssi(**feldspar, Q=20.0, Ne=0.0)
+    assert ai == pytest.approx(0.0, abs=1e-12)
+    assert fssi > 0
+    ai, fssi = _ai_fssi(**{**feldspar, "Na2O": 1.2 * mm["Na2O"]},
+                        Q=0.0, Ne=15.0)
+    assert ai < 0
+    assert fssi < 0
+
+
+def test_each_quadrant_label_names_its_own_quadrant():
+    """As Rollinson & Pease (2021) Figure 3.9d names them.
+
+    The panel carried two labels, both wrong: "metaluminous,
+    silica-saturated" sat at FSSI < 0, which is undersaturated, and
+    "peralkaline, silica-saturated" at AI > 0, which is not peralkaline.
+    The lower half had none.
+    """
+    from matplotlib.figure import Figure
+
+    from birds.diagrams.templates.base import PlotOptions
+    from birds.plot_style import PlotStyle
+
+    fig = Figure()
+    get_diagram(DIAGRAM).plot(fig, None, PlotStyle(), PlotOptions())
+    ax = fig.axes[3]
+    assert ax.get_title() == "(d) AI vs FSSI"
+    quadrants = set()
+    for t in ax.texts:
+        x, y = t.get_position()
+        words = " ".join(t.get_text().split())
+        assert ("undersaturated" in words) == (x < 0), words
+        assert ("deficient" in words) == (y < 0), words
+        assert ("excessive" in words) == (y > 0), words
+        assert "metaluminous" not in words and "peralkaline" not in words
+        quadrants.add((x > 0, y > 0))
+    assert len(ax.texts) == 4 and len(quadrants) == 4

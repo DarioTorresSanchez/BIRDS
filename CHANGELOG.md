@@ -313,6 +313,12 @@ including what is still unverified.
   Pease 2021, p. 127), so every feldspar has to sit on it; all now do,
   and with no P₂O₅ the index equals A/CNK. P₂O₅'s molar mass was
   141.95 where the atomic weights give 141.94.
+- **Frost *et al.* (2001), panel (d): both labels named the wrong
+  quadrant.** "Metaluminous, silica-saturated" sat at FSSI < 0, which
+  is undersaturated, and "peralkaline, silica-saturated" at AI > 0,
+  which is not peralkaline; the lower half had no label. All four
+  quadrants now carry the names Rollinson & Pease (2021) Figure 3.9d
+  gives them.
 - **A sweep of all 208 statistics rows against the diagrams**, looking
   for the fault that the Verma units and the Saccani normalisers both
   were: a quantity computed twice by two routes that do not share code,

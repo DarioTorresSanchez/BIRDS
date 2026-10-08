@@ -68,6 +68,16 @@ MALI_LABELS = {
 }
 
 
+#: The four quadrants of AI against FSSI, named as Rollinson & Pease
+#: (2021) Figure 3.9d names them: FSSI < 0 is silica-undersaturated,
+#: AI < 0 is Al-deficient (peralkaline).  Placed at quadrant centres.
+AI_FSSI_LABELS = {
+    "silica-\nundersaturated\nAl adequate\nto excessive": (-1.25, 0.5),
+    "silica-\nsaturated\nAl adequate\nto excessive":      (1.25, 0.5),
+    "silica-\nundersaturated\nAl deficient":              (-1.25, -0.5),
+    "silica-\nsaturated\nAl deficient":                   (1.25, -0.5),
+}
+
 #: Oxide molar masses (g/mol); IUPAC atomic weights give 101.9601,
 #: 56.0770, 61.9785, 94.1956 and 141.9425.
 MOLAR_MASS = {
@@ -188,10 +198,9 @@ class Frost(Diagram):
 
         ax_ai.axvline(0.0, color="#b13a3a", lw=0.7, ls="--")
         ax_ai.axhline(0.0, color="#b13a3a", lw=0.7, ls="--")
-        ax_ai.text(-2.0, 0.4, "metaluminous\nsilica-saturated", color="#444",
-                   fontsize=7.5)
-        ax_ai.text(0.5, 0.4, "peralkaline\nsilica-saturated", color="#444",
-                   fontsize=7.5)
+        for name, (x, y) in AI_FSSI_LABELS.items():
+            ax_ai.text(x, y, name, color="#444", fontsize=7.5,
+                       ha="center", va="center")
 
         # Data
         if df is not None and not df.empty:
