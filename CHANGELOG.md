@@ -294,6 +294,17 @@ including what is still unverified.
   draws only the Yb ≤ 1.9 ppm threshold the paper does state, says so
   on the plot, and has given up its invented `(0, 6)` by `(0, 80)`
   frame so the axes follow the data.
+- **Maniar & Piccoli (1989): the "Peralkaline" label sat where nothing
+  can plot.** The diagram draws a third line besides Shand's two, the
+  diagonal A/NK = A/CNK, which is where CaO = 0 and below which no
+  composition falls. It was stored as the peralkaline field and its
+  label put at (1.25, 0.75), under that diagonal and right of
+  A/CNK = 1; peralkaline rocks plot in the triangle above it, which had
+  no label. The label is there now, the note under the plot says what
+  the diagonal is, and nothing drawn has moved. The two boundaries and
+  the molar arithmetic were checked against Shand's definitions and
+  were right: every feldspar lands on A/CNK = 1, albite and orthoclase
+  on both lines.
 - **A sweep of all 208 statistics rows against the diagrams**, looking
   for the fault that the Verma units and the Saccani normalisers both
   were: a quantity computed twice by two routes that do not share code,

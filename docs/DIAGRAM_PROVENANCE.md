@@ -8,7 +8,7 @@ kind of check:
 
 | Kind | What it is | How to verify |
 |---|---|---|
-| **Rule** | A definition, e.g. A/CNK = 1 | Nothing to verify — the rule *is* the boundary |
+| **Rule** | A definition, e.g. A/CNK = 1 | Nothing to measure — the rule *is* the boundary — but check the arithmetic under it and whatever else is drawn |
 | **Equation / table** | Published coefficients or vertex list | Compare the numbers with the paper |
 | **Drawn envelope** | A hand-drawn field with no equation | Measure the published figure |
 
@@ -156,9 +156,11 @@ reported values 20 to 56 units out on axes that span ±8. It now lives on
 `DFCoefSet.ppm_parts`, which both paths read, and a test asserts the two
 paths return the same number.
 
-**Rule, nothing to verify:**
+**Rule, nothing to measure:**
 
-- `maniar_piccolli` — A/CNK = 1 and A/NK = 1 (Shand's definition)
+- `maniar_piccolli` — A/CNK = 1 and A/NK = 1 (Shand's definition); the
+  molar arithmetic and what else is drawn are checked too, and one
+  label was wrong. See *Maniar & Piccoli (1989)* below.
 
 **Checked vertex-by-vertex against the published coordinate table**
 (Le Bas et al. 1986, as tabulated in Rollinson & Pease 2021 Fig. 3.1b):
@@ -952,6 +954,86 @@ the per-class covariance matrices. The paper publishes neither those nor
 anchor points for them in Table 6, the way it does for the three LDA
 ternaries. They stay drawn by eye unless the data behind the paper can
 be obtained.
+
+## Maniar & Piccoli (1989) — the rules were right, one label was not
+
+No source file: *GSA Bulletin* **101**, 635–643, is not on disk, and
+nothing below needed it. Key `maniar_piccolli` — the old misspelling,
+kept because saved sessions store the key; every string a user reads
+says Piccoli.
+
+This was listed as a rule with nothing to verify, and the rules do need
+nothing: A/CNK = 1 and A/NK = 1 are Shand's (1943) definitions, so they
+*are* the boundaries. What is built around a rule still has to be
+checked — the arithmetic that places a sample, and anything else on the
+plot — and one of those was wrong.
+
+**The arithmetic is right.** Both ratios are molar, with Al₂O₃ 101.96,
+CaO 56.08, Na₂O 61.98 and K₂O 94.20; the IUPAC atomic weights give
+101.960, 56.077, 61.979 and 94.196, so all four are right to the two
+decimals they carry. The check worth having is a composition the
+boundaries are defined by. A/CNK = 1 is where Al is just enough to make
+feldspar of the Ca, Na and K present, so every feldspar has to land on
+it. With the wt.% built from atomic weights rather than from the
+module's own masses, albite, orthoclase and Or₄₀Ab₆₀ come out at
+(1, 1) to 3 × 10⁻⁵, and Ab–Or–An mixtures at A/CNK = 1 with
+A/NK = 1 + An/(Ab + Or), counted as oxide-basis formula units. In wt.%,
+albite would sit at A/NK = 1.64.
+
+**The two boundaries are right**, a vertical at A/CNK = 1 the full
+height of the frame and a horizontal at A/NK = 1 the full width.
+
+**The third line was filed as a field.** A diagonal from (0.5, 0.5) to
+(2, 2) is drawn as well. It is not a boundary but arithmetic:
+
+> A/NK ÷ A/CNK = (CaO + Na₂O + K₂O) / (Na₂O + K₂O)
+
+is never below 1 while CaO ≥ 0 and is exactly 1 at CaO = 0. The
+diagonal is the CaO-free limit and nothing plots under it — least of
+all in the lower-right quadrant, which would have to be peraluminous and
+peralkaline at once. It was stored under the name *Peralkaline*, so the
+label that name carries sat at (1.25, 0.75): right of A/CNK = 1 and
+under the diagonal, where no rock can go, while the module's docstring
+said that quadrant was left unlabelled. The peralkaline rocks themselves
+fall in the small triangle above the diagonal, left of A/CNK = 1 and
+under A/NK = 1, and that had no label. A comendite-like rhyolite —
+9.5 Al₂O₃, 0.3 CaO, 5.0 Na₂O, 4.5 K₂O — plots at (0.70, 0.73), inside
+it and close to the diagonal, as low-Ca peralkaline rocks do.
+
+Nothing drawn has moved: the same three lines at the same coordinates,
+compared before and after on the rendered plot. The diagonal is now
+drawn as what it is, the label sits in the triangle at (0.66, 0.88),
+where it fits at both canvas sizes tried, and the note under the plot
+says what the diagonal means.
+
+**What needs the paper.** Whether Maniar & Piccoli draw the diagonal at
+all, and on what frame, cannot be settled from the definitions. The
+frame, 0.5–2.0 by 0.4–4.0, is not taken from their figure, and neither
+is running both boundaries across the whole frame rather than stopping
+them at the diagonal. None of it changes where a sample plots or which
+field it falls in.
+
+**Found along the way, not fixed here.** `frost` computes its ASI on a
+cation basis — Al, Na and K doubled from the oxide moles, Ca not — so it
+is 2A/(C + 2N + 2K) where Shand's index is A/(C + N + K). The two agree
+only without Ca: anorthite comes out at ASI 2 against A/CNK 1, and a
+granite at A/CNK 1.03 at ASI 1.23. Frost's panel calls everything above
+ASI = 1 peraluminous, so a Ca-bearing metaluminous rock can read
+peraluminous there and metaluminous here. Rollinson & Pease (2021)
+describe the index as Al beyond what feldspar needs, which only the
+A/CNK form satisfies; what Frost *et al.* (2001) and Frost & Frost
+(2008) mean by "Al/(Ca − 1.67P + Na + K)" needs those papers, and
+neither is on disk.
+
+`tests/test_maniar_piccoli_1989.py` pins the molar masses against the
+atomic weights, the feldspars on the boundaries, the fields against the
+mineralogy — Al left over is peraluminous, Ca left over metaluminous,
+Na left over peralkaline — the diagonal as the CaO = 0 limit, exactly
+three lines drawn, each label inside the field it names and above the
+diagonal, and the spelling. Each was checked by putting a fault back:
+the old label position, a wt.% computation, K₂O at 94.11, the boundary
+at 1.1, and Ca counted twice, the last caught only by the plagioclase
+mixtures.
 
 ## Method
 
