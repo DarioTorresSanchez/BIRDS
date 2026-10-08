@@ -516,10 +516,6 @@ including what is still unverified.
   frame, one and a half at the top. The diagram draws the line, which is
   what Figure 9 is; both rules are quoted on it so that a sample landing
   in the band is visibly a case with two answers.
-- **Ni-Cu-PGE reference values** come from the usual compilations and
-  have not been checked page by page against the original papers.
-  Pattern shapes are robust; verify the absolute normalised level
-  before publishing.
 
 ## [0.1.0-alpha] – 2026-08-20
 
