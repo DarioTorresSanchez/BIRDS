@@ -308,6 +308,8 @@ water-saturated rows in Table 3.10 — a curation choice, now documented.
   `0.46 + 0.005·SiO₂` — and ASI, AI and FSSI are definitional. Its
   three MALI boundaries were straight lines between invented endpoints;
   the published ones are curves. Measured from Fig. 3.9b and replaced.
+  Being definitional did not make the ASI right: it was computed on a
+  mixed basis that put anorthite at 2. See *Frost et al. (2001)* below.
 * **`pearce_1976_DF`** and **`butler_woronow_DF`** were the real find.
   Both are **DF1–DF2 binary diagrams** with three fields around a
   central point, and both were implemented as one-dimensional strip
@@ -1013,17 +1015,9 @@ is running both boundaries across the whole frame rather than stopping
 them at the diagonal. None of it changes where a sample plots or which
 field it falls in.
 
-**Found along the way, not fixed here.** `frost` computes its ASI on a
-cation basis — Al, Na and K doubled from the oxide moles, Ca not — so it
-is 2A/(C + 2N + 2K) where Shand's index is A/(C + N + K). The two agree
-only without Ca: anorthite comes out at ASI 2 against A/CNK 1, and a
-granite at A/CNK 1.03 at ASI 1.23. Frost's panel calls everything above
-ASI = 1 peraluminous, so a Ca-bearing metaluminous rock can read
-peraluminous there and metaluminous here. Rollinson & Pease (2021)
-describe the index as Al beyond what feldspar needs, which only the
-A/CNK form satisfies; what Frost *et al.* (2001) and Frost & Frost
-(2008) mean by "Al/(Ca − 1.67P + Na + K)" needs those papers, and
-neither is on disk.
+**Found along the way:** `frost` computed the same index differently,
+and a Ca-bearing rock could be metaluminous here and peraluminous there.
+Now fixed; see *Frost et al. (2001)* below.
 
 `tests/test_maniar_piccoli_1989.py` pins the molar masses against the
 atomic weights, the feldspars on the boundaries, the fields against the
@@ -1034,6 +1028,55 @@ diagonal, and the spelling. Each was checked by putting a fault back:
 the old label position, a wt.% computation, K₂O at 94.11, the boundary
 at 1.1, and Ca counted twice, the last caught only by the plagioclase
 mixtures.
+
+## Frost *et al.* (2001) — the ASI was not Shand's index
+
+Rollinson & Pease (2021) Figure 3.9 and Table 3.4, after Frost *et al.*
+(2001) and Frost & Frost (2008); neither original is on disk. Key
+`frost`, panel (c).
+
+The index is printed as molecular **Al/(Ca − 1.67P + Na + K)**, and
+Rollinson & Pease say on p. 127 what its line at 1 means: peraluminous
+rocks "have more Al than is needed to make feldspars", metaluminous
+rocks lack it. That fixes the arithmetic without the originals. A
+feldspar has exactly the Al it needs, so every feldspar — anorthite as
+much as albite — has to come out at ASI = 1, which makes the index
+Shand's A/CNK with apatite's Ca taken out.
+
+**It was computed on a mixed basis.** Al, Na and K were doubled from
+oxide moles to cations and Ca was not, so the index was
+2A/(C + 2N + 2K) where Shand's is A/(C + N + K). The two agree only
+without Ca:
+
+| | A/CNK | ASI before | ASI now |
+| --- | --- | --- | --- |
+| albite | 1.000 | 1.000 | 1.000 |
+| anorthite | 1.000 | 2.000 | 1.000 |
+| An₅₀ plagioclase | 1.000 | 1.333 | 1.000 |
+| granite, 14.5 Al₂O₃ / 2.5 CaO / 3.5 Na₂O / 3.5 K₂O | 1.029 | 1.227 | 1.029 |
+
+Panel (c) calls everything above 1 peraluminous, so a Ca-bearing rock
+near the line was peraluminous on this panel and metaluminous on
+`maniar_piccolli` — the same index, reaching the user twice with two
+answers. All four oxides are now molecular proportions; P stays counted
+per atom, two per P₂O₅, so that 1.67, Frost's printed rounding of the
+5/3 Ca per P in apatite, still applies to it. Read that way the printed
+formula is exactly A/CNK less apatite, and with no P₂O₅ the two
+diagrams now agree to rounding. P₂O₅ was also 141.95 g/mol where the
+atomic weights give 141.94.
+
+**AI is left on the cation basis**, Al − (Na + K) per atom. Only its
+sign is read — AI < 0 is Al-deficient, peralkaline — and the sign is the
+same on either basis; Figure 3.9d is a quadrant sketch with no scale on
+its axes, so it cannot say which basis the magnitude should be on.
+
+`tests/test_frost_2001.py` pins the molar masses against the atomic
+weights, ASI = 1 for albite, orthoclase, anorthite, An₅₀ and a ternary
+feldspar, the agreement with `maniar_piccolli` over 200 random
+compositions, the apatite correction — adding apatite to a feldspar
+leaves it on 1 — and the granite above. Putting the cation basis back
+fails seven of them; P₂O₅ at 141.95 and a halved apatite correction
+fail one each.
 
 ## Method
 

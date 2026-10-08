@@ -305,6 +305,14 @@ including what is still unverified.
   the molar arithmetic were checked against Shand's definitions and
   were right: every feldspar lands on A/CNK = 1, albite and orthoclase
   on both lines.
+- **Frost *et al.* (2001): the ASI was not Shand's index.** Al, Na and
+  K were doubled to cations and Ca was not, so anorthite came out at
+  ASI 2 instead of 1 and a granite at A/CNK 1.03 at 1.23 —
+  peraluminous on the Frost panel, metaluminous on Maniar & Piccoli.
+  The line at ASI = 1 means Al just enough for feldspar (Rollinson &
+  Pease 2021, p. 127), so every feldspar has to sit on it; all now do,
+  and with no P₂O₅ the index equals A/CNK. P₂O₅'s molar mass was
+  141.95 where the atomic weights give 141.94.
 - **A sweep of all 208 statistics rows against the diagrams**, looking
   for the fault that the Verma units and the Saccani normalisers both
   were: a quantity computed twice by two routes that do not share code,

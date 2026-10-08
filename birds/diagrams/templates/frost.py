@@ -9,6 +9,14 @@ Four diagrams plotted in a 2 x 2 grid:
 
 FSSI is taken from the CIPW norm if columns Q, Lc, Ne, Kp are present;
 otherwise the panel renders an empty axis.
+
+ASI is Shand's index, A/CNK, with Ca in apatite taken out: molecular
+Al2O3 / (CaO - 1.67 P + Na2O + K2O), P per atom.  It is 1 for every
+feldspar, which is what ASI = 1 between metaluminous and peraluminous
+means.  It used to double Al, Na and K to cations and leave Ca alone,
+which put anorthite at 2 and a granite at A/CNK 1.03 at 1.23.  AI is
+still on the cation basis, Al - (Na + K) per atom; only its sign is
+read, and the sign is the same on either basis.
 """
 
 from __future__ import annotations
@@ -60,6 +68,20 @@ MALI_LABELS = {
 }
 
 
+#: Oxide molar masses (g/mol); IUPAC atomic weights give 101.9601,
+#: 56.0770, 61.9785, 94.1956 and 141.9425.
+MOLAR_MASS = {
+    "Al2O3": 101.96,
+    "CaO":    56.08,
+    "Na2O":   61.98,
+    "K2O":    94.20,
+    "P2O5":  141.94,
+}
+
+#: Ca per P in apatite, as Frost et al. (2001) print it (5/3).
+APATITE_CA_PER_P = 1.67
+
+
 def _to_num(df, col):
     return pd.to_numeric(df[col], errors="coerce")
 
@@ -107,13 +129,16 @@ class Frost(Diagram):
         p2 = resolve_column(df, ["P2O5"])
         if not (si and al and na and k and ca):
             return None, None
-        # Molar
-        al_m = _to_num(df, al) / 101.96 * 2.0
-        na_m = _to_num(df, na) / 61.98 * 2.0
-        k_m = _to_num(df, k) / 94.20 * 2.0
-        ca_m = _to_num(df, ca) / 56.08
-        p_m = _to_num(df, p2) / 141.95 * 2.0 if p2 else 0.0
-        asi = al_m / (ca_m - 1.67 * p_m + na_m + k_m)
+        # Molecular proportions of the oxides, so that ASI is Shand's
+        # A/CNK and every feldspar has ASI = 1.  Doubling Al, Na and K
+        # to cations without doubling Ca made anorthite 2.  P is counted
+        # per atom, two per P2O5, against Ca = CaO in apatite.
+        al_m = _to_num(df, al) / MOLAR_MASS["Al2O3"]
+        na_m = _to_num(df, na) / MOLAR_MASS["Na2O"]
+        k_m = _to_num(df, k) / MOLAR_MASS["K2O"]
+        ca_m = _to_num(df, ca) / MOLAR_MASS["CaO"]
+        p_m = _to_num(df, p2) / MOLAR_MASS["P2O5"] * 2.0 if p2 else 0.0
+        asi = al_m / (ca_m - APATITE_CA_PER_P * p_m + na_m + k_m)
         return _to_num(df, si), asi
 
     def _ai_fssi(self, df):
@@ -126,9 +151,9 @@ class Frost(Diagram):
         kp = resolve_column(df, ["Kp", "kp", "Kaliophilite"])
         if not (al and na and k):
             return None, None
-        al_m = _to_num(df, al) / 101.96 * 2.0
-        na_m = _to_num(df, na) / 61.98 * 2.0
-        k_m = _to_num(df, k) / 94.20 * 2.0
+        al_m = _to_num(df, al) / MOLAR_MASS["Al2O3"] * 2.0
+        na_m = _to_num(df, na) / MOLAR_MASS["Na2O"] * 2.0
+        k_m = _to_num(df, k) / MOLAR_MASS["K2O"] * 2.0
         ai = al_m - (k_m + na_m)
         if q is None:
             return ai, None
