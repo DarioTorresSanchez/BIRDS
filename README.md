@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-2758%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-2762%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -122,7 +122,7 @@ structured:
 - TAS plutonic — Middlemost 1994
 - Normative An–Ab–Or — Barker 1979
 - Fe-index, MALI, ASI, AI, FSSI — Frost et al. 2001 / Frost & Frost 2008
-- A/CNK vs A/NK — Maniar & Piccolli 1989
+- A/CNK vs A/NK — Maniar & Piccoli 1989
 - Ab–Or–Q haplogranite system — Tuttle & Bowen 1958
 
 </details>
@@ -378,7 +378,10 @@ python3 main.py
 6. **`Ctrl+S`** to save the session.
 
 A complete user manual ships with the repository:
-[`docs/BIRDS_User_Manual.pdf`](docs/BIRDS_User_Manual.pdf).
+[`docs/BIRDS_User_Manual.pdf`](docs/BIRDS_User_Manual.pdf). How the Map
+view kriges — the choices, the equations, how it was checked and where
+it stops — is set out in
+[`docs/SPATIAL_ANALYSIS.md`](docs/SPATIAL_ANALYSIS.md).
 
 ---
 
@@ -463,6 +466,8 @@ BIRDS/
 │   ├── session.py              .birds sessions + autosave
 │   ├── selection.py            Cross-view sample selection bus
 │   ├── stats_engine.py         Descriptive stats, anomalies, indices
+│   ├── coords.py               Coordinate formats, WGS-84 ellipsoid
+│   ├── geostats.py             Variograms, ordinary kriging, grids
 │   ├── references.py           APA bibliography
 │   ├── diagrams/
 │   │   ├── registry.py         Key → template lookup
@@ -472,7 +477,7 @@ BIRDS/
 │   ├── views/                  One widget per diagram family
 │   └── resources/              Logo and icons
 ├── templates/                  Data-entry templates
-└── docs/                       User manual (PDF/DOCX) and flow chart
+└── docs/                       User manual (PDF/DOCX), flow chart, method notes
 ```
 
 ---
@@ -483,7 +488,9 @@ BIRDS/
 under testing. [`CHANGELOG.md`](CHANGELOG.md) records what has changed
 and against which published source each diagram was checked;
 [`docs/DIAGRAM_PROVENANCE.md`](docs/DIAGRAM_PROVENANCE.md) carries the
-same thing diagram by diagram, including what is still unverified.
+same thing diagram by diagram, including what is still unverified, and
+[`docs/SPATIAL_ANALYSIS.md`](docs/SPATIAL_ANALYSIS.md) does it for the
+kriging.
 
 Known limitations worth stating plainly:
 
@@ -510,6 +517,12 @@ Known limitations worth stating plainly:
 - In the Map view, `pyproj` and `mgrs` are optional and only affect
   coordinate-format parsing. Once installed, nothing in B.I.R.D.S needs a
   network connection.
+- The Map view's kriging is **ordinary and isotropic**: no model of a
+  regional trend, no direction-dependent variogram, one variable at a
+  time. A strong trend shows up as a variogram range that never levels
+  off, and the summary under the map says so.
+  [`docs/SPATIAL_ANALYSIS.md`](docs/SPATIAL_ANALYSIS.md) lists the limits
+  in full.
 
 Bug reports and suggestions are welcome through the issue tracker.
 

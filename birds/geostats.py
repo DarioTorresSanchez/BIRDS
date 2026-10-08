@@ -11,7 +11,7 @@ Four choices shape the rest, and each is the conservative one.
 **Distances are measured through the Earth, not across a projection.**
 Every sample is placed in Earth-centred Cartesian coordinates on the
 WGS-84 ellipsoid and kriged there with straight-line distances.  The
-chord differs from the distance along the surface by under one part in
+chord differs from the distance along the surface by about one part in
 10⁵ at 100 km, nothing is distorted anywhere on the globe, and the three
 variogram models offered here are valid in three dimensions -- so
 restricting them to the ellipsoid's surface keeps them valid, which

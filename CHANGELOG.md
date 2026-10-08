@@ -85,6 +85,25 @@ including what is still unverified.
   `tests/test_manual_and_menu_are_current.py` recomputes every count
   from the registry and requires each menu entry to name the axes its
   own plot draws, because counts written in prose drift silently.
+- **The manual covers the Map view, and the rest of it caught up.** A
+  new section 12 explains the coordinate formats, the sample map, the
+  five displays, every kriging option, how to read the summary, setting
+  the variogram by hand and exporting the grids, with troubleshooting
+  entries for the map. The menu list had six menus of eleven and said
+  "14" tectonic diagrams; two menu paths no longer existed (`Data →
+  Import`, `Data → Save`); the classification lists lacked Hastie et
+  al., Winchester & Floyd and Maniar & Piccoli; the spider section
+  lacked the Ni-Cu-PGE references and the caveat they carry. The
+  manual-currency tests now also require the menu list to match the
+  menu bar, the sections to be numbered in order, and every map tab
+  and control the manual names to exist under that name. The workflow
+  flowchart — the manual's Figure 1 and the README's — was redrawn
+  with all eleven modules, and its counts are now read from the code
+  instead of typed in.
+- **`docs/SPATIAL_ANALYSIS.md`**, the method note for the kriging: the
+  choices and their reasons, the equations, the data handling, how it
+  was checked and where it stops. It is to the geostatistics what
+  `DIAGRAM_PROVENANCE.md` is to the diagrams.
 - **The FCMS plane, Yang *et al.* (2019) Fig. 1a.** FCMS was reported
   in the statistics table with no diagram to read it against — the gap
   the two-routes sweep found, by its having no partner to pair with.
@@ -356,6 +375,13 @@ including what is still unverified.
   as soon as the view was opened, which filled the selectors again
   from the column names. Choices are now kept while the columns are
   the same.
+- **Maniar & Piccoli was spelt "Piccolli"** in the menu, the plot title
+  and the citation printed under the plot, and was missing from the
+  bibliography — as was Middlemost (1994), the source of the plutonic
+  TAS and its rock naming. Both are now listed, with a new
+  geostatistics section (Matheron 1963, Dubrule 1983, Webster & Oliver
+  1992, Pebesma 2004). The pyproj entry still said it served Web
+  Mercator.
 
 ### Changed
 

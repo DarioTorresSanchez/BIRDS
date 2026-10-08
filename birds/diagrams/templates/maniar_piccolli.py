@@ -1,10 +1,10 @@
-"""A/CNK vs A/NK aluminium-saturation diagram – Maniar & Piccolli (1989).
+"""A/CNK vs A/NK aluminium-saturation diagram – Maniar & Piccoli (1989).
 
 X-axis : A/CNK = molar Al2O3 / (CaO + Na2O + K2O)  (Shand's index)
 Y-axis : A/NK  = molar Al2O3 / (Na2O + K2O)
 
 The two reference lines at A/CNK = 1 and A/NK = 1 split the plane into
-three classification fields (Shand 1943; Maniar & Piccolli 1989):
+three classification fields (Shand 1943; Maniar & Piccoli 1989):
 
   - Peraluminous : A/CNK > 1
   - Metaluminous : A/CNK ≤ 1 and A/NK ≥ 1
@@ -32,8 +32,8 @@ _MW = {
 
 class ManiarPiccolli1989(Diagram):
     key = "maniar_piccolli"
-    title = "A/CNK – A/NK aluminium saturation – Maniar & Piccolli (1989)"
-    citation = ("Maniar, P.D. & Piccolli, P.M. (1989). Tectonic "
+    title = "A/CNK – A/NK aluminium saturation – Maniar & Piccoli (1989)"
+    citation = ("Maniar, P.D. & Piccoli, P.M. (1989). Tectonic "
                 "discrimination of granitoids. GSA Bulletin 101, 635–643. "
                 "Original index after Shand (1943).")
     x_label = "A/CNK = molar Al$_2$O$_3$ / (CaO + Na$_2$O + K$_2$O)"

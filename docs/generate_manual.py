@@ -15,6 +15,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import LETTER
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
+from reportlab.lib.utils import ImageReader
 from reportlab.platypus import (
     Image,
     PageBreak,
@@ -192,10 +193,11 @@ def build_pdf(out_path: Path) -> None:
 
     if FLOWCHART.exists():
         story.append(Spacer(1, 0.1 * inch))
-        # Flowchart aspect ratio matches the 10.0 × 11.5 figure used by
-        # generate_flowchart.py (ratio ≈ 1.15).
-        story.append(Image(str(FLOWCHART),
-                           width=5.6 * inch, height=6.4 * inch))
+        # Sized from the image itself, so the figure keeps its shape
+        # whatever generate_flowchart.py gives it.
+        img_w, img_h = ImageReader(str(FLOWCHART)).getSize()
+        story.append(Image(str(FLOWCHART), width=5.6 * inch,
+                           height=5.6 * inch * img_h / img_w))
         story.append(Paragraph(
             "Figure 1.  B.I.R.D.S application workflow.",
             styles["caption"]))

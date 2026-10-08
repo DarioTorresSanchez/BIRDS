@@ -49,6 +49,14 @@ REFERENCES: List[Section] = [
         ("Middlemost, E. A. K. (1985). *Magmas and magmatic rocks*. "
          "Longman.",
          "K2O-SiO2 fields (low/medium/high-K series)."),
+        ("Middlemost, E. A. K. (1994). Naming materials in the "
+         "magma/igneous rock system. *Earth-Science Reviews*, *37*(3-4), "
+         "215-224.",
+         "TAS plutonic diagram and its rock naming."),
+        ("Maniar, P. D., & Piccoli, P. M. (1989). Tectonic discrimination "
+         "of granitoids. *Geological Society of America Bulletin*, "
+         "*101*, 635-643.",
+         "A/CNK vs A/NK aluminium-saturation diagram."),
         ("Peccerillo, A., & Taylor, S. R. (1976). Geochemistry of Eocene "
          "calc-alkaline volcanic rocks from the Kastamonu area, northern "
          "Turkey. *Contributions to Mineralogy and Petrology*, *58*(1), "
@@ -386,6 +394,25 @@ REFERENCES: List[Section] = [
          "MGRS grid-reference convention."),
     ]),
     # ----------------------------------------------------------------------
+    ("Geostatistics — kriging in the Map view", [
+        ("Matheron, G. (1963). Principles of geostatistics. *Economic "
+         "Geology*, *58*(8), 1246-1266. "
+         "https://doi.org/10.2113/gsecongeo.58.8.1246",
+         "Variogram and ordinary kriging."),
+        ("Dubrule, O. (1983). Cross validation of kriging in a unique "
+         "neighborhood. *Mathematical Geology*, *15*(6), 687-699. "
+         "https://doi.org/10.1007/BF01033232",
+         "Leave-one-out cross-validation from a single matrix inverse."),
+        ("Webster, R., & Oliver, M. A. (1992). Sample adequately to "
+         "estimate variograms of soil properties. *Journal of Soil "
+         "Science*, *43*(1), 177-192.",
+         "Sample sizes behind the variogram's reliability warning."),
+        ("Pebesma, E. J. (2004). Multivariable geostatistics in S: The "
+         "gstat package. *Computers & Geosciences*, *30*, 683-691. "
+         "https://doi.org/10.1016/j.cageo.2004.03.012",
+         "Variogram fit weighted by N(h)/h², gstat's default."),
+    ]),
+    # ----------------------------------------------------------------------
     ("Software & libraries used by B.I.R.D.S", [
         ("Hunter, J. D. (2007). Matplotlib: A 2D graphics environment. "
          "*Computing in Science & Engineering*, *9*(3), 90-95. "
@@ -402,13 +429,14 @@ REFERENCES: List[Section] = [
         ("Virtanen, P., Gommers, R., Oliphant, T. E., et al. (2020). "
          "SciPy 1.0: Fundamental algorithms for scientific computing in "
          "Python. *Nature Methods*, *17*, 261-272.",
-         "scipy.spatial.ConvexHull for shaded group envelopes."),
+         "Convex hulls for group envelopes; the linear algebra and "
+         "least squares behind the kriging."),
         ("The Qt Company. (2024). *Qt for Python (PySide6) documentation*. "
          "https://doi.org/10.5281/zenodo.7891302",
          "GUI framework."),
         ("Whitaker, J. (2024). *pyproj: Python interface to PROJ*. "
          "https://pyproj4.github.io/pyproj/",
-         "Coordinate-system transforms (UTM, Web-Mercator)."),
+         "UTM to latitude/longitude, when installed."),
     ]),
 ]
 

@@ -32,7 +32,7 @@ CLASSIFICATION_PLUTONIC = [
     ("TAS plutonic - Middlemost (1994)", "tas_plutonic"),
     ("Normative An-Ab-Or - Barker 1979", "barker_anaborn"),
     ("Frost et al. 2001 / Frost & Frost 2008 (Fe-index, MALI, ASI, AI, FSSI)", "frost"),
-    ("A/CNK vs A/NK - Maniar & Piccolli (1989)", "maniar_piccolli"),
+    ("A/CNK vs A/NK - Maniar & Piccoli (1989)", "maniar_piccolli"),
     ("Ab-Or-Q haplogranite system - Tuttle & Bowen 1958", "haplogranite"),
 ]
 

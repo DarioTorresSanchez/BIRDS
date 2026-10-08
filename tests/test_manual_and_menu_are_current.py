@@ -80,6 +80,7 @@ def test_the_normaliser_count_is_right(manual_text):
     ("REE chondrite normalisers", REE_CHONDRITES),
     ("REE shale composites", REE_SHALES),
     ("multi-element references", MULTIELEMENT_NORMS),
+    ("Ni-Cu-PGE metal references", CHALCOPHILE_NORMS),
 ])
 def test_the_spider_tables_are_counted_right(manual_text, phrase, table):
     assert _count_before(manual_text, phrase) == len(table)
@@ -165,3 +166,79 @@ def test_every_diagram_is_reachable_from_some_menu():
     listed |= {k for _l, k in _PETROGRAPHY_CATALOG}
     unreachable = set(_REGISTRY) - listed
     assert not unreachable, f"not in any menu: {sorted(unreachable)}"
+
+
+# ---------------------------------------------------------------------------
+# The menu bar, and the map's controls, as the manual names them
+# ---------------------------------------------------------------------------
+
+def _section(title_word):
+    import manual_content
+
+    for title, blocks in manual_content.SECTIONS:
+        if title_word in title:
+            return blocks
+    raise AssertionError(f"the manual has no section on {title_word!r}")
+
+
+@pytest.fixture(scope="module")
+def menu_titles(qapp):
+    from birds.main_window import BirdsMainWindow
+
+    window = BirdsMainWindow()
+    return [a.text().replace("&", "") for a in window.menuBar().actions()]
+
+
+def test_the_manual_lists_every_menu_in_order(menu_titles):
+    """It listed six, with the Map, Petrography, Norm, Isotopes and
+    References menus missing and "14" tectonic diagrams."""
+    blocks = _section("interface")
+    items = next(b["items"] for b in blocks if b["type"] == "bullet")
+    assert [item.split(" — ")[0] for item in items] == menu_titles
+    words = {9: "nine", 10: "ten", 11: "eleven", 12: "twelve",
+             13: "thirteen"}
+    intro = " ".join(b.get("text", "") for b in blocks)
+    assert f"{words[len(menu_titles)]} menus" in intro
+
+
+def test_the_sections_are_numbered_in_order():
+    import manual_content
+
+    for n, (title, blocks) in enumerate(manual_content.SECTIONS, 1):
+        assert title.startswith(f"{n}. "), title
+        for block in blocks:
+            sub = re.match(r"(\d+)\.\d+\s", block.get("text", ""))
+            if block["type"] == "h2" and sub:
+                assert int(sub.group(1)) == n, block["text"]
+
+
+def test_the_manual_names_the_maps_tabs_and_controls(qapp, manual_text):
+    """What the map section tells the user to click must exist, under
+    the name it gives."""
+    from birds.data_manager import DataManager
+    from birds.plot_style import PlotStyle
+    from birds.views.map_view import MapView
+
+    view = MapView(DataManager(), PlotStyle())
+    tabs = [view.display_tabs.tabText(i)
+            for i in range(view.display_tabs.count())]
+    for tab in tabs:
+        assert f"{tab} — " in manual_text, tab
+    # Both ways round: a name tested only for being *in* the manual
+    # passes when the control is renamed to a piece of another name
+    # ("Auto-fit" sits inside "Auto-fit to samples").
+    named = {
+        "Auto-fit to samples": view.auto_extent_chk,
+        "Colour by the analysed variable": view.colour_by_value_chk,
+        "Fit automatically": view.auto_fit_chk,
+        "Clip to each group's sample hull": view.clip_chk,
+        "Contour lines on the estimate": view.contours_chk,
+        "Export grid for a GIS (.asc)…": view.export_grid_btn,
+    }
+    for name, widget in named.items():
+        assert name in manual_text, name
+        assert widget.text() == name, (name, widget.text())
+    for combo in (view.pooling_combo,):
+        for i in range(combo.count()):
+            assert combo.itemText(i) in manual_text, combo.itemText(i)
+    assert "Map → Sample locations and kriging…" in manual_text
