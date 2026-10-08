@@ -47,10 +47,13 @@ class TestReferenceLines:
     def test_the_vertical_line_measured_where_it_is_set(self):
         assert BSE_SR_87_86 == pytest.approx(0.705126, abs=2 * PX_SR)
 
-    def test_the_vertical_line_is_not_the_epsilon_sr_reference(self):
-        """0.7045 is 32 px away — the figure uses a different BSE."""
+    def test_epsilon_sr_is_referred_to_the_vertical_line(self):
+        """The older uniform reservoir, 0.7045, is 32 px away; εSr is
+        referred to the BSE the figure draws instead (decided
+        2026-10-08), so εSr = 0 falls on the line."""
         from birds.views.isotopes import SR_UR_87_86
-        assert abs(BSE_SR_87_86 - SR_UR_87_86) > 20 * PX_SR
+        assert SR_UR_87_86 == BSE_SR_87_86
+        assert abs(BSE_SR_87_86 - 0.7045) > 20 * PX_SR
 
     def test_the_vertical_line_crosses_the_bse_box(self):
         sr0, sr1, _, _ = FIELDS_BY_NAME["BSE"].bounds()

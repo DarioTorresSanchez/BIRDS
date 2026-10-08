@@ -34,8 +34,9 @@ Two independent checks confirm that calibration:
   is CHUR (0.512638) to within 0.4 px — and the figure marks that line
   "0 εNd", so it must be CHUR;
 * the unlabelled vertical line lands on ⁸⁷Sr/⁸⁶Sr = 0.705126, within
-  4 px of the Zindler & Hart (1986) BSE value and 32 px from the 0.7045
-  used for εSr, and it passes through the centre of the BSE box.
+  4 px of the Zindler & Hart (1986) BSE value and 32 px from the older
+  uniform reservoir, 0.7045, and it passes through the centre of the
+  BSE box.  εSr is referred to the same BSE, so εSr = 0 falls on it.
 
 Field outlines came from the fill colours: each mask was closed to
 bridge the hatching, hole-filled, reduced to its largest component and
@@ -55,14 +56,20 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field as _field
 
-#: ¹⁴³Nd/¹⁴⁴Nd of CHUR (Bouvier et al. 2008), the figure's εNd = 0 line.
+#: ¹⁴³Nd/¹⁴⁴Nd of CHUR today, the figure's εNd = 0 line, and the
+#: reference for εNd: Jacobsen & Wasserburg (1980), normalised to
+#: ¹⁴⁶Nd/¹⁴⁴Nd = 0.7219 (Rollinson & Pease 2021, Table 6.3b and their
+#: worked example).  Bouvier et al. (2008) revise it to 0.512630, with
+#: ¹⁴⁷Sm/¹⁴⁴Nd 0.1960 -- 0.16 εNd units lower.
 CHUR_ND_143_144 = 0.512638
 
-#: ⁸⁷Sr/⁸⁶Sr of the vertical reference line, measured at 0.705126.
-#: This is the Zindler & Hart (1986) BSE value, and it is *not* the
-#: 0.7045 that :data:`birds.views.isotopes.SR_UR_87_86` uses for εSr —
-#: the two conventions differ, so the vertical line is drawn as BSE and
-#: not as εSr = 0.
+#: ¹⁴⁷Sm/¹⁴⁴Nd of CHUR today, Jacobsen & Wasserburg (1980).
+CHUR_SM_147_144 = 0.1967
+
+#: ⁸⁷Sr/⁸⁶Sr of the vertical reference line, measured at 0.705126: the
+#: Zindler & Hart (1986) bulk silicate Earth.  εSr is referred to it,
+#: so that εSr = 0 falls on the line the figure draws; the older uniform
+#: reservoir of DePaolo & Wasserburg (1976), 0.7045, is not used.
 BSE_SR_87_86 = 0.7051
 
 #: The window the figure is drawn in, (x_range, y_range).  Used as the

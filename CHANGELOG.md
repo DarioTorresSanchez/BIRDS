@@ -362,6 +362,22 @@ including what is still unverified.
 
 #### Numerical core
 
+- **Initial εNd and εSr were taken against today's reservoirs.** An
+  initial ratio has to be compared with CHUR, or the Sr reservoir, as
+  it was at the sample's age; the reservoirs' parent ratios were defined
+  and never used. A 1 Ga rock that evolved exactly as CHUR read about
+  −25 εNd instead of 0, and the error grows with age — about −2.5 units
+  already at 100 Ma. Both are now taken at each sample's age, checked
+  against the worked example in Rollinson & Pease (2021): CHUR at
+  3.54 Ga is 0.508031. With one age for every sample the ε axes follow
+  it and say so; with an age per sample no single ε axis exists, and
+  none is drawn. The CHUR values, 0.512638 and 0.1967, were credited to
+  Bouvier *et al.* (2008), whose CHUR is 0.512630 and 0.1960; they are
+  Jacobsen & Wasserburg's (1980), and are now defined once, beside the
+  lines the Sr–Nd figure draws. The bibliography gains an isotope
+  section — Zindler & Hart (1986), Hart (1984), Hofmann (2003), Jacobsen
+  & Wasserburg (1980), Papanastassiou & Wasserburg (1969), Steiger &
+  Jäger (1977) — none of which it listed.
 - **CIPW**: MnO was never allocated, so manganese vanished and the norm
   came up short by exactly the MnO content. Silica-deficient rocks had
   their residual deficit ignored, inflating the total by up to 8 wt.%
@@ -442,6 +458,13 @@ including what is still unverified.
 
 ### Changed
 
+- **εSr is referred to the bulk silicate Earth of Zindler & Hart
+  (1986), ⁸⁷Sr/⁸⁶Sr = 0.7051**, instead of the uniform reservoir of
+  0.7045. The Sr–Nd figure draws its vertical line at that BSE, so
+  εSr = 0 now falls on it. Taken back in time, the reservoir evolves
+  with ⁸⁷Rb/⁸⁶Sr ≈ 0.0916, the ratio that runs it back to BABI at
+  4.55 Ga as a closed system — the construction that gives the 0.0827
+  quoted with 0.7045. εSr values are about 8.5 units lower than before.
 - **CIPW simplified to the classical Cross–Iddings–Pirsson–Washington
   (1903) norm.** The SINCLAS, Verma & Rivera-Gómez (2013) and Hutchison
   variants are gone, with the titanite/perovskite chain and the

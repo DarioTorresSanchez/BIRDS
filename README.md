@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-2841%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-2858%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -220,7 +220,10 @@ All follow the IUGS recommendations, including the 5 % and 10 % rules.
 <summary><b>Isotopes (3)</b></summary>
 
 - ⁸⁷Sr/⁸⁶Sr vs ¹⁴³Nd/¹⁴⁴Nd — with mantle reservoirs, the mantle array and
-  secondary εNd / εSr axes
+  secondary εNd / εSr axes. εSr is referred to the bulk silicate Earth of
+  Zindler & Hart (1986), 0.7051, so that εSr = 0 falls on the BSE line;
+  εNd to CHUR (Jacobsen & Wasserburg 1980). Initial ε values are taken
+  against the reservoirs as they were at the sample's age.
 - ²⁰⁶Pb/²⁰⁴Pb vs ²⁰⁷Pb/²⁰⁴Pb
 - ²⁰⁶Pb/²⁰⁴Pb vs ²⁰⁸Pb/²⁰⁴Pb — with the Northern Hemisphere Reference Line
   (NHRL; Hart 1984)

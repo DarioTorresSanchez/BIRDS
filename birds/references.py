@@ -329,6 +329,34 @@ REFERENCES: List[Section] = [
          "Early chondrite REE normalisation (still used)."),
     ]),
     # ----------------------------------------------------------------------
+    ("Isotopes", [
+        ("Zindler, A., & Hart, S. R. (1986). Chemical geodynamics. "
+         "*Annual Review of Earth and Planetary Sciences*, *14*, 493-571.",
+         "Sr-Nd mantle reservoirs; bulk silicate Earth 87Sr/86Sr = 0.7051, "
+         "the reference for εSr."),
+        ("Hart, S. R. (1984). A large-scale isotope anomaly in the "
+         "Southern Hemisphere mantle. *Nature*, *309*, 753-757.",
+         "Northern Hemisphere Reference Line (NHRL)."),
+        ("Hofmann, A. W. (2003). Sampling mantle heterogeneity through "
+         "oceanic basalts: Isotopes and trace elements. *Treatise on "
+         "Geochemistry*, *2*, 61-101.",
+         "Mantle end-member fields."),
+        ("Jacobsen, S. B., & Wasserburg, G. J. (1980). Sm-Nd isotopic "
+         "evolution of chondrites. *Earth and Planetary Science "
+         "Letters*, *50*, 139-155.",
+         "CHUR, the reference for εNd."),
+        ("Papanastassiou, D. A., & Wasserburg, G. J. (1969). Initial "
+         "strontium isotopic abundances and the resolution of small time "
+         "differences in the formation of planetary objects. *Earth and "
+         "Planetary Science Letters*, *5*, 361-376.",
+         "BABI, the start of the Sr reference reservoir."),
+        ("Steiger, R. H., & Jäger, E. (1977). Subcommission on "
+         "geochronology: Convention on the use of decay constants in "
+         "geo- and cosmochronology. *Earth and Planetary Science "
+         "Letters*, *36*, 359-362.",
+         "87Rb and 147Sm decay constants."),
+    ]),
+    # ----------------------------------------------------------------------
     ("Statistics & anomalies", [
         ("Eu/Eu*: Boynton, W. V. (1984), Henderson, P. (Ed.) (1984). "
          "*Rare earth element geochemistry*. Elsevier.",

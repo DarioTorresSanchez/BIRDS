@@ -8,10 +8,11 @@ Two sections are bundled into a single widget:
   lines and the CHUR / BSE rules.  The fields and lines are measured
   from the published figure — see :mod:`birds.isotope_fields`.
 
-  Note that the figure's vertical rule sits at ⁸⁷Sr/⁸⁶Sr = 0.7051,
-  which is *not* the ``SR_UR_87_86`` = 0.7045 that εSr is referenced
-  to, so that rule is drawn as BSE and the εSr axis zero falls a little
-  to its left.
+  εSr is referred to the bulk silicate Earth of Zindler & Hart (1986),
+  0.7051 -- the vertical rule the figure draws -- so εSr = 0 falls on
+  it.  εNd is referred to CHUR (Jacobsen & Wasserburg 1980).  Initial
+  ε values are taken against the reservoir as it was at the sample's
+  age, not as it is today.
 * **Pb**: ²⁰⁶Pb/²⁰⁴Pb  vs  ²⁰⁷Pb/²⁰⁴Pb and  ²⁰⁶Pb/²⁰⁴Pb  vs
   ²⁰⁸Pb/²⁰⁴Pb, carrying the Northern Hemisphere Reference Line
   (NHRL; Hart 1984) and nothing else.  Hart publishes it for both
@@ -23,7 +24,8 @@ References
 - Hart, S.R. (1984). A large-scale isotope anomaly in the Southern Hemisphere mantle. *Nature* 309, 753-757.
 - Hofmann, A.W. (2003). Sampling mantle heterogeneity through oceanic basalts. *Treatise on Geochemistry* 2, 61-101.
 - DePaolo, D.J. & Wasserburg, G.J. (1976). Nd isotopic variations and petrogenetic models. *GRL* 3, 249-252.
-- Bouvier, A., Vervoort, J.D. & Patchett, P.J. (2008). The Lu-Hf and Sm-Nd isotopic composition of CHUR. *EPSL* 273, 48-57.
+- Jacobsen, S.B. & Wasserburg, G.J. (1980). Sm-Nd isotopic evolution of chondrites. *EPSL* 50, 139-155.
+- Papanastassiou, D.A. & Wasserburg, G.J. (1969). Initial strontium isotopic abundances and the resolution of small time differences in the formation of planetary objects. *EPSL* 5, 361-376.
 - Steiger, R.H. & Jäger, E. (1977). Subcommission on geochronology: convention on the use of decay constants. *EPSL* 36, 359-362.
 """
 
@@ -54,6 +56,8 @@ from PySide6.QtWidgets import (
 from ..diagrams.templates.base import get_groups, resolve_column
 from ..isotope_fields import (
     BSE_SR_87_86,
+    CHUR_ND_143_144,
+    CHUR_SM_147_144,
     MANTLE_ARRAY,
     MANTLE_ARRAY_LABEL,
     SR_ND_FIELDS,
@@ -74,11 +78,23 @@ from .plot_canvas import PlotCanvas
 LAMBDA_RB = 1.42e-11    # /yr  - 87Rb -> 87Sr
 LAMBDA_SM = 6.54e-12    # /yr  - 147Sm -> 143Nd
 
-# Bulk Silicate Earth / Uniform Reservoir / CHUR  (Bouvier et al. 2008)
-SR_UR_87_86 = 0.7045
-RB_SR_UR    = 0.0827
-ND_CHUR     = 0.512638
-SM_ND_CHUR  = 0.1967
+# Reference reservoirs for ε, today.  One definition each, in
+# isotope_fields, shared with the lines the Sr-Nd figure draws.
+SR_UR_87_86 = BSE_SR_87_86          # Zindler & Hart (1986) BSE
+ND_CHUR     = CHUR_ND_143_144       # Jacobsen & Wasserburg (1980)
+SM_ND_CHUR  = CHUR_SM_147_144
+
+# Basaltic achondrite best initial ⁸⁷Sr/⁸⁶Sr (Papanastassiou & Wasserburg
+# 1969) and the age of the Earth it is taken at.
+BABI_SR_87_86 = 0.69899
+AGE_EARTH_YR  = 4.55e9
+
+# ⁸⁷Rb/⁸⁶Sr of the Sr reference reservoir: the ratio that carries it from
+# BABI at 4.55 Ga to 0.7051 today as a closed system.  The same
+# construction gives 0.0826 for the older 0.7045 -- the 0.0827 that
+# reservoir is quoted with -- so the pair stays consistent; it is ≈0.0916.
+RB_SR_UR = ((SR_UR_87_86 - BABI_SR_87_86)
+            / (np.exp(LAMBDA_RB * AGE_EARTH_YR) - 1.0))
 
 # Approximate elemental → parent-isotope-ratio conversions used when the
 # user only provides Rb / Sr / Sm / Nd concentrations (ppm).
@@ -126,8 +142,15 @@ def compute_initial_ratio(measured: pd.Series, parent: pd.Series,
     return measured - parent * (np.exp(lam * t) - 1.0)
 
 
-def epsilon_nd(nd_ratio: pd.Series) -> pd.Series:
-    return (nd_ratio / ND_CHUR - 1.0) * 1.0e4
+def epsilon_nd(nd_ratio, age_Ma=0.0):
+    """εNd against CHUR as it was *age_Ma* ago (today, by default).
+
+    An initial ratio has to be compared with CHUR at the same time:
+    against today's CHUR, a rock 1 Ga old that evolved exactly as CHUR
+    would read about −25 εNd instead of 0.
+    """
+    chur = compute_initial_ratio(ND_CHUR, SM_ND_CHUR, age_Ma, LAMBDA_SM)
+    return (nd_ratio / chur - 1.0) * 1.0e4
 
 
 def _widen(window: Tuple[float, float], values, pad: float
@@ -158,8 +181,10 @@ def _around(values, fallback: Tuple[float, float], min_pad: float
     return lo - pad, hi + pad
 
 
-def epsilon_sr(sr_ratio: pd.Series) -> pd.Series:
-    return (sr_ratio / SR_UR_87_86 - 1.0) * 1.0e4
+def epsilon_sr(sr_ratio, age_Ma=0.0):
+    """εSr against the Sr reference reservoir as it was *age_Ma* ago."""
+    ur = compute_initial_ratio(SR_UR_87_86, RB_SR_UR, age_Ma, LAMBDA_RB)
+    return (sr_ratio / ur - 1.0) * 1.0e4
 
 
 # ---------------------------------------------------------------------------
@@ -571,13 +596,13 @@ class IsotopesView(QWidget):
                 pd.to_numeric(df[sr_col], errors="coerce"),
                 parent_sr, age, LAMBDA_RB)
             out["sr_i"] = sr_i
-            out["eps_sr_i"] = epsilon_sr(sr_i)
+            out["eps_sr_i"] = epsilon_sr(sr_i, age)
         if parent_nd is not None:
             nd_i = compute_initial_ratio(
                 pd.to_numeric(df[nd_col], errors="coerce"),
                 parent_nd, age, LAMBDA_SM)
             out["nd_i"] = nd_i
-            out["eps_nd_i"] = epsilon_nd(nd_i)
+            out["eps_nd_i"] = epsilon_nd(nd_i, age)
         return out
 
     # ------------------------------------------------------------------ plot
@@ -728,26 +753,40 @@ class IsotopesView(QWidget):
         ax.set_xlim(*_widen(SR_ND_WINDOW[0], xs_data, 0.0004))
         ax.set_ylim(*_widen(SR_ND_WINDOW[1], ys_data, 0.00004))
 
-        # Secondary axes — εSr (top) and εNd (right)
+        # Secondary axes — εSr (top) and εNd (right).  Initial ratios
+        # read against the reservoirs at the samples' age; with one age
+        # per sample there is no single such axis, so none is drawn.
         if self.eps_axes_chk.isChecked():
-            x_min, x_max = ax.get_xlim()
-            y_min, y_max = ax.get_ylim()
-            ax_top = ax.secondary_xaxis(
-                "top",
-                functions=(
-                    lambda x: (x / SR_UR_87_86 - 1.0) * 1.0e4,
-                    lambda eps: SR_UR_87_86 * (1.0 + eps / 1.0e4),
-                ),
-            )
-            ax_top.set_xlabel("εSr", fontsize=11)
-            ax_right = ax.secondary_yaxis(
-                "right",
-                functions=(
-                    lambda y: (y / ND_CHUR - 1.0) * 1.0e4,
-                    lambda eps: ND_CHUR * (1.0 + eps / 1.0e4),
-                ),
-            )
-            ax_right.set_ylabel("εNd", fontsize=11)
+            age = 0.0
+            single = self.age_source.currentData() == "single"
+            if use_initial and single:
+                age = self.age_value.value()
+            if use_initial and not single:
+                ax.text(0.99, 1.01, "ε axes need a single age",
+                        transform=ax.transAxes, ha="right", va="bottom",
+                        fontsize=8, color="#6c7388")
+            else:
+                ur = float(compute_initial_ratio(
+                    SR_UR_87_86, RB_SR_UR, age, LAMBDA_RB))
+                chur = float(compute_initial_ratio(
+                    ND_CHUR, SM_ND_CHUR, age, LAMBDA_SM))
+                when = f"  (t = {age:g} Ma)" if use_initial else ""
+                ax_top = ax.secondary_xaxis(
+                    "top",
+                    functions=(
+                        lambda x, _r=ur: (x / _r - 1.0) * 1.0e4,
+                        lambda eps, _r=ur: _r * (1.0 + eps / 1.0e4),
+                    ),
+                )
+                ax_top.set_xlabel("εSr" + when, fontsize=11)
+                ax_right = ax.secondary_yaxis(
+                    "right",
+                    functions=(
+                        lambda y, _c=chur: (y / _c - 1.0) * 1.0e4,
+                        lambda eps, _c=chur: _c * (1.0 + eps / 1.0e4),
+                    ),
+                )
+                ax_right.set_ylabel("εNd" + when, fontsize=11)
 
         # Legend
         if self.legend_chk.isChecked():
