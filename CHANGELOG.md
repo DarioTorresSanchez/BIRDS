@@ -52,7 +52,12 @@ including what is still unverified.
   on a double-click: macOS hands the file over as an event, Windows and
   Linux on the command line, and `birds/app.py` routes both to the
   window. A session opened that way is not covered by the offer to
-  recover an earlier auto-save. Build steps in `packaging/README.md`.
+  recover an earlier auto-save. `BIRDS --self-test` puts a diagram, the
+  kriging, UTM and MGRS conversions, the CIPW norm, a session and an
+  Excel file through the built program and exits non-zero if any fails —
+  the first macOS build left out `mgrs`'s compiled library and would not
+  start, which is how it earned its place. Build steps in
+  `packaging/README.md`.
 - **Mg# in the statistics and in the saved report.** `Mg#`, `Mg#_FeOt`
   and `Mg#_adj` are summarised like any oxide in the Descriptive, By
   group and Paper tables — at the foot of the major elements in the
@@ -405,6 +410,11 @@ including what is still unverified.
 
 #### Numerical core
 
+- **A broken `mgrs` install stopped B.I.R.D.S starting.** The package
+  loads a compiled library with ctypes; when that file is missing the
+  error is an `OSError`, which the optional import did not catch. It now
+  costs the MGRS coordinate option only, as a missing package always
+  did.
 - **The saved statistics report ignored the adjustment that had been
   chosen.** Its "Adjusted data" and "CIPW norm" sheets recomputed their
   own adjustment — anhydrous, Fe after Middlemost — whatever had been

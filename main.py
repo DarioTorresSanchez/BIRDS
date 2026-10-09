@@ -83,6 +83,13 @@ def _install_qt_message_handler() -> None:
 
 
 def main() -> int:
+    # A packaged app checks itself with: BIRDS --self-test
+    if "--self-test" in sys.argv:
+        import os
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+        from birds.selftest import run
+        return run()
+
     _install_excepthook()
     _install_qt_message_handler()
 

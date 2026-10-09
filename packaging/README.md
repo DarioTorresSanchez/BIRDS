@@ -20,6 +20,18 @@ without Python.
 PyInstaller packages for the platform it runs on: build the macOS app on
 a Mac and the Windows installer on Windows.
 
+**After every build, run the self-test** of the built program. It puts a
+diagram, the kriging, a UTM and an MGRS conversion, the CIPW norm, a
+session and an Excel file through the packaged code, and exits with 0
+when all seven pass. PyInstaller can leave out a library a package
+loads in an unusual way — the first build left out `mgrs`'s, and the app
+would not start — and this finds it before anyone else does.
+
+```bash
+dist/BIRDS.app/Contents/MacOS/BIRDS --self-test      # macOS
+dist\BIRDS\BIRDS.exe --self-test                     # Windows
+```
+
 ## macOS
 
 ```bash
@@ -27,16 +39,17 @@ python3 -m pip install pyinstaller
 pyinstaller packaging/birds.spec --noconfirm
 ```
 
-The app is `dist/BIRDS.app`. Copy it to `/Applications` and open it
-once; from then on `.birds` files carry the session icon and open on a
-double-click. Its `Info.plist` declares the session type
-(`UTExportedTypeDeclarations`) and that B.I.R.D.S owns it
-(`CFBundleDocumentTypes`).
+The app is `dist/BIRDS.app`, about 370 MB — Qt, matplotlib and SciPy
+travel inside it. Copy it to `/Applications` and open it once; from then
+on `.birds` files carry the session icon and open on a double-click. Its
+`Info.plist` declares the session type (`UTExportedTypeDeclarations`)
+and that B.I.R.D.S owns it (`CFBundleDocumentTypes`).
 
-The app is not signed. The first time, macOS refuses to open an app from
-an unidentified developer: right-click it, choose **Open**, and confirm.
-Distributing it without that step needs an Apple Developer ID to sign
-and notarise it.
+The app is not signed. A copy built on the Mac it runs on opens normally;
+a copy received from someone else — downloaded, mailed, on a USB stick —
+is refused the first time as coming from an unidentified developer:
+right-click it, choose **Open**, and confirm. Distributing it without
+that step needs an Apple Developer ID to sign and notarise it.
 
 ## Windows
 

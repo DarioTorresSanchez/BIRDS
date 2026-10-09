@@ -30,17 +30,21 @@ import numpy as np
 import pandas as pd
 
 # Optional deps — imported lazily so the module loads even without them.
+# OSError too: mgrs loads a compiled library with ctypes, and when that
+# file is missing -- an incomplete install, a packaged app that left it
+# out -- the failure is an OSError, which must cost the MGRS option and
+# not the whole program.
 try:
     import pyproj
     _HAS_PYPROJ = True
-except ImportError:
+except (ImportError, OSError):
     _HAS_PYPROJ = False
 
 try:
     import mgrs as _mgrs_lib
     _MGRS = _mgrs_lib.MGRS()
     _HAS_MGRS = True
-except ImportError:
+except (ImportError, OSError):
     _HAS_MGRS = False
 
 

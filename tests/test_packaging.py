@@ -197,3 +197,57 @@ def test_the_spec_bundles_the_document_icon_and_the_logo():
     spec = (PACKAGING / "birds.spec").read_text()
     assert "app_info.info_plist()" in spec
     assert "DOCUMENT_ICON" in spec and "birds\" / \"resources\"" in spec
+
+
+# ---------------------------------------------------------------------------
+# The self-test a packaged build runs, and an optional library gone wrong
+# ---------------------------------------------------------------------------
+
+def test_the_self_test_passes_here(qapp):
+    from birds.selftest import run
+    lines = []
+    assert run(echo=lines.append) == 0
+    assert lines[-1].endswith("checks passed")
+    assert not [line for line in lines if line.startswith("FAIL")]
+
+
+def test_a_failing_check_fails_the_self_test(monkeypatch):
+    from birds import selftest
+
+    def broken():
+        raise OSError("libmgrs not found")
+
+    monkeypatch.setattr(selftest, "CHECKS", [("mgrs", broken)])
+    lines = []
+    assert selftest.run(echo=lines.append) == 1
+    assert lines[0].startswith("FAIL  mgrs") and "libmgrs" in lines[0]
+
+
+def test_a_missing_compiled_library_costs_mgrs_not_the_program(monkeypatch):
+    """The packaged app once left out libmgrs: importing mgrs raised an
+    OSError, which the optional import did not catch, and B.I.R.D.S
+    would not start."""
+    import importlib
+    import importlib.abc
+
+    import birds.coords as coords
+
+    class _Broken(importlib.abc.MetaPathFinder):
+        def find_spec(self, name, path=None, target=None):
+            if name == "mgrs":
+                raise OSError("Failed to load dynlib libmgrs")
+            return None
+
+    monkeypatch.delitem(sys.modules, "mgrs", raising=False)
+    monkeypatch.setattr(sys, "meta_path", [_Broken(), *sys.meta_path])
+    try:
+        importlib.reload(coords)
+        assert coords._HAS_MGRS is False
+    finally:
+        monkeypatch.undo()
+        importlib.reload(coords)
+
+
+def test_the_spec_bundles_the_mgrs_library():
+    spec = (PACKAGING / "birds.spec").read_text()
+    assert 'glob("libmgrs*")' in spec and "binaries=binaries" in spec
