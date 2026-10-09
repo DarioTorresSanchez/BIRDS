@@ -42,6 +42,13 @@ including what is still unverified.
   and on the reservoir overlays, where Primitive Mantle gives 89.3, the
   value McDonough & Sun (1995) print. Reservoirs also plot on `*_adj`
   axes, being published volatile-free.
+- **Mg# in the statistics and in the saved report.** `Mg#`, `Mg#_FeOt`
+  and `Mg#_adj` are summarised like any oxide in the Descriptive, By
+  group and Paper tables — at the foot of the major elements in the
+  paper table, ticked on first open — and the saved report carries them
+  there too. Before, the Mg# reached the file only inside the
+  trace-ratio sheet, which the save dialog described as "La/Yb, Zr/Y,
+  Th/Yb, …".
 
 - **Spatial analysis in the Map view: ordinary kriging of any numeric
   column.** Five tabs over the canvas — the samples, the kriged
@@ -387,6 +394,13 @@ including what is still unverified.
 
 #### Numerical core
 
+- **The saved statistics report ignored the adjustment that had been
+  chosen.** Its "Adjusted data" and "CIPW norm" sheets recomputed their
+  own adjustment — anhydrous, Fe after Middlemost — whatever had been
+  chosen in *Pre-process majors…*, and its ratio sheet ignored the
+  adjusted-majors switch. They now read the adjusted columns and the
+  switch, as the screen does; "Original data" holds the analysed
+  values only.
 - **Pre-processing left total iron behind.** FeOt is not one of the
   oxides the 100 % rescale scales, so after it FeOt no longer equalled
   FeO + 0.8998 × Fe₂O₃: by about 0.15 % when the iron was partitioned,

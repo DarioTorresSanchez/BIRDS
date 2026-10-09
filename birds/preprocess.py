@@ -519,3 +519,27 @@ def describe_adjustment(settings: Optional[dict]) -> str:
     iron = IRON_LABELS.get(settings.get("iron", ""), "")
     iron = iron.format(ratio=float(settings.get("ratio", 0.15)))
     return ", ".join(part for part in (mode, iron) if part)
+
+
+def interleave_twins(columns: Sequence[str]) -> list:
+    """*columns* with each adjusted twin moved right after its oxide.
+
+    So ``SiO2`` and ``SiO2_adj`` are listed side by side wherever a user
+    picks a variable.  Twins whose oxide is not a column -- ``FeO_adj``
+    when only FeOT was reported -- follow the other twins.
+    """
+    columns = [str(c) for c in columns]
+    twins = {c for c in columns if c.endswith(ADJ_SUFFIX)}
+    out: list = []
+    for c in columns:
+        if c in twins:
+            continue
+        out.append(c)
+        if adjusted_name(c) in twins:
+            out.append(adjusted_name(c))
+    orphans = [c for c in columns if c in twins and c not in out]
+    if orphans:
+        placed = [i for i, c in enumerate(out) if c in twins]
+        at = placed[-1] + 1 if placed else len(out)
+        out[at:at] = orphans
+    return out

@@ -104,3 +104,17 @@ def derived_scalar(values: Mapping[str, float], name: str
     fe = float(feo) / _MW_FEO
     total = mg + fe
     return 100.0 * mg / total if total > 0 else None
+
+
+def with_derived(df: Optional[pd.DataFrame]) -> Optional[pd.DataFrame]:
+    """A copy of *df* with the derived variables it can provide added as
+    columns, for the tables that summarise columns -- descriptive
+    statistics, the paper table -- so Mg# is reported beside the oxides.
+    A column the user already has under the same name is left alone."""
+    names = available(df)
+    if not names:
+        return df
+    out = df.copy()
+    for name in names:
+        out[name] = derived_series(df, name)
+    return out

@@ -34,7 +34,7 @@ from ..diagrams.templates.base import (
 from ..derived import DESCRIPTIONS as _DERIVED_DESCRIPTIONS
 from ..derived import available as _derived_available
 from ..expression import ExpressionError, evaluate, evaluate_scalar
-from ..preprocess import ADJ_SUFFIX, adjusted_name
+from ..preprocess import ADJ_SUFFIX, adjusted_name, interleave_twins
 from ..reservoirs import RESERVOIRS
 from .plot_canvas import PlotCanvas
 from .widgets import (
@@ -442,22 +442,7 @@ class BivariateView(QWidget):
         df = self.data.df
         if df is None or df.empty:
             return []
-        cols = [str(c) for c in df.select_dtypes(include="number").columns]
-        twins = {c for c in cols if c.endswith(ADJ_SUFFIX)}
-        out: list[str] = []
-        for c in cols:
-            if c in twins:
-                continue
-            out.append(c)
-            if adjusted_name(c) in twins:
-                out.append(adjusted_name(c))
-        # Twins whose oxide was never a column -- FeO_adj when only FeOT
-        # was reported -- join the other twins.
-        orphans = [c for c in cols if c in twins and c not in out]
-        if orphans:
-            placed = [i for i, c in enumerate(out) if c in twins]
-            at = placed[-1] + 1 if placed else len(out)
-            out[at:at] = orphans
+        out = interleave_twins(df.select_dtypes(include="number").columns)
         derived = _derived_available(df)
         if derived:
             anchor = next((a for a in (adjusted_name("MgO"), "MgO")

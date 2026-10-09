@@ -47,7 +47,6 @@ from .stats_engine import (
     compute_correlation_matrix,
     compute_descriptive_by_group,
     compute_descriptive_full,
-    compute_ratios,
     export_sections,
 )
 from .views.bivariate import BivariateView
@@ -851,30 +850,47 @@ class BirdsMainWindow(QMainWindow):
         sections_flags = dlg.sections
         norm_name = self.statistics.norm_combo.currentData()
         sections: dict[str, pd.DataFrame] = {}
+        from .derived import with_derived
+        from .preprocess import ADJ_SUFFIX, has_adjusted
+        df = self.data.df
+        twins = [c for c in df.columns if str(c).endswith(ADJ_SUFFIX)]
         if sections_flags["raw"]:
-            sections["Original data"] = self.data.df
+            # The analysed values only; the adjusted ones have a sheet
+            # of their own.
+            sections["Original data"] = df.drop(columns=twins)
 
-        # Compute the pre-processed analysis once (anhydrous rescale +
-        # Middlemost Fe partition); both the "Adjusted" and "CIPW"
-        # sections feed off the result.
+        # The adjusted analyses are the ones Pre-process majors made, with
+        # the settings chosen there.  A dataset never adjusted gets the
+        # default treatment (anhydrous, Middlemost 1989) for the sheet.
         adjusted: Optional[pd.DataFrame] = None
         if sections_flags["adjusted"] or sections_flags["cipw"]:
-            try:
-                adjusted = pre_process(
-                    self.data.df, "anhydrous", "middlemost")
-            except Exception:                              # noqa: BLE001
-                adjusted = None
+            if has_adjusted(df):
+                adjusted = self.data.majors_df()
+            else:
+                try:
+                    adjusted = pre_process(df, "anhydrous", "middlemost")
+                except Exception:                          # noqa: BLE001
+                    adjusted = None
         if sections_flags["adjusted"] and adjusted is not None:
-            sections["Adjusted data (100% + Fe partition)"] = adjusted
+            if has_adjusted(df):
+                identity = [c for c in df.columns if c not in twins
+                            and not pd.api.types.is_numeric_dtype(df[c])]
+                sections["Adjusted data (100% + Fe partition)"] = \
+                    df[identity + twins]
+            else:
+                sections["Adjusted data (100% + Fe partition)"] = adjusted
         if sections_flags["cipw"] and adjusted is not None:
             try:
                 sections["CIPW norm"] = compute_cipw(adjusted)
             except Exception:                              # noqa: BLE001
                 pass
+        # Mg# is reported like any oxide in the summary tables.
+        stats_df = with_derived(df)
         if sections_flags["descriptive"]:
-            sections["Descriptive statistics"] = compute_descriptive_full(self.data.df)
+            sections["Descriptive statistics"] = compute_descriptive_full(
+                stats_df)
             by_grp = compute_descriptive_by_group(
-                self.data.df, self.style.group_columns or [])
+                stats_df, self.style.group_columns or [])
             if not by_grp.empty:
                 sections["By group"] = by_grp
             # Publication-ready mean ± 1σ (n) summary, honouring the
@@ -889,7 +905,7 @@ class BirdsMainWindow(QMainWindow):
                 order = [g.name for g in (self.style.groups or [])
                          if getattr(g, "name", None)]
                 paper = compute_paper_table(
-                    self.data.df,
+                    stats_df,
                     group_columns=self.style.group_columns or [],
                     variables=variables,
                     group_order=order or None,
@@ -902,7 +918,9 @@ class BirdsMainWindow(QMainWindow):
             sections["REE anomalies"] = compute_anomalies_extended(
                 self.data.df, norm_name)
         if sections_flags["ratios"]:
-            sections["Trace-element ratios"] = compute_ratios(self.data.df)
+            # The same table the Statistics view shows, following the
+            # adjusted-majors switch.
+            sections["Trace-element ratios"] = self.statistics.ratio_frame()
             corr = compute_correlation_matrix(self.data.df)
             if not corr.empty:
                 sections["Correlation matrix"] = corr

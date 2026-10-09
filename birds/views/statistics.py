@@ -42,6 +42,8 @@ from ..tectonic_results import (
     compute_results as compute_tectonic_results,
     discriminator_catalog,
 )
+from ..derived import DERIVED, with_derived
+from ..preprocess import ADJ_SUFFIX, interleave_twins
 from .plot_canvas import PlotCanvas
 from .widgets import AdjustedMajorsBox
 
@@ -422,15 +424,30 @@ class StatisticsView(QWidget):
     _MAJOR_OXIDES = ("SiO2", "TiO2", "Al2O3", "Fe2O3", "FeO", "FeOt",
                      "MnO", "MgO", "CaO", "Na2O", "K2O", "P2O5", "LOI")
 
+    def _is_major(self, name: str) -> bool:
+        """A major oxide, its adjusted twin, or a Mg#."""
+        base = name[:-len(ADJ_SUFFIX)] if name.endswith(ADJ_SUFFIX) else name
+        return base in self._MAJOR_OXIDES or name in DERIVED
+
     def _populate_paper_tree(self, df: pd.DataFrame) -> None:
-        """Fill the variable picker, preserving previous ticks."""
+        """Fill the variable picker, preserving previous ticks.
+
+        The major block lists each adjusted twin beside its oxide and the
+        Mg# at its foot, where a geochemical table reports it.
+        """
         previous = self._paper_checked_variables()
         first_run = self.paper_tree.topLevelItemCount() == 0
         self.paper_tree.blockSignals(True)
         self.paper_tree.clear()
-        numeric = list(df.select_dtypes(include="number").columns)
-        majors = [c for c in numeric if c in self._MAJOR_OXIDES]
-        traces = [c for c in numeric if c not in self._MAJOR_OXIDES]
+        numeric = interleave_twins(df.select_dtypes(include="number").columns)
+        majors = ([c for c in numeric
+                   if self._is_major(c) and c not in DERIVED]
+                  + [c for c in numeric if c in DERIVED])
+        traces = [c for c in numeric if not self._is_major(c)]
+        # First open ticks the analysed majors and the Mg#: a full
+        # 60-column table is unreadable and nobody publishes one.
+        default = {c for c in majors
+                   if c in self._MAJOR_OXIDES or c in DERIVED}
         for header, names in (("Major elements", majors),
                               ("Trace elements & others", traces)):
             if not names:
@@ -444,10 +461,8 @@ class StatisticsView(QWidget):
                 item = QTreeWidgetItem(parent, [str(name)])
                 item.setFlags(Qt.ItemFlag.ItemIsUserCheckable
                               | Qt.ItemFlag.ItemIsEnabled)
-                # First open: tick majors only — a full 60-column table
-                # is unreadable and nobody publishes one.
                 want = (str(name) in previous if not first_run
-                        else name in majors)
+                        else name in default)
                 item.setCheckState(0, Qt.CheckState.Checked if want
                                    else Qt.CheckState.Unchecked)
             parent.setExpanded(True)
@@ -480,8 +495,26 @@ class StatisticsView(QWidget):
         self.paper_tree.blockSignals(False)
         self._update_paper_table()
 
+    def _stats_frame(self) -> Optional[pd.DataFrame]:
+        """The dataset as the column-summarising tables read it: with
+        the Mg# variants added as columns, reported like any oxide."""
+        return with_derived(self.data.df)
+
+    def ratio_frame(self) -> pd.DataFrame:
+        """Trace ratios, Mg# and alteration indices, per sample.
+
+        Ti/V, Ti/Y and the Mg# come from the majors the switch selects.
+        On adjusted majors the measured-FeO Mg# is the partition's, and
+        carries the _adj name the bivariate axis gives it.  Shared with
+        the exported report, so the file says what the screen says.
+        """
+        table = compute_ratios(self.data.majors_df())
+        if self.data.adjusted_in_use():
+            table = table.rename(columns={"Mg#": "Mg#_adj"})
+        return table
+
     def _update_paper_table(self, *_args) -> None:
-        df = self.data.df
+        df = self._stats_frame()
         if df is None or df.empty:
             self._paper = pd.DataFrame()
             self._fill_table(self.paper_table, self._paper)
@@ -1427,17 +1460,14 @@ class StatisticsView(QWidget):
             return
 
         norm_name = self.norm_combo.currentData()
-        self._descriptive = compute_descriptive_full(df)
+        # Mg# is summarised like any oxide in the descriptive tables.
+        stats_df = self._stats_frame()
+        self._descriptive = compute_descriptive_full(stats_df)
         self._by_group = compute_descriptive_by_group(
-            df, getattr(self.plot_style, "group_columns", []) or []
+            stats_df, getattr(self.plot_style, "group_columns", []) or []
         )
         self._anomalies = compute_anomalies_extended(df, norm_name)
-        # Ti/V, Ti/Y and the Mg# come from the majors the switch selects.
-        # On adjusted majors the measured-FeO Mg# is the partition's, and
-        # carries the _adj name the bivariate axis gives it.
-        self._ratios = compute_ratios(self.data.majors_df())
-        if self.data.adjusted_in_use():
-            self._ratios = self._ratios.rename(columns={"Mg#": "Mg#_adj"})
+        self._ratios = self.ratio_frame()
 
         self._fill_table(self.descriptive_table, self._descriptive)
         self._fill_table(self.by_group_table, self._by_group)
@@ -1454,7 +1484,7 @@ class StatisticsView(QWidget):
                     "Set a grouping column first in Data → Edit plot.")
 
         # Publication-ready table — variable picker then the table itself.
-        self._populate_paper_tree(df)
+        self._populate_paper_tree(stats_df)
         self._update_paper_table()
 
         # Repopulate the correlation-tree selector. Default: tick all

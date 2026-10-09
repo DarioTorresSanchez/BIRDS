@@ -433,3 +433,107 @@ def test_the_tectonic_diagram_follows_the_switch(window):
     _xs, ys = diagram._compute_xy(view._composition_filtered_df(diagram))
     assert ys.to_numpy() == pytest.approx(
         (df["TiO2"] / df["Yb"]).loc[ys.index])
+
+
+# ---------------------------------------------------------------------------
+# Mg# in the statistics tables and the exported report
+# ---------------------------------------------------------------------------
+
+def test_with_derived_adds_the_mg_numbers_as_columns(adjusted):
+    from birds.derived import with_derived
+    out = with_derived(adjusted)
+    assert {MG_NUMBER_FEOT, MG_NUMBER_ADJ} <= set(out.columns)
+    assert MG_NUMBER not in out.columns          # no measured FeO split
+    assert out[MG_NUMBER_FEOT].equals(evaluate(adjusted, MG_NUMBER_FEOT))
+    own = RAW.assign(Mg_note=1).assign(**{"Mg#_FeOt": [1.0, 2.0, 3.0]})
+    assert with_derived(own)["Mg#_FeOt"].tolist() == [1.0, 2.0, 3.0]
+
+
+def test_the_statistics_report_mg_number_beside_the_oxides(window):
+    _preprocess(window)
+    stats = window.statistics
+    stats.refresh()
+    assert {MG_NUMBER_FEOT, MG_NUMBER_ADJ} <= set(stats._descriptive.index) \
+        | set(stats._descriptive.columns)
+    # The paper table: majors with their twins, Mg# at the foot of the
+    # block, ticked on first open with the analysed majors.
+    picked = stats._paper_checked_variables()
+    assert MG_NUMBER_FEOT in picked and MG_NUMBER_ADJ in picked
+    assert "SiO2" in picked and "SiO2_adj" not in picked
+    items = [it.text(0) for it in stats._iter_paper_items()]
+    assert items.index("SiO2_adj") == items.index("SiO2") + 1
+    majors_end = max(items.index(c) for c in items
+                     if c.startswith(("SiO2", "P2O5", "FeOt")))
+    assert items.index(MG_NUMBER_FEOT) > majors_end
+    assert MG_NUMBER_FEOT in stats._paper.index
+
+
+def _export(window, tmp_path, monkeypatch, **sections):
+    import birds.main_window as mw
+    path = tmp_path / "report.xlsx"
+    flags = {"raw": True, "adjusted": True, "cipw": True,
+             "descriptive": True, "anomalies": True, "ratios": True,
+             "tectonic": True}
+    flags.update(sections)
+
+    class _Dialog:
+        DialogCode = mw.SaveStatisticsDialog.DialogCode
+
+        def __init__(self, *_a, **_k):
+            self.sections, self.path, self.fmt = flags, path, "xlsx"
+
+        def exec(self):
+            return self.DialogCode.Accepted
+
+    monkeypatch.setattr(mw, "SaveStatisticsDialog", _Dialog)
+    window.statistics.refresh()
+    window.on_save_file()
+    return pd.read_excel(path, sheet_name=None, index_col=0)
+
+
+def _sheet(book, prefix):
+    return next(frame for name, frame in book.items()
+                if name.startswith(prefix))
+
+
+def test_the_exported_report_carries_mg_number(window, tmp_path,
+                                               monkeypatch):
+    _preprocess(window)
+    book = _export(window, tmp_path, monkeypatch)
+    paper = _sheet(book, "Paper table")
+    assert MG_NUMBER_FEOT in paper.index and MG_NUMBER_ADJ in paper.index
+    descriptive = _sheet(book, "Descriptive")
+    assert MG_NUMBER_FEOT in set(descriptive.index) | set(descriptive)
+    ratios = _sheet(book, "Trace-element")
+    assert MG_NUMBER_FEOT in ratios.columns
+    assert MG_NUMBER_ADJ in ratios.columns         # the switch is on
+
+
+def test_the_export_uses_the_adjustment_that_was_chosen(window, tmp_path,
+                                                        monkeypatch):
+    """It used to recompute its own (anhydrous, Middlemost), whatever
+    had been chosen, and put the twins in the "Original data" sheet."""
+    _preprocess(window, "anhydrous", "le_maitre")
+    book = _export(window, tmp_path, monkeypatch)
+    original = _sheet(book, "Original data")
+    assert not [c for c in original.columns if str(c).endswith("_adj")]
+    adjusted = _sheet(book, "Adjusted data")
+    assert adjusted["FeO_adj"].to_numpy() == pytest.approx(
+        window.data.df["FeO_adj"].to_numpy())
+    from birds.cipw import compute_cipw
+    cipw = _sheet(book, "CIPW")
+    expected = compute_cipw(window.data.majors_df())
+    assert cipw["norm_Q"].to_numpy() == pytest.approx(
+        expected["norm_Q"].to_numpy())
+
+
+def test_the_exported_ratios_follow_the_switch(window, tmp_path,
+                                               monkeypatch):
+    _preprocess(window)
+    window.data.use_adjusted = False
+    book = _export(window, tmp_path, monkeypatch)
+    ratios = _sheet(book, "Trace-element")
+    assert MG_NUMBER_ADJ not in ratios.columns
+    pd.testing.assert_frame_equal(
+        ratios, window.statistics.ratio_frame(), check_dtype=False,
+        check_names=False, check_index_type=False)

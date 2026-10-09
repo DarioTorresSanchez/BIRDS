@@ -453,8 +453,9 @@ SECTIONS = [
             "%RSD, skewness and kurtosis for every numeric column.",
             "By group — the same statistics broken down by your "
             "grouping column(s).",
-            "Paper table — a publication-ready layout, samples down "
-            "the side and elements across.",
+            "Paper table — a publication-ready mean ± 1SD (n) per group, "
+            "with the Mg# at the foot of the major elements and each "
+            "adjusted oxide beside the analysed one.",
             "Anomalies & ratios — Eu/Eu*, Ce/Ce*, Pr/Pr*, Gd/Gd*, "
             "Y/Y*, Y/Ho (raw), and the normalised (La/Yb)_N, "
             "(La/Sm)_N, (Gd/Yb)_N, (Sm/Yb)_N per sample. Positive "
@@ -468,6 +469,14 @@ SECTIONS = [
             "tree and computed per sample. See below.",
             "Plots — the figures that go with the tables.",
         ]},
+        {"type": "p", "text":
+         "Mg#, Mg#_FeOt and, once the majors are adjusted, Mg#_adj are "
+         "summarised like any oxide in the Descriptive, By group and "
+         "Paper tables, and listed per sample with the trace ratios; "
+         "the saved report carries them in the same places. The "
+         "Major elements panel under the toolbar decides whether the "
+         "ratios and the tectonic parameters read adjusted or analysed "
+         "majors."},
         {"type": "h2", "text": "The tectonic discrimination tab"},
         {"type": "p", "text":
          "This is where the discriminant functions behind the Verma "

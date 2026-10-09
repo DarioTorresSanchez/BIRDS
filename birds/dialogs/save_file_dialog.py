@@ -28,9 +28,9 @@ _SECTIONS: Tuple[Tuple[str, str], ...] = (
     ("raw",         "Original dataset (samples × elements)"),
     ("adjusted",    "Pre-processed analyses (100 % adjusted + Fe partitioned)"),
     ("cipw",        "CIPW normative mineralogy (per-sample wt % + classification)"),
-    ("descriptive", "Descriptive statistics (count, mean, std, min, percentiles, max)"),
+    ("descriptive", "Descriptive statistics and paper table (mean ± 1SD), Mg# included"),
     ("anomalies",   "REE anomalies (Eu/Eu*, Ce/Ce*) per sample"),
-    ("ratios",      "Selected trace-element ratios (La/Yb, Zr/Y, Th/Yb, …) per sample"),
+    ("ratios",      "Trace-element ratios (La/Yb, Zr/Y, …), Mg# and alteration indices per sample"),
     ("tectonic",    "Tectonic-discrimination results (whatever is ticked in the Statistics view)"),
 )
 
