@@ -6,6 +6,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -30,7 +31,10 @@ from .. import annotations as _ann
 from ..diagrams.templates.base import (
     get_groups,
 )
+from ..derived import DESCRIPTIONS as _DERIVED_DESCRIPTIONS
+from ..derived import available as _derived_available
 from ..expression import ExpressionError, evaluate, evaluate_scalar
+from ..preprocess import ADJ_SUFFIX, adjusted_name
 from ..reservoirs import RESERVOIRS
 from .plot_canvas import PlotCanvas
 from .widgets import (
@@ -429,10 +433,51 @@ class BivariateView(QWidget):
 
     # ----------------------------------------------------------------- impl
     def _numeric_columns(self) -> list[str]:
+        """Every variable an axis can take, in the order offered.
+
+        Each adjusted twin (``SiO2_adj``) sits right after the oxide it
+        adjusts, so the analysed and the adjusted value are side by side
+        and never confused; the Mg# variants follow MgO.
+        """
         df = self.data.df
         if df is None or df.empty:
             return []
-        return [str(c) for c in df.select_dtypes(include="number").columns]
+        cols = [str(c) for c in df.select_dtypes(include="number").columns]
+        twins = {c for c in cols if c.endswith(ADJ_SUFFIX)}
+        out: list[str] = []
+        for c in cols:
+            if c in twins:
+                continue
+            out.append(c)
+            if adjusted_name(c) in twins:
+                out.append(adjusted_name(c))
+        # Twins whose oxide was never a column -- FeO_adj when only FeOT
+        # was reported -- join the other twins.
+        orphans = [c for c in cols if c in twins and c not in out]
+        if orphans:
+            placed = [i for i, c in enumerate(out) if c in twins]
+            at = placed[-1] + 1 if placed else len(out)
+            out[at:at] = orphans
+        derived = _derived_available(df)
+        if derived:
+            anchor = next((a for a in (adjusted_name("MgO"), "MgO")
+                           if a in out), None)
+            at = out.index(anchor) + 1 if anchor else len(out)
+            out[at:at] = derived
+        return out
+
+    @staticmethod
+    def _variable_hint(name: str):
+        """(colour, tooltip) marking an adjusted or derived variable, or
+        None for a plain column."""
+        if name in _DERIVED_DESCRIPTIONS:
+            return QColor("#2a7a3b"), _DERIVED_DESCRIPTIONS[name]
+        if name.endswith(ADJ_SUFFIX):
+            return QColor("#1f4e99"), (
+                f"{name[:-len(ADJ_SUFFIX)]} adjusted to 100 % "
+                "(Data → Pre-process majors…). The analysed value is "
+                "the column without _adj.")
+        return None
 
     def _refresh_variable_lists(self) -> None:
         cols = self._numeric_columns()
@@ -447,8 +492,14 @@ class BivariateView(QWidget):
         self._individual.x_combo.clear()
         self._individual.y_combo.clear()
         for c in cols:
-            self._individual.x_combo.addItem(c)
-            self._individual.y_combo.addItem(c)
+            for combo in (self._individual.x_combo, self._individual.y_combo):
+                combo.addItem(c)
+                hint = self._variable_hint(c)
+                if hint is not None:
+                    i = combo.count() - 1
+                    combo.setItemData(i, hint[0],
+                                      Qt.ItemDataRole.ForegroundRole)
+                    combo.setItemData(i, hint[1], Qt.ItemDataRole.ToolTipRole)
         if prev_x:
             self._individual.x_combo.setCurrentText(prev_x)
         if prev_y:
@@ -471,7 +522,11 @@ class BivariateView(QWidget):
                     selected.add(item.text())
             list_widget.clear()
             for c in cols:
-                QListWidgetItem(c, list_widget)
+                item = QListWidgetItem(c, list_widget)
+                hint = self._variable_hint(c)
+                if hint is not None:
+                    item.setForeground(hint[0])
+                    item.setToolTip(hint[1])
             for expr in custom:
                 item = QListWidgetItem(expr, list_widget)
                 item.setData(Qt.ItemDataRole.UserRole, "expr")

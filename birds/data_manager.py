@@ -40,6 +40,27 @@ class DataManager:
         # so the substitution policy can be switched after the import.
         self.bdl_limits: dict[str, pd.DataFrame] = {}
         self.bdl_policy: str = "half"
+        # Major oxides adjusted to 100 % live beside the analysed ones as
+        # ``SiO2_adj``, … (see preprocess.attach_adjusted).  One switch,
+        # shown in every view that reads majors, says which the diagrams
+        # use, so that no two views can disagree about it.
+        self.use_adjusted: bool = True
+        #: How the adjusted twins were made: {"mode", "iron", "ratio"}.
+        self.adjust_settings: Optional[dict] = None
+
+    def adjusted_in_use(self) -> bool:
+        """True when the diagrams are reading adjusted majors."""
+        from .preprocess import has_adjusted
+        return self.use_adjusted and has_adjusted(self.df)
+
+    def majors_df(self) -> Optional[pd.DataFrame]:
+        """The main sheet as a major-element diagram should read it:
+        with the adjusted values in the oxide columns when they are in
+        use, as analysed otherwise."""
+        if not self.adjusted_in_use():
+            return self.df
+        from .preprocess import with_adjusted_majors
+        return with_adjusted_majors(self.df)
 
     def realign_bdl_masks(self) -> None:
         """Trim the below-detection masks to the sheets as they stand now.

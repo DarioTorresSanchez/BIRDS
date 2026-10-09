@@ -29,6 +29,7 @@ from ..diagrams.registry import get_diagram
 from ..diagrams.templates.base import AxisStyle, LegendStyle, PlotOptions
 from .annotation_controller import AnnotationController, nearest_sample
 from .plot_canvas import PlotCanvas
+from .widgets import AdjustedMajorsBox
 
 
 _FONT_CHOICES = ["DejaVu Sans", "Arial", "Helvetica", "Times New Roman",
@@ -148,6 +149,11 @@ class ClassificationView(QWidget):
         diag_layout.addWidget(self.diagram_combo)
         layout.addWidget(diag_box)
 
+        # Adjusted or analysed majors -- shared with every other view.
+        self.majors_box = AdjustedMajorsBox()
+        self.majors_box.toggled.connect(self._on_majors_toggled)
+        layout.addWidget(self.majors_box)
+
         # Axes / fonts -------------------------------------------------------
         axes_box = QGroupBox("Axes (titles and font)")
         axes_layout = QVBoxLayout(axes_box)
@@ -264,7 +270,12 @@ class ClassificationView(QWidget):
         if idx >= 0:
             self.diagram_combo.setCurrentIndex(idx)
 
+    def _on_majors_toggled(self, on: bool) -> None:
+        self.data.use_adjusted = on
+        self.update_plot()
+
     def update_plot(self) -> None:
+        self.majors_box.sync(self.data)
         # Every path that leaves the canvas without points must also drop
         # the tally, otherwise it keeps advertising the previous render.
         if not self._diagram_key:
@@ -329,7 +340,7 @@ class ClassificationView(QWidget):
         """Sample resolver for Identify-sample mode — uses the active
         diagram's own _compute_xy mapping so the click works on TAS,
         K2O-SiO2, AFM, Jensen, etc. without per-diagram code."""
-        df = self.data.df
+        df = self.data.majors_df()
         if df is None or df.empty:
             return None
         diagram = get_diagram(self._diagram_key)
@@ -349,8 +360,9 @@ class ClassificationView(QWidget):
 
     def _rock_type_filtered_df(self):
         """Drop samples that don't belong to the current family
-        (volcanic / plutonic).  Toggleable via the checkbox."""
-        df = self.data.df
+        (volcanic / plutonic).  Toggleable via the checkbox.  The majors
+        are the adjusted ones when those are in use."""
+        df = self.data.majors_df()
         if not self.rock_type_filter_chk.isChecked():
             self.rock_type_status.setText(
                 "<b>Filter disabled.</b> Showing all samples."

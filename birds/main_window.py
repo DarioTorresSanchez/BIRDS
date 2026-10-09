@@ -395,9 +395,9 @@ class BirdsMainWindow(QMainWindow):
         act_preprocess = QAction("Pre-process majors…", self)
         act_preprocess.setShortcut("Ctrl+Shift+P")
         act_preprocess.setStatusTip(
-            "Re-scale major oxides to 100 wt % and partition total "
-            "iron between Fe₂O₃ and FeO (Middlemost 1989, Le Maitre "
-            "1976 or fixed ratio)."
+            "Add major oxides re-scaled to 100 wt %, with total iron "
+            "partitioned between Fe₂O₃ and FeO, as SiO2_adj, TiO2_adj, … "
+            "beside the analysed values."
         )
         act_preprocess.triggered.connect(self.on_preprocess)
         menu.addAction(act_preprocess)
@@ -629,6 +629,12 @@ class BirdsMainWindow(QMainWindow):
         """
         self.selection.clear()
         self.data.realign_bdl_masks()
+        # A new table brings its own adjusted columns or none: settings
+        # recorded for the previous one no longer describe it.
+        from .preprocess import has_adjusted
+        if not has_adjusted(self.data.df):
+            self.data.adjust_settings = None
+        self.data.use_adjusted = True
         self.data_table.refresh_from_data()
         self.refresh_variable_lists()
 
@@ -753,8 +759,14 @@ class BirdsMainWindow(QMainWindow):
             self.data.realign_bdl_masks()
             self.data_table.refresh_from_data()
             self.refresh_variable_lists()
+            # The view on screen now reads the adjusted majors.
+            current = self.stack.currentWidget()
+            if hasattr(current, "update_plot"):
+                current.update_plot()
             self.statusBar().showMessage(
-                f"Pre-processed {n} samples (majors → 100 % and Fe partition)."
+                f"Pre-processed {n} samples: adjusted majors added as "
+                f"SiO2_adj, TiO2_adj, …, and now used by the diagrams. The "
+                f"analysed values are kept."
             )
             self.mark_dirty()
 
@@ -1139,6 +1151,10 @@ class BirdsMainWindow(QMainWindow):
             "window_size": [self.width(), self.height()],
             "active_view": active_name,
             "session_path": str(self._session_path) if self._session_path else "",
+            # Which majors the diagrams read, and how the adjusted ones
+            # were made (the *_adj columns travel with the data).
+            "use_adjusted": bool(self.data.use_adjusted),
+            "adjust_settings": self.data.adjust_settings,
         }
 
         return SessionState(
@@ -1191,6 +1207,13 @@ class BirdsMainWindow(QMainWindow):
             # A session is a whole new dataset: clear the leftovers from
             # whatever was loaded before it.
             self.on_dataset_replaced()
+            # Then the adjusted-majors switch as it was saved (absent in
+            # sessions older than the switch).
+            self.data.use_adjusted = bool(state.ui.get("use_adjusted", True))
+            settings = state.ui.get("adjust_settings")
+            self.data.adjust_settings = (dict(settings)
+                                         if isinstance(settings, dict)
+                                         else None)
 
             # Refresh views that depend on data (lat/lon combos, etc.)
             # before piping their state back in.

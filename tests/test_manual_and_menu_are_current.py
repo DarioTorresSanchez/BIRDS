@@ -242,3 +242,15 @@ def test_the_manual_names_the_maps_tabs_and_controls(qapp, manual_text):
         for i in range(combo.count()):
             assert combo.itemText(i) in manual_text, combo.itemText(i)
     assert "Map → Sample locations and kriging…" in manual_text
+
+
+def test_the_manual_names_the_majors_switch_and_the_mg_numbers(
+        qapp, manual_text):
+    from birds.derived import DERIVED
+    from birds.views.widgets import AdjustedMajorsBox
+
+    box = AdjustedMajorsBox()
+    assert f"{box.title()} panel" in manual_text
+    assert box.check.text() in manual_text
+    for name in DERIVED:
+        assert f"{name} — " in manual_text, name

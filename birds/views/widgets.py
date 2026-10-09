@@ -110,6 +110,60 @@ class LegendGroup(QGroupBox):
         )
 
 
+class AdjustedMajorsBox(QGroupBox):
+    """Which major-element values a view plots: adjusted, or as analysed.
+
+    One per view that reads majors, all showing the same switch -- the
+    state lives in the DataManager, so ticking it in one view changes
+    every view, and the statistics, the diagrams and the norm cannot
+    disagree.  The owning view connects :attr:`toggled`, and calls
+    :meth:`sync` before it draws so the box shows the shared state.
+    """
+
+    toggled = Signal(bool)
+
+    def __init__(self, title: str = "Major elements") -> None:
+        super().__init__(title)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(8, 12, 8, 8)
+        layout.setSpacing(4)
+        self.check = QCheckBox("Use majors adjusted to 100 %")
+        self.check.setToolTip(
+            "Plot SiO2_adj, TiO2_adj, … — the values Data → Pre-process "
+            "majors… adjusted — in place of the analysed ones. The same "
+            "switch appears in every view that reads major elements.")
+        self.check.toggled.connect(self.toggled.emit)
+        layout.addWidget(self.check)
+        self.status = QLabel()
+        self.status.setWordWrap(True)
+        self.status.setTextFormat(Qt.TextFormat.RichText)
+        self.status.setStyleSheet("font-size: 11px;")
+        layout.addWidget(self.status)
+
+    def sync(self, data) -> None:
+        """Show the DataManager's state without firing :attr:`toggled`."""
+        from ..preprocess import describe_adjustment, has_adjusted
+
+        available = has_adjusted(data.df)
+        on = available and data.use_adjusted
+        self.check.blockSignals(True)
+        self.check.setEnabled(available)
+        self.check.setChecked(on)
+        self.check.blockSignals(False)
+        if on:
+            how = describe_adjustment(data.adjust_settings)
+            text = (f"<span style='color:#1f4e99'><b>● Adjusted</b></span> "
+                    f"— {how}. The analysed values are kept.")
+        elif available:
+            text = ("<span style='color:#5b6478'><b>● As analysed.</b></span> "
+                    "Adjusted copies exist; tick to plot them.")
+        else:
+            text = ("<span style='color:#5b6478'><b>● As analysed.</b></span> "
+                    "<i>Data → Pre-process majors…</i> adds adjusted copies "
+                    "(SiO2_adj, …) and keeps these.")
+        self.status.setText(text)
+
+
 class GroupingGroup(QGroupBox):
     """Per-group visibility toggles + facet (separate-plot) checkbox.
 

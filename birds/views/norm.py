@@ -46,6 +46,7 @@ from PySide6.QtWidgets import (
 from ..cipw import OUTPUT_MINERALS, compute_cipw
 from ..diagrams.templates.base import get_groups
 from .plot_canvas import PlotCanvas
+from .widgets import AdjustedMajorsBox
 
 
 # ---------------------------------------------------------------------------
@@ -218,6 +219,13 @@ class NormView(QWidget):
             )
             return f
 
+        # Adjusted or analysed majors -- shared with every other view.
+        # The classical norm is meant for anhydrous analyses with the
+        # iron split, which is what the adjusted values are.
+        self.majors_box = AdjustedMajorsBox()
+        self.majors_box.toggled.connect(self._on_majors_toggled)
+        layout.addWidget(self.majors_box)
+
         # Bar plot options -----------------------------------------------
         bar_box = QGroupBox("Bar plot")
         bar_layout = QVBoxLayout(bar_box)
@@ -271,8 +279,17 @@ class NormView(QWidget):
         layout.addStretch(1)
 
     # ------------------------------------------------------------------ API
+    def _on_majors_toggled(self, on: bool) -> None:
+        self.data.use_adjusted = on
+        # A norm already on screen was computed from the other values;
+        # recompute it rather than leave it describing what is no longer
+        # selected.
+        if self._result is not None:
+            self.compute()
+
     def show_view(self) -> None:
         """Called when the user navigates into the Norm view."""
+        self.majors_box.sync(self.data)
         if self.data.df is None or self.data.df.empty:
             self._empty("Load a dataset (Data → Import) before computing CIPW.")
             return
@@ -283,20 +300,24 @@ class NormView(QWidget):
             "loaded dataset.")
 
     def compute(self) -> None:
+        self.majors_box.sync(self.data)
         df = self.data.df
         if df is None or df.empty:
             QMessageBox.information(self, "No data",
                                     "Load a dataset before computing.")
             return
 
+        # The norm reads the majors the switch selects; its columns are
+        # written back into the dataset itself.
+        source = self.data.majors_df()
         try:
-            result = compute_cipw(df)
+            result = compute_cipw(source)
         except Exception as exc:                           # noqa: BLE001
             QMessageBox.critical(self, "CIPW error", str(exc))
             return
 
         self._result = result
-        self._preprocessed = df.copy()
+        self._preprocessed = source.copy()
 
         # Optionally write back.  Widening the dataset is only half the
         # job: unless every variable picker re-reads its columns, the
@@ -439,9 +460,13 @@ class NormView(QWidget):
     def _update_summary(self, result: pd.DataFrame) -> None:
         n = len(result)
         sat_counts = result["silica_saturation"].value_counts()
+        from ..preprocess import describe_adjustment
+        majors = ("adjusted — " + describe_adjustment(self.data.adjust_settings)
+                  if self.data.adjusted_in_use() else "as analysed")
         parts = [
             "Algorithm : Classical CIPW (Cross-Iddings-Pirsson-"
             "Washington 1903)",
+            f"Majors    : {majors}",
             f"Samples   : {n}",
             "Norm Σ ±  : "
             + f"{result['norm_Total'].mean():.2f} ± "

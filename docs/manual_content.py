@@ -214,6 +214,34 @@ SECTIONS = [
             "Click OK. From now on every plot will respect those group "
             "styles.",
         ]},
+        {"type": "h2", "text": "6.5  Adjusting the majors to 100 %"},
+        {"type": "p", "text":
+         "Data → Pre-process majors… recalculates the major oxides to "
+         "100 wt % — anhydrous by default, removing LOI, H2O and CO2 — "
+         "and splits total iron between Fe2O3 and FeO after Middlemost "
+         "(1989), Le Maitre (1976) or a fixed ratio. A preview shows the "
+         "values before and after."},
+        {"type": "p", "text":
+         "Applying keeps the analysed values and adds the adjusted ones "
+         "as new columns with the suffix _adj: SiO2_adj, TiO2_adj, …, "
+         "FeO_adj, Fe2O3_adj and FeOt_adj. An oxide that was not "
+         "analysed stays empty in its _adj column rather than becoming "
+         "0. Running the dialog again replaces the _adj columns, always "
+         "starting from the analysed values."},
+        {"type": "p", "text":
+         "Every view that reads major elements — classification, "
+         "tectonic, multi-element spider, the CIPW norm and the "
+         "statistics — carries a Major elements panel with the switch "
+         "Use majors adjusted to 100 %. It is one switch: ticking or "
+         "unticking it in any view changes all of them, so no two "
+         "views can disagree about which values they use. The panel "
+         "says which values are in use and how they were adjusted. It "
+         "turns on when the adjustment is applied, and it is saved "
+         "with the session."},
+        {"type": "note", "text":
+         "The bivariate view has no switch: it lists the analysed and "
+         "the adjusted columns side by side, so each axis shows which "
+         "one it is by its name (section 8)."},
     ]),
 
     ("7. Classification diagrams", [
@@ -282,6 +310,27 @@ SECTIONS = [
             "and several Y columns (or vice-versa) for a near-square "
             "grid; or several of both for a full X × Y matrix.",
         ]},
+        {"type": "h2", "text": "Adjusted majors and Mg#"},
+        {"type": "p", "text":
+         "Once the majors have been adjusted (section 6.5), each _adj "
+         "column is listed right after the oxide it adjusts, in blue, "
+         "so SiO2 and SiO2_adj sit side by side. After MgO come the "
+         "magnesium numbers, in green, 100·Mg/(Mg+Fe²⁺) in molar "
+         "proportions:"},
+        {"type": "bullet", "items": [
+            "Mg# — with the measured FeO. Offered only when FeO and "
+            "Fe2O3 were reported separately.",
+            "Mg#_FeOt — with all iron as Fe²⁺, what most papers mean "
+            "when only total iron was measured. The 100 % adjustment "
+            "does not change it.",
+            "Mg#_adj — of the adjusted majors, with Fe²⁺ the FeO of the "
+            "iron partition chosen when adjusting.",
+        ]},
+        {"type": "p", "text":
+         "They are the same definitions as the statistics table uses, "
+         "and they can be used inside an expression too, such as "
+         "Mg#_FeOt/100. A column of your own named Mg# takes "
+         "precedence over the computed one."},
         {"type": "h2", "text": "Optional overlays"},
         {"type": "bullet", "items": [
             "Linear regression line per group or overall, with optional "

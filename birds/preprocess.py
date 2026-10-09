@@ -383,4 +383,139 @@ def pre_process(df: pd.DataFrame,
     # Second rescale closes the small mass change introduced by the
     # partition; with ``adjust="none"`` it is a no-op (early return).
     out = adjust_to_100(out, adjust)
+    # FeOt is not one of the rescaled oxides, so both rescales left it
+    # behind -- by the LOI removed when the iron is not partitioned, by
+    # ~0.15 % when it is.  Total iron is whatever FeO and Fe2O3 now are.
+    if {"FeOt", "FeO", "Fe2O3"} <= set(out.columns):
+        feo = pd.to_numeric(out["FeO"], errors="coerce")
+        fe2o3 = pd.to_numeric(out["Fe2O3"], errors="coerce")
+        out["FeOt"] = (feo + FE2O3_TO_FEO * fe2o3).round(6)
     return out
+
+
+# ---------------------------------------------------------------------------
+# Adjusted twins: the analysed values stay, the adjusted ones sit beside
+# ---------------------------------------------------------------------------
+#
+# Pre-processing used to overwrite the analysed oxides with the adjusted
+# ones.  From then on every diagram plotted adjusted values with nothing
+# to say so, and the analysed values were gone.  Now the adjusted values
+# are added as ``SiO2_adj``, ``TiO2_adj``, … and the analysed columns are
+# left as they were; each major-element view chooses which to read.
+
+#: Suffix of the columns pre-processing adds.
+ADJ_SUFFIX = "_adj"
+
+#: Columns that get an adjusted twin: the major oxides and total iron.
+ADJUSTABLE: Sequence[str] = (*MAJOR_OXIDES, "FeOt")
+
+_IRON_COLUMNS = ("FeO", "Fe2O3", "FeOt")
+
+#: Plain-language names of the options, shared by the dialog and by the
+#: panels that say which values a diagram is using.
+ADJUST_LABELS = {
+    "anhydrous": "anhydrous (volatile-free) to 100 wt %",
+    "simple": "proportionally to 100 wt %",
+    "none": "not rescaled",
+}
+IRON_LABELS = {
+    "middlemost": "Fe₂O₃/FeO after Middlemost (1989)",
+    "le_maitre": "Fe₂O₃/FeO after Le Maitre (1976)",
+    "fixed": "Fe₂O₃/(Fe₂O₃+FeO) fixed at {ratio:g}",
+    "none": "Fe₂O₃/FeO as analysed",
+}
+
+
+def adjusted_name(column: str) -> str:
+    """``SiO2`` → ``SiO2_adj``."""
+    return f"{column}{ADJ_SUFFIX}"
+
+
+def has_adjusted(df: Optional[pd.DataFrame]) -> bool:
+    """True when *df* carries adjusted twins of any major oxide."""
+    return df is not None and any(adjusted_name(c) in df.columns
+                                  for c in ADJUSTABLE)
+
+
+def _has_iron(df: pd.DataFrame) -> pd.Series:
+    """Per row: was any form of iron reported at all?"""
+    names = ("FeO", "Fe2O3", *_FEOT_ALIASES, *_FE2O3T_ALIASES)
+    present = [n for n in names if n in df.columns]
+    if not present:
+        return pd.Series(False, index=df.index)
+    return (df[present].apply(pd.to_numeric, errors="coerce")
+            .notna().any(axis=1))
+
+
+def attach_adjusted(df: pd.DataFrame,
+                    adjust: AdjustOptions | str = "anhydrous",
+                    iron: IronOptions | str = "middlemost") -> pd.DataFrame:
+    """A copy of *df* with adjusted twins of its major oxides added.
+
+    The analysed columns are not touched.  Running it again replaces the
+    twins, always computed from the analysed values.
+
+    An oxide that was not analysed stays missing in its twin: the 100 %
+    rescale counts it as zero, but writing 0.000 wt % into the table
+    would report a measurement nobody made.  Iron is the exception --
+    the partition creates FeO, Fe₂O₃ and FeOt from whichever form was
+    reported -- and is missing only where no iron was reported at all.
+    """
+    analysed = df[[c for c in df.columns
+                   if not str(c).endswith(ADJ_SUFFIX)]]
+    processed = pre_process(analysed, adjust, iron)
+    out = df.copy()
+    iron_rows = _has_iron(analysed)
+    for col in ADJUSTABLE:
+        if col not in processed.columns:
+            continue
+        values = pd.to_numeric(processed[col], errors="coerce")
+        if col in _IRON_COLUMNS:
+            values = values.where(iron_rows)
+        elif col in analysed.columns:
+            values = values.where(
+                pd.to_numeric(analysed[col], errors="coerce").notna())
+        else:
+            continue
+        out[adjusted_name(col)] = values
+    return out
+
+
+def with_adjusted_majors(df: Optional[pd.DataFrame]
+                         ) -> Optional[pd.DataFrame]:
+    """*df* as a major-element diagram should read it when the adjusted
+    values are in use: each oxide column holds its adjusted twin.
+
+    The diagrams look up ``SiO2``, never ``SiO2_adj``, so the swap is
+    made here, once, for all of them.  Total iron is written into every
+    alias the dataset carries (FeOT, Fe2O3T, …): a diagram that happened
+    to read one of those would otherwise get the analysed value.
+    """
+    if not has_adjusted(df):
+        return df
+    out = df.copy()
+    for col in ADJUSTABLE:
+        twin = adjusted_name(col)
+        if twin in out.columns:
+            out[col] = out[twin]
+    twin = adjusted_name("FeOt")
+    if twin in out.columns:
+        feot = pd.to_numeric(out[twin], errors="coerce")
+        for alias in _FEOT_ALIASES:
+            if alias in out.columns:
+                out[alias] = feot
+        for alias in _FE2O3T_ALIASES:
+            if alias in out.columns:
+                out[alias] = feot * FEO_TO_FE2O3
+    return out
+
+
+def describe_adjustment(settings: Optional[dict]) -> str:
+    """How the twins were made, in words: "anhydrous (volatile-free) to
+    100 wt %, Fe₂O₃/FeO after Middlemost (1989)"."""
+    if not settings:
+        return "settings not recorded"
+    mode = ADJUST_LABELS.get(settings.get("mode", ""), "")
+    iron = IRON_LABELS.get(settings.get("iron", ""), "")
+    iron = iron.format(ratio=float(settings.get("ratio", 0.15)))
+    return ", ".join(part for part in (mode, iron) if part)

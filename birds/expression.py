@@ -32,6 +32,9 @@ Supported syntax
 * Numeric literals (int/float)
 * Identifiers — must match a column name in *df* (or the keys passed to
   :func:`evaluate_scalar`).
+* Derived variables — ``Mg#``, ``Mg#_FeOt`` and ``Mg#_adj`` (see
+  :mod:`birds.derived`), alone or inside an expression such as
+  ``Mg#_FeOt/100``.
 * Parentheses
 
 Anything else raises :class:`ExpressionError`.
@@ -72,6 +75,23 @@ _FUNCS = {
     "sqrt": np.sqrt,
     "abs": np.abs,
 }
+
+
+# ``#`` opens a comment in Python, so ``Mg#`` cannot reach the parser as
+# written.  Each derived name is swapped for a placeholder identifier
+# first -- longest first, so ``Mg#_adj`` is not read as ``Mg#`` + ``_adj``.
+_DERIVED_TOKENS = {
+    "Mg#_FeOt": "__derived_mg_number_feot__",
+    "Mg#_adj": "__derived_mg_number_adj__",
+    "Mg#": "__derived_mg_number__",
+}
+_TOKEN_NAMES = {token: name for name, token in _DERIVED_TOKENS.items()}
+
+
+def _substitute_derived(text: str) -> str:
+    for name, token in _DERIVED_TOKENS.items():
+        text = text.replace(name, token)
+    return text
 
 
 # ---------------------------------------------------------------------------
@@ -127,7 +147,7 @@ def evaluate(df: pd.DataFrame, text: str) -> pd.Series:
         return pd.to_numeric(df[text], errors="coerce")
 
     try:
-        tree = ast.parse(text, mode="eval")
+        tree = ast.parse(_substitute_derived(text), mode="eval")
     except SyntaxError as exc:
         raise ExpressionError(f"Syntax error in '{text}': {exc.msg}") from exc
 
@@ -161,7 +181,7 @@ def evaluate_scalar(values: Mapping[str, float], text: str) -> Optional[float]:
             return None
 
     try:
-        tree = ast.parse(text, mode="eval")
+        tree = ast.parse(_substitute_derived(text), mode="eval")
     except SyntaxError:
         return None
 
@@ -205,10 +225,19 @@ def _eval_node(node: ast.AST, *, df_source: Optional[pd.DataFrame] = None,
 
     # Identifiers ---------------------------------------------------------
     if isinstance(node, ast.Name):
-        name = node.id
+        name = _TOKEN_NAMES.get(node.id, node.id)
         if df_source is not None:
             if name in df_source.columns:
                 return pd.to_numeric(df_source[name], errors="coerce")
+            if node.id in _TOKEN_NAMES:
+                from .derived import derived_series
+                series = derived_series(df_source, name)
+                if series is None:
+                    from .derived import DESCRIPTIONS
+                    raise ExpressionError(
+                        f"'{name}' cannot be computed from these data. "
+                        f"{DESCRIPTIONS.get(name, '')}")
+                return series
             raise ExpressionError(
                 f"Unknown column '{name}'. "
                 f"Available: {', '.join(map(str, df_source.columns[:8]))}…"
@@ -219,6 +248,17 @@ def _eval_node(node: ast.AST, *, df_source: Optional[pd.DataFrame] = None,
                 if v is None:
                     raise ExpressionError(f"'{name}' has no value")
                 return float(v)
+            if node.id in _TOKEN_NAMES:
+                from .derived import derived_scalar
+                v = derived_scalar(scalar_source, name)
+                if v is None:
+                    raise ExpressionError(f"'{name}' has no value")
+                return v
+            # Reference compositions are published volatile-free, so an
+            # axis on adjusted majors reads their plain values.
+            base = name[:-len("_adj")] if name.endswith("_adj") else None
+            if base and scalar_source.get(base) is not None:
+                return float(scalar_source[base])
             raise ExpressionError(f"Unknown variable '{name}'")
         raise ExpressionError("No data source provided")
 

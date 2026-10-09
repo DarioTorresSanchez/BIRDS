@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-2858%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-2895%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -87,7 +87,7 @@ structured:
 |---|---|
 | **Data** | Import, data table, detection limits, plot styling, style presets, pre-processing, sessions, export |
 | **Classification diagrams** | TAS and the rest of the compositional classification schemes, split volcanic / plutonic |
-| **Bivariate diagrams** | Harker-style plots, single or in grids, with regressions and annotations |
+| **Bivariate diagrams** | Harker-style plots, single or in grids, with regressions and annotations; analysed and adjusted majors side by side, and Mg# as an axis |
 | **Spider diagrams** | REE, multi-element and Ni-Cu-PGE metal patterns with 28 normalisers |
 | **Tectonic diagrams** | Discrimination schemes, grouped by composition and rock family |
 | **Norm** | CIPW normative mineralogy |
@@ -255,6 +255,12 @@ through an undo stack (`Ctrl+Z` / `Ctrl+Shift+Z`).
 
 **Pre-processing.** Rescales major oxides to 100 wt % and partitions total
 iron between Fe₂O₃ and FeO following Middlemost (1989) or Le Maitre (1976).
+The analysed values are kept; the adjusted ones are added beside them as
+`SiO2_adj`, `TiO2_adj`, …. Every view that reads majors — classification,
+tectonic, multi-element spider, CIPW norm, statistics — shows one shared
+**Major elements** switch saying which of the two its diagrams use, and the
+Bivariate view lists each `*_adj` column next to its oxide, with `Mg#`,
+`Mg#_FeOt` and `Mg#_adj` offered as axes.
 
 **Sample accounting.** Under every canvas, a counter reports the fate of each
 sample: plotted, removed by a filter, hidden with its group, or missing the

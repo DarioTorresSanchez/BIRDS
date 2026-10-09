@@ -43,6 +43,7 @@ from ..tectonic_results import (
     discriminator_catalog,
 )
 from .plot_canvas import PlotCanvas
+from .widgets import AdjustedMajorsBox
 
 
 # ---------------------------------------------------------------------------
@@ -280,6 +281,13 @@ class StatisticsView(QWidget):
         self.refresh_btn.clicked.connect(self.refresh)
         toolbar.addWidget(self.refresh_btn)
         layout.addLayout(toolbar)
+
+        # The ratios (Ti/V, Mg#, …) and the discriminant functions read
+        # majors: the same switch as the diagrams, so a row here equals
+        # the axis it is paired with.
+        self.majors_box = AdjustedMajorsBox()
+        self.majors_box.toggled.connect(self._on_majors_toggled)
+        layout.addWidget(self.majors_box)
 
         self.placeholder = QLabel(
             "Load a dataset (Data → Import) and reopen this view to "
@@ -803,8 +811,15 @@ class StatisticsView(QWidget):
         for cat_i in range(self.tect_tree.topLevelItemCount()):
             self.tect_tree.topLevelItem(cat_i).setCheckState(0, state)
 
+    def _on_majors_toggled(self, on: bool) -> None:
+        self.data.use_adjusted = on
+        self.refresh()
+        if self._tectonic is not None and not self._tectonic.empty:
+            self._update_tectonic()
+
     def _update_tectonic(self) -> None:
-        df = self.data.df
+        self.majors_box.sync(self.data)
+        df = self.data.majors_df()
         if df is None or df.empty:
             self.tect_summary.setText(
                 "Load a dataset (Data → Import) before computing.")
@@ -1400,6 +1415,7 @@ class StatisticsView(QWidget):
         return self._tectonic
 
     def refresh(self) -> None:
+        self.majors_box.sync(self.data)
         df = self.data.df
         if df is None or df.empty:
             self.placeholder.setText(
@@ -1416,7 +1432,12 @@ class StatisticsView(QWidget):
             df, getattr(self.plot_style, "group_columns", []) or []
         )
         self._anomalies = compute_anomalies_extended(df, norm_name)
-        self._ratios = compute_ratios(df)
+        # Ti/V, Ti/Y and the Mg# come from the majors the switch selects.
+        # On adjusted majors the measured-FeO Mg# is the partition's, and
+        # carries the _adj name the bivariate axis gives it.
+        self._ratios = compute_ratios(self.data.majors_df())
+        if self.data.adjusted_in_use():
+            self._ratios = self._ratios.rename(columns={"Mg#": "Mg#_adj"})
 
         self._fill_table(self.descriptive_table, self._descriptive)
         self._fill_table(self.by_group_table, self._by_group)

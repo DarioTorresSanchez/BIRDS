@@ -18,6 +18,31 @@ including what is still unverified.
 
 ### Added
 
+- **Adjusted majors beside the analysed ones, and one switch to choose.**
+  *Data → Pre-process majors…* used to overwrite the analysed oxides with
+  the adjusted values; from then on every diagram plotted adjusted values
+  with nothing on screen to say so, and the analysed values were gone. It
+  now adds the adjusted values as `SiO2_adj`, `TiO2_adj`, …, `FeO_adj`,
+  `Fe2O3_adj`, `FeOt_adj`, and leaves the analysed columns as they were.
+  Every view that reads majors — classification, tectonic, multi-element
+  spider, CIPW norm and statistics (the trace ratios, the Mg# and the 208
+  tectonic parameters) — carries a **Major elements** panel with the
+  switch *Use majors adjusted to 100 %*, saying which values are in use
+  and how they were adjusted. It is one switch, held by the data, so
+  every view follows it and the statistics table still equals the axis
+  it is paired with. It turns on when the adjustment is applied and is
+  saved with the session; new data reset it.
+- **The Bivariate view lists the adjusted columns and the Mg#.** Each
+  `*_adj` column follows the oxide it adjusts, in blue, so the analysed
+  and adjusted values sit side by side. After MgO come, in green, `Mg#`
+  (measured FeO, offered only with a reported FeO/Fe₂O₃ split),
+  `Mg#_FeOt` (all iron as Fe²⁺) and `Mg#_adj` (Fe²⁺ from the iron
+  partition) — the statistics table's definitions, so an axis and a row
+  of the same name agree. They work inside expressions (`Mg#_FeOt/100`)
+  and on the reservoir overlays, where Primitive Mantle gives 89.3, the
+  value McDonough & Sun (1995) print. Reservoirs also plot on `*_adj`
+  axes, being published volatile-free.
+
 - **Spatial analysis in the Map view: ordinary kriging of any numeric
   column.** Five tabs over the canvas — the samples, the kriged
   estimate, its uncertainty, the variogram, and the cross-validation —
@@ -362,6 +387,13 @@ including what is still unverified.
 
 #### Numerical core
 
+- **Pre-processing left total iron behind.** FeOt is not one of the
+  oxides the 100 % rescale scales, so after it FeOt no longer equalled
+  FeO + 0.8998 × Fe₂O₃: by about 0.15 % when the iron was partitioned,
+  and by the whole volatile content — 1 to 5 % on an ordinary analysis —
+  when it was not. It is now recomputed from FeO and Fe₂O₃ after the
+  last rescale. And an oxide that was not analysed came out of the
+  adjustment as 0.000 wt %; its adjusted value now stays missing.
 - **Initial εNd and εSr were taken against today's reservoirs.** An
   initial ratio has to be compared with CHUR, or the Sr reservoir, as
   it was at the sample's age; the reservoirs' parent ratios were defined

@@ -26,7 +26,12 @@ from ..diagrams.registry import get_diagram, has_diagram
 from ..diagrams.templates.base import AxisStyle, PlotOptions
 from .annotation_controller import AnnotationController, nearest_sample
 from .plot_canvas import PlotCanvas
-from .widgets import AxisGroup, GroupingGroup, LegendGroup
+from .widgets import (
+    AdjustedMajorsBox,
+    AxisGroup,
+    GroupingGroup,
+    LegendGroup,
+)
 
 
 class TectonicView(QWidget):
@@ -142,6 +147,11 @@ class TectonicView(QWidget):
         sel_layout.addLayout(form)
         layout.addWidget(sel_box)
 
+        # Adjusted or analysed majors -- shared with every other view.
+        self.majors_box = AdjustedMajorsBox()
+        self.majors_box.toggled.connect(self._on_majors_toggled)
+        layout.addWidget(self.majors_box)
+
         self.axis_grp = AxisGroup("Axes (labels and font)")
         self.axis_grp.log_x.setVisible(False)
         self.axis_grp.log_y.setVisible(False)
@@ -230,7 +240,12 @@ class TectonicView(QWidget):
         if i >= 0:
             self.diagram_combo.setCurrentIndex(i)
 
+    def _on_majors_toggled(self, on: bool) -> None:
+        self.data.use_adjusted = on
+        self.update_plot()
+
     def update_plot(self) -> None:
+        self.majors_box.sync(self.data)
         if not self._diagram_key:
             return
         diagram = get_diagram(self._diagram_key)
@@ -310,7 +325,7 @@ class TectonicView(QWidget):
         mapping.  Only works on single-panel diagrams; multi-panel
         diagrams (Verma multidim) silently return None."""
         df = self._composition_filtered_df(get_diagram(self._diagram_key)) \
-            if self._diagram_key else self.data.df
+            if self._diagram_key else self.data.majors_df()
         if df is None or df.empty:
             return None
         diagram = get_diagram(self._diagram_key) if self._diagram_key else None
@@ -392,8 +407,9 @@ class TectonicView(QWidget):
     def _composition_filtered_df(self, diagram):
         """Apply the diagram's compositional pre-filter (if any) and
         return the dataframe to plot.  Also updates the status label
-        with kept/dropped counts and a hint about the SiO2 source."""
-        df = self.data.df
+        with kept/dropped counts and a hint about the SiO2 source.  The
+        majors are the adjusted ones when those are in use."""
+        df = self.data.majors_df()
         # First pass — rock-type filter (Volcanic / Plutonic).  Runs
         # before the SiO2 filter so the SiO2 counts reflect what was
         # already eligible.

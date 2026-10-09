@@ -39,7 +39,13 @@ from ..normalizations import (
 from ..reservoirs import get_reservoir_value
 from .annotation_controller import AnnotationController
 from .plot_canvas import PlotCanvas
-from .widgets import AxisGroup, GroupingGroup, LegendGroup, ReservoirGroup
+from .widgets import (
+    AdjustedMajorsBox,
+    AxisGroup,
+    GroupingGroup,
+    LegendGroup,
+    ReservoirGroup,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -102,6 +108,14 @@ class _SpiderControls(QWidget):
             self.include_y_chk = None
 
         layout.addWidget(norm_box)
+
+        # K, Ti and P come from K2O, TiO2 and P2O5 on the multi-element
+        # axis, so that pattern reads majors; the REE pattern does not.
+        if mode == "ree":
+            self.majors_box = None
+        else:
+            self.majors_box = AdjustedMajorsBox()
+            layout.addWidget(self.majors_box)
 
         # ── Elements (multi-element mode only) ─────────────────────────
         # Lets the user pick which trace elements appear on the x-axis,
@@ -351,6 +365,8 @@ class SpiderView(QWidget):
             # wired in __init__; per-control widgets still trigger
             # auto-refresh on change.
             ctrl.norm_combo.currentIndexChanged.connect(self.update_plot)
+            if ctrl.majors_box is not None:
+                ctrl.majors_box.toggled.connect(self._on_majors_toggled)
             ctrl.mode_individual.toggled.connect(self.update_plot)
             ctrl.mode_summary.toggled.connect(self.update_plot)
             ctrl.connect_chk.toggled.connect(self.update_plot)
@@ -468,13 +484,19 @@ class SpiderView(QWidget):
         # No spidergram drawn — drop the tally from the previous render.
         self.count_label.clear_report()
 
+    def _on_majors_toggled(self, on: bool) -> None:
+        self.data.use_adjusted = on
+        self.update_plot()
+
     def update_plot(self) -> None:
+        ctrl = self._controls.get(self._mode)
+        if ctrl is not None and ctrl.majors_box is not None:
+            ctrl.majors_box.sync(self.data)
         if self.data.df is None or self.data.df.empty:
             self._empty_canvas(
                 "Load a dataset via Data → Import to start plotting."
             )
             return
-        ctrl = self._controls.get(self._mode)
         if ctrl is None:
             return
 
@@ -512,8 +534,9 @@ class SpiderView(QWidget):
                     )
                     return
 
-        # Resolve which elements are actually present (data + normaliser)
-        df = self.data.df
+        # Resolve which elements are actually present (data + normaliser).
+        # K, Ti and P are read from the adjusted majors when in use.
+        df = self.data.majors_df()
         available: list[tuple[str, pd.Series]] = []
         for el in order:
             if el not in norm_values:

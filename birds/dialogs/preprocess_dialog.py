@@ -1,9 +1,10 @@
 """Pre-process dialog: rescale majors to 100 % and partition iron.
 
-Exposed in the main window as ``Data → Pre-process majors…``. The dialog
-operates on the active dataset (modifies ``data_manager.df`` in place
-after user confirmation) and shows a before / after preview table so the
-user can see exactly what is going to change.
+Exposed in the main window as ``Data → Pre-process majors…``.  Applying
+adds the adjusted values beside the analysed ones -- ``SiO2_adj``,
+``TiO2_adj``, … -- and leaves the analysed columns as they were; the
+"Major elements" switch in each view says which the diagrams read.  A
+before / after preview shows what the adjustment does.
 """
 
 from __future__ import annotations
@@ -32,6 +33,7 @@ from ..preprocess import (
     AdjustOptions,
     IronOptions,
     MAJOR_OXIDES,
+    attach_adjusted,
     pre_process,
 )
 
@@ -64,9 +66,12 @@ class PreprocessDialog(QDialog):
         intro = QLabel(
             "Re-scale the major oxides so each sample sums to 100 wt % "
             "and partition total iron between Fe₂O₃ and FeO using a "
-            "published rule. The preview below updates live so you can "
-            "see the change before applying it."
+            "published rule. Applying adds the adjusted values as new "
+            "columns — SiO2_adj, TiO2_adj, … — and keeps the analysed "
+            "ones. The <b>Major elements</b> switch in each view chooses "
+            "which the diagrams use; it turns to adjusted when you apply."
         )
+        intro.setTextFormat(Qt.TextFormat.RichText)
         intro.setWordWrap(True)
         intro.setStyleSheet("color: #5b6478;")
         outer.addWidget(intro)
@@ -229,8 +234,8 @@ class PreprocessDialog(QDialog):
 
         self.preview_table.resizeColumnsToContents()
         self.status.setText(
-            f"Previewing {n} of {len(df)} samples. Click Apply to write "
-            f"the changes back to the dataset."
+            f"Previewing {n} of {len(df)} samples. Apply adds the adjusted "
+            f"values as *_adj columns; the analysed values are kept."
         )
         self._preview_processed = processed
 
@@ -249,11 +254,13 @@ class PreprocessDialog(QDialog):
         if self.data.df is None or self.data.df.empty:
             self.reject()
             return
+        adjust, iron = self._current_adjust(), self._current_iron()
         try:
-            self.data.df = pre_process(
-                self.data.df, self._current_adjust(), self._current_iron(),
-            )
+            self.data.df = attach_adjusted(self.data.df, adjust, iron)
         except Exception as exc:                           # noqa: BLE001
             self.status.setText(f"Pre-process failed: {exc}")
             return
+        self.data.adjust_settings = {"mode": adjust.mode, "iron": iron.rule,
+                                     "ratio": iron.fixed_ratio}
+        self.data.use_adjusted = True
         self.accept()
