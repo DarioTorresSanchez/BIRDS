@@ -304,6 +304,17 @@ python3 main.py
 
 ---
 
+## Installing B.I.R.D.S as an application
+
+Everything above runs B.I.R.D.S from its source. It can also be built
+into an ordinary application — `BIRDS.app` on macOS, an installer on
+Windows — which needs no Python on the computer it is installed on, and
+with which saved `.birds` sessions are drawn with their own icon and
+open on a double-click. How to build it is in
+[packaging/README.md](packaging/README.md).
+
+---
+
 ## Running B.I.R.D.S after installation
 
 Every time you want to use the application, open a terminal, go to the

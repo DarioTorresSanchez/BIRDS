@@ -8,8 +8,8 @@ import traceback
 from pathlib import Path
 
 from PySide6.QtCore import qInstallMessageHandler, QtMsgType
-from PySide6.QtWidgets import QApplication
 
+from birds.app import BirdsApplication
 from birds.main_window import BirdsMainWindow
 
 
@@ -86,13 +86,16 @@ def main() -> int:
     _install_excepthook()
     _install_qt_message_handler()
 
-    app = QApplication(sys.argv)
+    # BirdsApplication opens the .birds files the system hands over: a
+    # double-clicked session, or one named on the command line.
+    app = BirdsApplication(sys.argv)
     app.setApplicationName("B.I.R.D.S")
     app.setOrganizationName("B.I.R.D.S")
     app.setApplicationDisplayName("B.I.R.D.S")
 
     window = BirdsMainWindow()
     window.show()
+    app.attach(window)
     return app.exec()
 
 

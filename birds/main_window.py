@@ -1331,6 +1331,25 @@ class BirdsMainWindow(QMainWindow):
             return
         self._load_session_path(Path(path_str))
 
+    def open_session_file(self, path: Path) -> None:
+        """Open a session the system handed over: double-clicked in the
+        Finder or Explorer, or named on the command line."""
+        path = Path(path)
+        # A file opened at launch is what the user asked for; offering
+        # to recover last time's auto-save on top of it would not be.
+        self._opened_from_file = True
+        if (self._session_path is not None and path.exists()
+                and self._session_path.exists()
+                and path.resolve() == self._session_path.resolve()):
+            self.raise_()
+            self.activateWindow()
+            return
+        if not self._confirm_discard_changes("open another session"):
+            return
+        self._load_session_path(path)
+        self.raise_()
+        self.activateWindow()
+
     def _load_session_path(self, path: Path) -> None:
         try:
             state = load_session(path)
@@ -1564,6 +1583,8 @@ class BirdsMainWindow(QMainWindow):
     def _maybe_offer_recovery(self) -> None:
         """At startup, prompt to recover an unsaved auto-save if one
         exists and is newer than whatever the user has loaded so far."""
+        if getattr(self, "_opened_from_file", False):
+            return
         ap = autosave_path()
         if not ap.exists():
             return

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=B.I.R.D.S
+GenericName=Igneous geochemistry
+Comment=Diagrams and statistics for igneous rocks
+Exec=BIRDS %f
+Icon=birds
+Terminal=false
+Categories=Science;Geology;Education;
+MimeType=application/x-birds-session;

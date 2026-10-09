@@ -373,6 +373,11 @@ python3 -m pip install -r requirements.txt
 python3 main.py
 ```
 
+To build B.I.R.D.S as an installable application — `BIRDS.app` on macOS,
+an installer on Windows — so that saved `.birds` sessions carry their own
+icon and open on a double-click, see
+**[packaging/README.md](packaging/README.md)**.
+
 ---
 
 ## Quick start
@@ -467,6 +472,7 @@ BIRDS/
 ├── main.py                     Launcher + crash logging (~/.birds/crash.log)
 ├── requirements.txt
 ├── birds/
+│   ├── app.py                  QApplication; opens double-clicked sessions
 │   ├── main_window.py          QMainWindow, menus, session wiring
 │   ├── data_manager.py         The three sheets + below-detection masks
 │   ├── io_utils.py             Robust CSV/Excel reader
@@ -489,6 +495,7 @@ BIRDS/
 │   ├── views/                  One widget per diagram family
 │   └── resources/              Logo and icons
 ├── templates/                  Data-entry templates
+├── packaging/                  App bundle, installer, icons (.birds files)
 └── docs/                       User manual (PDF/DOCX), flow chart, method notes
 ```
 

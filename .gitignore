@@ -47,6 +47,8 @@ env/
 # --- Packaging (PyInstaller) ------------------------------------------------
 *.manifest
 *.spec
+# …except the one recipe the app is built from.
+!packaging/birds.spec
 
 # --- Testing / coverage -----------------------------------------------------
 .pytest_cache/

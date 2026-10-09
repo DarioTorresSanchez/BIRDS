@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The .birds session type, for shared-mime-info.  See packaging/README.md. -->
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-birds-session">
+    <comment>B.I.R.D.S session</comment>
+    <glob pattern="*.birds"/>
+    <icon name="application-x-birds-session"/>
+  </mime-type>
+</mime-info>

@@ -42,6 +42,17 @@ including what is still unverified.
   and on the reservoir overlays, where Primitive Mantle gives 89.3, the
   value McDonough & Sun (1995) print. Reservoirs also plot on `*_adj`
   axes, being published volatile-free.
+- **B.I.R.D.S can be built as an application, and `.birds` sessions get
+  their own icon.** `packaging/` holds the PyInstaller recipe for a
+  macOS `BIRDS.app` and a Windows build, an Inno Setup installer, Linux
+  desktop and MIME files, and the icons: the application's, and a
+  session-file icon — a page with the emblem small on it — drawn from
+  the logo by `packaging/make_icons.py`. The app declares the `.birds`
+  type, so every saved session shows that icon and opens in B.I.R.D.S
+  on a double-click: macOS hands the file over as an event, Windows and
+  Linux on the command line, and `birds/app.py` routes both to the
+  window. A session opened that way is not covered by the offer to
+  recover an earlier auto-save. Build steps in `packaging/README.md`.
 - **Mg# in the statistics and in the saved report.** `Mg#`, `Mg#_FeOt`
   and `Mg#_adj` are summarised like any oxide in the Descriptive, By
   group and Paper tables — at the foot of the major elements in the
