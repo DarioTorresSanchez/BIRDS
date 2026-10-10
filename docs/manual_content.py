@@ -65,6 +65,9 @@ SECTIONS = [
             "An internet connection is needed only for the initial "
             "library installation. Once installed, nothing in "
             "B.I.R.D.S uses the network.",
+            "Installed as an application — BIRDS.app on macOS, or "
+            "through the Windows installer — B.I.R.D.S needs no Python "
+            "at all, and about 400 MB of disk.",
         ]},
     ]),
 
@@ -110,6 +113,15 @@ SECTIONS = [
          "of the desktop → New → Shortcut, paste the full path "
          "“C:\\Python311\\python.exe C:\\Users\\<your-name>\\BIRDS\\main.py” "
          "and name it B.I.R.D.S."},
+        {"type": "h2", "text": "3.5  The installer"},
+        {"type": "p", "text":
+         "B.I.R.D.S can also be packaged as a Windows installer. The "
+         "installed program needs no Python, has a Start-menu entry, "
+         "and registers .birds sessions: they carry the session icon "
+         "and open with a double-click. The installer is built on a "
+         "Windows computer from the source, with PyInstaller and Inno "
+         "Setup 6, following packaging/README.md; check the built "
+         "program with BIRDS.exe --self-test before sharing it."},
     ]),
 
     ("4. Installation — macOS", [
@@ -142,6 +154,42 @@ SECTIONS = [
          "On Apple-silicon Macs (M1/M2/M3) make sure you use the "
          "universal2 Python installer; PySide6 wheels are not yet "
          "available for some older Intel-only builds."},
+        {"type": "h2", "text": "4.5  The application: BIRDS.app"},
+        {"type": "p", "text":
+         "Packaged as BIRDS.app, B.I.R.D.S runs without Python, opens "
+         "from Launchpad or the Dock like any other program, and macOS "
+         "knows its sessions: every .birds file carries the session "
+         "icon and opens in B.I.R.D.S with a double-click."},
+        {"type": "bullet", "items": [
+            "If you received BIRDS.app: drag it into Applications. The "
+            "first time, right-click it and choose Open, then Open "
+            "again — the app is not signed with an Apple developer "
+            "certificate, so macOS asks once. After that it opens "
+            "normally.",
+            "To build it yourself, with the libraries of section 4.3 "
+            "installed, add PyInstaller once and run the updater from "
+            "the BIRDS folder:",
+        ]},
+        {"type": "code", "text": "python3 -m pip install pyinstaller"},
+        {"type": "code", "text": "python3 packaging/update_mac_app.py"},
+        {"type": "p", "text":
+         "In about a minute it builds the app, checks it with its "
+         "self-test and, only if that passes, puts it in Applications, "
+         "replacing an older copy. Close B.I.R.D.S before running it."},
+        {"type": "h2", "text": "4.6  Keeping the application up to date"},
+        {"type": "p", "text":
+         "BIRDS.app is a snapshot of the source as it was when built: "
+         "changes to the source reach it only when it is rebuilt. Run "
+         "python3 packaging/update_mac_app.py again — sessions, "
+         "settings and the .birds association carry over. In the "
+         "meantime python3 main.py always runs the source as it "
+         "stands."},
+        {"type": "note", "text":
+         "If .birds files still show a plain page right after the "
+         "first install, relaunch the Finder: hold Option, right-click "
+         "its icon in the Dock and choose Relaunch. macOS draws a new "
+         "document icon in the background and shows the plain page "
+         "until it is ready."},
     ]),
 
     ("5. The B.I.R.D.S interface", [
@@ -703,6 +751,22 @@ SECTIONS = [
             "Tick “Tight bounding box” to trim the margins and "
             "“Transparent background” for PNG / SVG figures meant for "
             "overlays.",
+        ]},
+        {"type": "h2", "text": "13.3  Save and reopen a session"},
+        {"type": "bullet", "items": [
+            "Data → Save session (Ctrl+S) writes everything to one "
+            ".birds file: the data sheets, the groups and their styles, "
+            "each view's settings, and results already computed such as "
+            "the CIPW norm, so reopening needs no recalculation.",
+            "Data → Save session as… (Ctrl+Shift+S) writes it under a "
+            "new name.",
+            "Data → Open session… (Ctrl+O), or Data → Recent sessions, "
+            "reopens one. With the application installed (sections 3.5 "
+            "and 4.5) a double-click on the .birds file does the same.",
+            "B.I.R.D.S also saves your work on its own every five "
+            "minutes. If it closes before you save, the next start "
+            "offers to recover it — unless it was started by "
+            "double-clicking a session, which is then the one opened.",
         ]},
     ]),
 

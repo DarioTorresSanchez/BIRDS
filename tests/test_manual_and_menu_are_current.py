@@ -254,3 +254,80 @@ def test_the_manual_names_the_majors_switch_and_the_mg_numbers(
     assert box.check.text() in manual_text
     for name in DERIVED:
         assert f"{name} — " in manual_text, name
+
+
+def test_the_manual_names_the_session_menu_and_the_app_updater(
+        qapp, manual_text):
+    """Sections 4.5-4.6 and 13.3: the session commands by the names and
+    shortcuts the Data menu shows, and the updater by a path that
+    exists."""
+    from PySide6.QtGui import QAction
+    from PySide6.QtWidgets import QMenu
+
+    from birds.main_window import BirdsMainWindow
+
+    window = BirdsMainWindow()
+    actions = {a.text(): a.shortcut().toString()
+               for a in window.findChildren(QAction)}
+    actions.update({m.title(): "" for m in window.findChildren(QMenu)})
+    for name in ("Save session", "Save session as…", "Open session…",
+                 "Recent sessions"):
+        assert name in actions, name
+        shortcut = actions[name]
+        mentioned = f"Data → {name} ({shortcut})" if shortcut else \
+            f"Data → {name}"
+        assert mentioned in manual_text, mentioned
+    root = Path(__file__).resolve().parents[1]
+    scripts = set(re.findall(r"python3? (\S+\.py)\b", manual_text))
+    assert "packaging/update_mac_app.py" in scripts
+    for script in scripts:                  # every one it says to run
+        assert (root / script).is_file(), script
+    assert window._autosave_timer.interval() == 5 * 60 * 1000
+    assert "every five minutes" in manual_text
+
+
+# ---------------------------------------------------------------------------
+# docs/DIAGRAM_PROVENANCE.md
+# ---------------------------------------------------------------------------
+
+def _menu_keys():
+    from birds.diagrams.catalog import (
+        CLASSIFICATION_PLUTONIC,
+        CLASSIFICATION_VOLCANIC,
+    )
+
+    keys = [k for _l, k in CLASSIFICATION_VOLCANIC + CLASSIFICATION_PLUTONIC]
+    keys += [k for cat in (TECTONIC_VOLCANIC, TECTONIC_PLUTONIC)
+             for section in cat.values() for _l, k in section]
+    return keys
+
+
+@pytest.fixture(scope="module")
+def provenance():
+    return (Path(__file__).resolve().parents[1] / "docs"
+            / "DIAGRAM_PROVENANCE.md").read_text(encoding="utf-8")
+
+
+def test_the_provenance_counts_are_the_catalogues(provenance):
+    """Its summary said 28 checked and 19 still to measure for two
+    weeks after all but three had been settled."""
+    keys = _menu_keys()
+    assert f"**{len(set(keys))} unique diagrams**" in provenance
+    assert f"The menus list {len(keys)} entries" in provenance
+
+    summary = provenance.split("## Summary", 1)[1].split("\n---", 1)[0]
+    rows = re.findall(r"^\| (.+?) \| \**(\d+)\** \|", summary, re.MULTILINE)
+    counts = {label.strip("* "): int(n) for label, n in rows}
+    total = counts.pop("Total")
+    assert total == len(set(keys)) == sum(counts.values())
+
+    blocked = provenance.split("## Still drawn by eye", 1)[1].split("\n## ")[0]
+    named = set(re.findall(r"`(\w+)`", blocked.split("\n\n", 3)[2]))
+    assert counts["Still drawn by eye, blocked on sources"] == len(named)
+    assert named <= set(keys)
+
+
+def test_every_diagram_in_the_menus_has_a_provenance_entry(provenance):
+    missing = sorted(k for k in set(_menu_keys())
+                     if f"`{k}`" not in provenance)
+    assert not missing, f"no provenance entry: {missing}"

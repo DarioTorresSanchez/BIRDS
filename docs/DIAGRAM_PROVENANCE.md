@@ -1,7 +1,8 @@
 # Diagram provenance and verification status
 
 Where every diagram boundary in BIRDS comes from, and how far it has been
-checked against the source. Written 2026-09-25.
+checked against the source. Written 2026-09-25; the summary brought up
+to date 2026-10-10.
 
 A boundary is one of three kinds of thing, and each needs a different
 kind of check:
@@ -18,21 +19,31 @@ apply. This was the lesson of the Pb NHRL: the drawn line in the source
 figure sits 5–7 px off Hart's published equation, which is the
 redrawing's error, not the equation's.
 
-The catalogue holds **47 unique diagrams**. The menus list 62 entries,
+The catalogue holds **48 unique diagrams**. The menus list 63 entries,
 but all 15 plutonic tectonic-discrimination entries re-use volcanic keys.
+The five modal diagrams of the Petrography view — the two QAPF
+triangles, gabbro, ultramafic and tuff — are not covered here.
 
 ---
 
 ## Summary
 
-| Status | Count |
-|---|---|
-| Verified against the source | 28 |
-| **Known wrong — fix first** | **0** |
-| Drawn envelope, not yet measured | 19 |
+| Status | Count | Section |
+|---|---|---|
+| Measured from the figure, or checked against the centroids it prints | 13 | *Measured, or checked against printed centroids* |
+| Equation or table, compared with the published numbers | 9 | *Equation or table* |
+| TAS, volcanic and plutonic, vertex by vertex | 2 | *Retracted findings*, *Middlemost (1994)* |
+| Rule, with the arithmetic under it checked | 1 | *Maniar & Piccoli (1989)* |
+| Drawn envelope, now measured, computed or read from printed coordinates | 19 | *Drawn envelope* to *Harris, Pearce & Tindle (1986)* |
+| A plane computed from printed equations, with no fields to check | 1 | *Yang et al. (2019)* |
+| **Known wrong — fix first** | **0** | |
+| Still drawn by eye, blocked on sources | 3 | *Still drawn by eye* |
+| **Total** | **48** | |
 
-One caveat remains inside the verified set: the Butler & Woronow field
-boundaries disagree with their own equations. See below.
+One curve inside the checked set is not verified: the Irvine & Baragar
+(1971) overlay on `afm`, whose coordinates the caption does not print.
+The Butler & Woronow disagreement this summary used to flag is resolved:
+two minus signs the PDF text layer drops (see below).
 
 Every entry that this triage first called "known wrong" turned out to be
 sound once it was checked properly — both TAS diagrams and the Verma
@@ -41,7 +52,7 @@ came from a different bad method and both are easy to repeat.
 
 ---
 
-## Verified (28)
+## Measured, or checked against printed centroids (13)
 
 **Measured from the published figure**, with the measurement pinned as
 tests and the method recorded in each module's *Provenance* section:
@@ -371,7 +382,11 @@ faded to say so.
 `Ti` was converted from TiO₂ with 5995 ppm per wt.% in four places;
 the mass ratio gives 5993.4. Now a named constant, shared.
 
-## Drawn envelope — twelve done, 10 to go
+## Drawn envelope — 19 done, 3 blocked
+
+Twelve are in the three subsections below; Saccani, Defant & Drummond,
+Pearce & Gale, Cabanis & Lecolle and Harris have a section each after
+them; the three still drawn by eye are listed last.
 
 ### Done (3)
 
@@ -475,7 +490,9 @@ back to Zr–Ti is the same softmax the ternaries use, scaled by 10⁶.
 
 ### Published coordinates, two of them corrected (4)
 
-The four **Pearce, Harris & Tindle (1984)** granitoid discriminants are
+The four **Pearce, Harris & Tindle (1984)** granitoid discriminants —
+`pearce1984_YNb`, `pearce1984_YbTa`, `pearce1984_YNbRb` and
+`pearce1984_YbTaRb` — are
 among the rare diagrams of their era whose authors printed the boundary
 coordinates outright, in the captions of their Figures 3 and 4. What
 was here before was hand-written line segments bearing no relation to
@@ -939,7 +956,7 @@ which the citation passes on.
 arithmetic rather than by label, the five segments, their shared
 vertices, the two separate branches, and the catalogue text.
 
-### Still drawn by eye (3) — all blocked, none pending
+## Still drawn by eye (3) — all blocked, none pending
 
 Nothing is left that a measurement could fix. The three below are
 blocked on sources, not on effort.

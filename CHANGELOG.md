@@ -152,6 +152,23 @@ including what is still unverified.
   flowchart — the manual's Figure 1 and the README's — was redrawn
   with all eleven modules, and its counts are now read from the code
   instead of typed in.
+- **The manual covers the installed application and sessions.** New
+  sections on BIRDS.app (4.5: installing a received copy, building it
+  with the updater, the first-open step for an unsigned app), keeping
+  it up to date (4.6), the Windows installer (3.5) and saving and
+  reopening sessions (13.3: the commands, double-click opening, the
+  five-minute auto-save and its recovery offer), plus the diagrams drawn
+  from the norm. A test requires the session commands to carry the
+  names and shortcuts the Data menu shows and every script the manual
+  says to run to exist.
+- **`DIAGRAM_PROVENANCE.md`'s summary caught up with its body.** It
+  still read 28 checked and 19 drawn envelopes to measure, flagged a
+  Butler & Woronow disagreement resolved since, and counted 47 diagrams
+  and 62 menu entries. Of 48 diagrams, 45 are now checked against their
+  sources, none is known wrong, and three remain drawn by eye, blocked
+  on sources; the table says which section covers each kind. Tests
+  recompute those counts from the catalogue and require every diagram
+  in the menus to have an entry.
 - **`docs/SPATIAL_ANALYSIS.md`**, the method note for the kriging: the
   choices and their reasons, the equations, the data handling, how it
   was checked and where it stops. It is to the geostatistics what
