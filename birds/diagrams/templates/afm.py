@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import pandas as pd
 from .base import (
-    Diagram,
     PlotOptions,
+    TernaryDiagram,
     draw_ternary_frame,
-    get_groups,
     resolve_column,
     ternary_to_xy,
 )
@@ -27,7 +26,7 @@ _IB_1971 = [
 ]
 
 
-class AFM(Diagram):
+class AFM(TernaryDiagram):
     key = "afm"
     title = "AFM ternary – Tholeiitic vs Calc-alkaline"
     citation = ("Irvine & Baragar (1971); Kuno (1968); new boundary curve "
@@ -85,22 +84,6 @@ class AFM(Diagram):
                 fontsize=10, style="italic")
 
         # Data
-        if df is not None and not df.empty:
-            for label, sub, gs in get_groups(df, plot_style):
-                abc = self._abc(sub)
-                if abc is None:
-                    continue
-                a, b, c = abc
-                mask = a.notna() & b.notna() & c.notna()
-                a, b, c = a[mask], b[mask], c[mask]
-                if a.empty:
-                    continue
-                x, y = ternary_to_xy(a, b, c)
-                ax.scatter(x, y, s=plot_style.point_size ** 2,
-                           alpha=plot_style.alpha,
-                           c=gs.color if gs else "#1f77b4",
-                           marker=gs.marker if gs else "o",
-                           label=label, edgecolors="black", linewidths=0.4,
-                           zorder=4)
+        self._scatter_samples(ax, df, plot_style)
         self._apply_legend(ax, options)
         figure.tight_layout()

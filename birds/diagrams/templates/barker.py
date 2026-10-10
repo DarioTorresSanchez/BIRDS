@@ -33,11 +33,10 @@ from __future__ import annotations
 import pandas as pd
 
 from .base import (
-    Diagram,
     PlotOptions,
+    TernaryDiagram,
     draw_note,
     draw_ternary_frame,
-    get_groups,
     normative,
     normative_note,
     ternary_to_xy,
@@ -88,7 +87,7 @@ _LABELS: tuple = (
 _LINE = dict(color="#444", linewidth=0.9, alpha=0.9, zorder=2)
 
 
-class BarkerAnAbOr(Diagram):
+class BarkerAnAbOr(TernaryDiagram):
     key = "barker_anaborn"
     title = "Normative An – Ab – Or granitoid classification"
     citation = ("Barker, F. (1979) Trondhjemite: definition, environment "
@@ -101,14 +100,12 @@ class BarkerAnAbOr(Diagram):
 
     _MINERALS = ("An", "Ab", "Or")
 
-    def _compute_xy(self, df):
-        """Each sample on the triangle (An at the top), from its norm;
-        NaN where it has none.  The sample tally and Identify-sample read
-        the same mapping as the plot."""
+    def _abc(self, df):
+        """(An, Ab, Or) from each sample's norm; NaN where it has none."""
         norm = normative(df, self._MINERALS)
         if norm is None:
-            return None, None
-        return ternary_to_xy(norm["An"], norm["Ab"], norm["Or"])
+            return None
+        return norm["An"], norm["Ab"], norm["Or"]
 
     def plot(self, figure, df, plot_style, options: PlotOptions):
         figure.clear()
@@ -127,20 +124,7 @@ class BarkerAnAbOr(Diagram):
                     ha="center", va="center", fontsize=8, color="#333",
                     alpha=0.95, zorder=3)
 
-        if df is not None and not df.empty:
-            for label, sub, gs in get_groups(df, plot_style):
-                x, y = self._compute_xy(sub)
-                if x is None:
-                    continue
-                mask = x.notna() & y.notna()
-                if not mask.any():
-                    continue
-                ax.scatter(x[mask], y[mask], s=plot_style.point_size ** 2,
-                           alpha=plot_style.alpha,
-                           c=gs.color if gs else "#1f77b4",
-                           marker=gs.marker if gs else "o",
-                           label=label, edgecolors="black", linewidths=0.4,
-                           zorder=4)
+        self._scatter_samples(ax, df, plot_style)
         note = normative_note(df, self._MINERALS)
         if note:
             draw_note(ax, note)

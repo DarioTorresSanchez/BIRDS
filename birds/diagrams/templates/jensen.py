@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import pandas as pd
 from .base import (
-    Diagram,
     PlotOptions,
+    TernaryDiagram,
     draw_ternary_frame,
-    get_groups,
     resolve_column,
     ternary_to_xy,
 )
@@ -20,7 +19,7 @@ _TH_CA_BOUNDARY = [
 ]
 
 
-class Jensen(Diagram):
+class Jensen(TernaryDiagram):
     key = "jensen"
     title = "Jensen cation plot – Al – (Fe+Ti) – Mg"
     citation = ("Jensen (1976); Jensen & Pyke (1982). Cation %. "
@@ -73,22 +72,6 @@ class Jensen(Diagram):
         ax.text(0.92, 0.02, "Komatiites", color="#333", fontsize=8,
                 ha="center")
 
-        if df is not None and not df.empty:
-            for label, sub, gs in get_groups(df, plot_style):
-                abc = self._abc(sub)
-                if abc is None:
-                    continue
-                aa, bb, cc = abc
-                mask = aa.notna() & bb.notna() & cc.notna()
-                aa, bb, cc = aa[mask], bb[mask], cc[mask]
-                if aa.empty:
-                    continue
-                x, y = ternary_to_xy(aa, bb, cc)
-                ax.scatter(x, y, s=plot_style.point_size ** 2,
-                           alpha=plot_style.alpha,
-                           c=gs.color if gs else "#1f77b4",
-                           marker=gs.marker if gs else "o",
-                           label=label, edgecolors="black", linewidths=0.4,
-                           zorder=4)
+        self._scatter_samples(ax, df, plot_style)
         self._apply_legend(ax, options)
         figure.tight_layout()

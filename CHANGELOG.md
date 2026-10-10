@@ -533,6 +533,19 @@ including what is still unverified.
 
 #### Interface
 
+- **On the triangles the sample tally counted everything as plotted.**
+  The ternary diagrams — the eight tectonic ones (Wood, Cabanis &
+  Lecolle, Harris, Vermeesch ×5), AFM and Jensen — placed their samples
+  inside their own plotting code and never told the tally where, so it
+  fell back to calling every visible sample plotted: Wood reported a
+  dataset with no Th, Hf or Ta as fully plotted on an empty triangle.
+  Identify-sample and the selection highlight found nothing on them
+  either. A shared `TernaryDiagram` now derives each sample's position
+  once, for the plot and for everything that reads it, and Barker and
+  the haplogranite use it too; every point drawn is where it was. Tests
+  check the tally against the points actually drawn, on six dataset
+  shapes, and fail if a new template draws samples without saying
+  where.
 - **Samples off the frame were counted as plotted.** Thirty-two of the
   53 templates fix their limits to the frame their source figure is
   drawn on — the TAS is 35–78 wt.% SiO₂ by 0–16 wt.% alkalis, the Verma

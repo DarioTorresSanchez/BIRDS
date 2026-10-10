@@ -10,13 +10,14 @@ from matplotlib.patches import Polygon
 
 from ...normalizations import TIO2_WT_TO_TI_PPM
 from .base import (
-    Diagram,
     PlotOptions,
+    TernaryDiagram,
     draw_ternary_frame,
-    get_groups,
     resolve_column,
     inverse_logratio as _inverse_logratio,
+    scatter_groups,
     ternary_to_xy,
+    ternary_xy,
 )
 
 
@@ -58,25 +59,12 @@ def _draw_ternary_fields(ax, fields: dict, *, linewidth: float = 0.9,
 def _plot_ternary_data(ax, df: Optional[pd.DataFrame], plot_style,
                         abc_fn: Callable[[pd.DataFrame],
                                           Optional[Tuple[pd.Series, pd.Series, pd.Series]]]) -> None:
-    """Scatter the grouped samples using a callable that returns (a, b, c)."""
-    if df is None or df.empty:
-        return
-    for label, sub, gs in get_groups(df, plot_style):
-        abc = abc_fn(sub)
-        if abc is None:
-            continue
-        a, b, c = abc
-        mask = a.notna() & b.notna() & c.notna() & (a + b + c > 0)
-        a, b, c = a[mask], b[mask], c[mask]
-        if a.empty:
-            continue
-        x, y = ternary_to_xy(a, b, c)
-        ax.scatter(x, y, s=plot_style.point_size ** 2,
-                   alpha=plot_style.alpha,
-                   c=gs.color if gs else "#1f77b4",
-                   marker=gs.marker if gs else "o",
-                   label=label, edgecolors="black", linewidths=0.4,
-                   zorder=4)
+    """Scatter the grouped samples using a callable that returns (a, b, c).
+
+    For the Petrography view's modal triangles; the diagrams here are
+    :class:`TernaryDiagram` and scatter through their own mapping.
+    """
+    scatter_groups(ax, df, plot_style, lambda d: ternary_xy(abc_fn(d)))
 
 
 # ---------------------------------------------------------------------------
@@ -161,7 +149,7 @@ CABANIS_FIELDS = (
 )
 
 
-class CabanisLecolle1989(Diagram):
+class CabanisLecolle1989(TernaryDiagram):
     key = "cabanis_lecolle_1989"
     title = "La/10 – Y/15 – Nb/8 — Cabanis & Lecolle (1989)"
     citation = ("Cabanis & Lecolle (1989), on the boundaries Rollinson "
@@ -218,7 +206,7 @@ class CabanisLecolle1989(Diagram):
             ax.text(float(lx.iloc[0]), float(ly.iloc[0]), name,
                     ha="center", va="center", fontsize=8, color="#333",
                     zorder=3)
-        _plot_ternary_data(ax, df, plot_style, self._abc)
+        self._scatter_samples(ax, df, plot_style)
         self._apply_legend(ax, options)
         figure.tight_layout()
 
@@ -247,7 +235,7 @@ _VRMS_NA_NB_SR = {
 }
 
 
-class Vermeesch2006NaNbSr(Diagram):
+class Vermeesch2006NaNbSr(TernaryDiagram):
     key = "vermeesch_NaNbSr"
     title = "Na − 25 Nb − Sr — Vermeesch (2006a)"
     citation = ("Vermeesch (2006a). Mafic discrimination using Na (wt% × "
@@ -270,7 +258,7 @@ class Vermeesch2006NaNbSr(Diagram):
         ax = figure.add_subplot(111)
         draw_ternary_frame(ax, ("Na/100", "25 Nb", "Sr"), options.x_axis)
         _draw_ternary_fields(ax, _VRMS_NA_NB_SR)
-        _plot_ternary_data(ax, df, plot_style, self._abc)
+        self._scatter_samples(ax, df, plot_style)
         self._apply_legend(ax, options)
         figure.tight_layout()
 
@@ -406,21 +394,18 @@ def _draw_lda_boundaries(ax, spec) -> None:
                 fontsize=8, color="#333", alpha=0.9, zorder=3)
 
 
-class _VermeeschLDATernary(Diagram):
+class _VermeeschLDATernary(TernaryDiagram):
     """Shared plumbing for the three log-ratio LDA ternaries."""
 
     spec: dict = {}
     apices: Tuple[str, str, str] = ("", "", "")
-
-    def _abc(self, df):                                   # pragma: no cover
-        raise NotImplementedError
 
     def plot(self, figure, df, plot_style, options: PlotOptions):
         figure.clear()
         ax = figure.add_subplot(111)
         draw_ternary_frame(ax, self.apices, options.x_axis)
         _draw_lda_boundaries(ax, self.spec)
-        _plot_ternary_data(ax, df, plot_style, self._abc)
+        self._scatter_samples(ax, df, plot_style)
         self._apply_legend(ax, options)
         figure.tight_layout()
 
@@ -506,7 +491,7 @@ _VRMS_SM_TI_V = {
 # Still a hand-drawn envelope: Figure 46 is a QDA, whose boundaries
 # are conics in log-ratio space rather than the straight rays of
 # Table 6, so it has no anchor points to rebuild it from.
-class Vermeesch2006SmTiV(Diagram):
+class Vermeesch2006SmTiV(TernaryDiagram):
     key = "vermeesch_SmTiV"
     title = "50 Sm − Ti/50 − V — Vermeesch (2006a)"
     citation = ("Vermeesch (2006a). 50 × Sm, Ti ppm / 50 and V ppm. "
@@ -528,7 +513,7 @@ class Vermeesch2006SmTiV(Diagram):
         ax = figure.add_subplot(111)
         draw_ternary_frame(ax, ("50 Sm", "Ti/50", "V"), options.x_axis)
         _draw_ternary_fields(ax, _VRMS_SM_TI_V)
-        _plot_ternary_data(ax, df, plot_style, self._abc)
+        self._scatter_samples(ax, df, plot_style)
         self._apply_legend(ax, options)
         figure.tight_layout()
 
@@ -649,7 +634,7 @@ HARRIS_FIELD_LABELS = (
 )
 
 
-class Harris1986HfRbTa(Diagram):
+class Harris1986HfRbTa(TernaryDiagram):
     key = "harris_1986_HfRbTa"
     title = "Rb/30 − Hf − Ta×3 — Harris et al. (1986)"
     citation = ("Harris, Pearce & Tindle (1986) Fig. 6, boundaries "
@@ -689,6 +674,6 @@ class Harris1986HfRbTa(Diagram):
             ax.text(float(x.iloc[0]), float(y.iloc[0]), name,
                     ha="center", va="center", fontsize=7.5, color="#333",
                     zorder=3)
-        _plot_ternary_data(ax, df, plot_style, self._abc)
+        self._scatter_samples(ax, df, plot_style)
         self._apply_legend(ax, options)
         figure.tight_layout()

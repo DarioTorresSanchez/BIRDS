@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import pandas as pd
 from .base import (
-    Diagram,
     PlotOptions,
+    TernaryDiagram,
     draw_note,
     draw_ternary_frame,
-    get_groups,
     normative,
     normative_note,
     ternary_to_xy,
@@ -38,7 +37,7 @@ _MIN_EUT = [
 ]
 
 
-class Haplogranite(Diagram):
+class Haplogranite(TernaryDiagram):
     key = "haplogranite"
     title = "Haplogranite system Ab – Or – Q (water-saturated)"
     citation = ("Tuttle & Bowen (1958); Johannes & Holz (1996); "
@@ -46,14 +45,12 @@ class Haplogranite(Diagram):
 
     _MINERALS = ("Ab", "Or", "Q")
 
-    def _compute_xy(self, df):
-        """Each sample on the triangle (Q at the top, Ab left, Or right),
-        from its norm; NaN where it has none.  The sample tally and
-        Identify-sample read the same mapping as the plot."""
+    def _abc(self, df):
+        """(Q, Ab, Or) from each sample's norm; NaN where it has none."""
         norm = normative(df, self._MINERALS)
         if norm is None:
-            return None, None
-        return ternary_to_xy(norm["Q"], norm["Ab"], norm["Or"])
+            return None
+        return norm["Q"], norm["Ab"], norm["Or"]
 
     def plot(self, figure, df, plot_style, options: PlotOptions):
         figure.clear()
@@ -72,20 +69,7 @@ class Haplogranite(Diagram):
             ax.text(x + 0.012, y, lbl, fontsize=7.5, color="#333",
                     va="center", zorder=3)
 
-        if df is not None and not df.empty:
-            for label, sub, gs in get_groups(df, plot_style):
-                x, y = self._compute_xy(sub)
-                if x is None:
-                    continue
-                mask = x.notna() & y.notna()
-                if not mask.any():
-                    continue
-                ax.scatter(x[mask], y[mask], s=plot_style.point_size ** 2,
-                           alpha=plot_style.alpha,
-                           c=gs.color if gs else "#1f77b4",
-                           marker=gs.marker if gs else "o",
-                           label=label, edgecolors="black", linewidths=0.4,
-                           zorder=4)
+        self._scatter_samples(ax, df, plot_style)
         note = normative_note(df, self._MINERALS)
         if note:
             draw_note(ax, note)

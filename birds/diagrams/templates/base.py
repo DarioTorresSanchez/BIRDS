@@ -549,6 +549,67 @@ class Diagram:
 
 
 # ---------------------------------------------------------------------------
+# Ternary diagrams
+# ---------------------------------------------------------------------------
+
+def ternary_xy(abc) -> Tuple[Optional[pd.Series], Optional[pd.Series]]:
+    """Where ``(apex, left, right)`` values put each sample on a triangle.
+
+    NaN for a sample lacking any of the three or summing to nothing, so a
+    caller can tell drawn from not; ``(None, None)`` when *abc* is
+    ``None``, i.e. the columns are absent.
+    """
+    if abc is None:
+        return None, None
+    a, b, c = (pd.to_numeric(v, errors="coerce") for v in abc)
+    placed = a.notna() & b.notna() & c.notna() & (a + b + c > 0)
+    return ternary_to_xy(a.where(placed), b.where(placed), c.where(placed))
+
+
+def scatter_groups(ax, df: Optional[pd.DataFrame], plot_style,
+                   xy_fn) -> None:
+    """Scatter each group of *df* where ``xy_fn(group)`` puts it,
+    leaving off the samples it returns as NaN."""
+    if df is None or df.empty:
+        return
+    for label, sub, gs in get_groups(df, plot_style):
+        x, y = xy_fn(sub)
+        if x is None or y is None:
+            continue
+        keep = x.notna() & y.notna()
+        if not keep.any():
+            continue
+        ax.scatter(x[keep], y[keep], s=plot_style.point_size ** 2,
+                   alpha=plot_style.alpha,
+                   c=gs.color if gs else "#1f77b4",
+                   marker=gs.marker if gs else "o",
+                   label=label, edgecolors="black", linewidths=0.4,
+                   zorder=4)
+
+
+class TernaryDiagram(Diagram):
+    """A triangle whose samples ``_abc`` places, as (apex, left, right).
+
+    ``_compute_xy`` is derived from ``_abc`` here, once, so the plot,
+    the sample tally, Identify-sample and brushing all read the same
+    mapping.  Without it the tally fell back to counting every sample as
+    plotted -- on a triangle that could be empty -- and a click on a
+    point identified nothing.
+    """
+
+    def _abc(self, df: pd.DataFrame):
+        raise NotImplementedError
+
+    def _compute_xy(self, df: pd.DataFrame
+                    ) -> Tuple[Optional[pd.Series], Optional[pd.Series]]:
+        return ternary_xy(self._abc(df))
+
+    def _scatter_samples(self, ax, df: Optional[pd.DataFrame],
+                         plot_style) -> None:
+        scatter_groups(ax, df, plot_style, self._compute_xy)
+
+
+# ---------------------------------------------------------------------------
 # Compositional-data helpers (Verma-style log-ratio discriminant functions)
 # ---------------------------------------------------------------------------
 
