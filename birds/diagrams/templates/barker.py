@@ -35,9 +35,11 @@ import pandas as pd
 from .base import (
     Diagram,
     PlotOptions,
+    draw_note,
     draw_ternary_frame,
     get_groups,
-    resolve_column,
+    normative,
+    normative_note,
     ternary_to_xy,
 )
 
@@ -97,17 +99,16 @@ class BarkerAnAbOr(Diagram):
                 "tonalite and the albite-rich corner trondhjemite.  "
                 "Boundaries measured from the published figure.")
 
-    def _abc(self, df):
-        ab = resolve_column(df, ["Ab", "ab", "Albite"])
-        an = resolve_column(df, ["An", "an", "Anorthite"])
-        orx = resolve_column(df, ["Or", "or", "Orthoclase"])
-        if not (ab and an and orx):
-            return None
-        return (
-            pd.to_numeric(df[an], errors="coerce"),
-            pd.to_numeric(df[ab], errors="coerce"),
-            pd.to_numeric(df[orx], errors="coerce"),
-        )
+    _MINERALS = ("An", "Ab", "Or")
+
+    def _compute_xy(self, df):
+        """Each sample on the triangle (An at the top), from its norm;
+        NaN where it has none.  The sample tally and Identify-sample read
+        the same mapping as the plot."""
+        norm = normative(df, self._MINERALS)
+        if norm is None:
+            return None, None
+        return ternary_to_xy(norm["An"], norm["Ab"], norm["Or"])
 
     def plot(self, figure, df, plot_style, options: PlotOptions):
         figure.clear()
@@ -128,21 +129,21 @@ class BarkerAnAbOr(Diagram):
 
         if df is not None and not df.empty:
             for label, sub, gs in get_groups(df, plot_style):
-                abc = self._abc(sub)
-                if abc is None:
+                x, y = self._compute_xy(sub)
+                if x is None:
                     continue
-                a, b, c = abc
-                mask = a.notna() & b.notna() & c.notna()
-                a, b, c = a[mask], b[mask], c[mask]
-                if a.empty:
+                mask = x.notna() & y.notna()
+                if not mask.any():
                     continue
-                x, y = ternary_to_xy(a, b, c)
-                ax.scatter(x, y, s=plot_style.point_size ** 2,
+                ax.scatter(x[mask], y[mask], s=plot_style.point_size ** 2,
                            alpha=plot_style.alpha,
                            c=gs.color if gs else "#1f77b4",
                            marker=gs.marker if gs else "o",
                            label=label, edgecolors="black", linewidths=0.4,
                            zorder=4)
+        note = normative_note(df, self._MINERALS)
+        if note:
+            draw_note(ax, note)
         self._apply_legend(ax, options)
         figure.tight_layout()
 

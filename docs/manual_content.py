@@ -271,6 +271,24 @@ SECTIONS = [
             "(1989).",
             "Ab–Or–Q haplogranite — Tuttle & Bowen (1958).",
         ]},
+        {"type": "h2", "text": "Diagrams drawn from the norm"},
+        {"type": "p", "text":
+         "Barker's An–Ab–Or, the haplogranite Ab–Or–Q and panel (d) of "
+         "Frost, AI vs FSSI, plot normative minerals. They compute the "
+         "CIPW norm themselves from the majors in use, the same norm as "
+         "the Norm view and following the same switch, so there is no "
+         "need to visit that view first. A dataset that brings its own "
+         "norm, in columns named Q, Or, Ab, An, Ne, Lc and Kp, is "
+         "plotted as it stands instead."},
+        {"type": "p", "text":
+         "A sample lacking SiO2, Al2O3, MgO, CaO, Na2O, K2O or the iron "
+         "as FeO or Fe2O3 gets no norm and is left off: computed "
+         "anyway, its blanks would count as zeros — without Al2O3 a "
+         "granite has no feldspar and sits on the quartz apex. A note "
+         "on the diagram says how many samples were left off and why, "
+         "and the Norm view lists them as incomplete. Iron given only "
+         "as a total (FeOt or Fe2O3t) must be split first: run Data → "
+         "Pre-process majors… and tick Use majors adjusted to 100 %."},
         {"type": "h2", "text": "Naming a rock from the TAS"},
         {"type": "p", "text":
          "Both TAS diagrams can name a composition as well as plot it. "
@@ -709,6 +727,15 @@ SECTIONS = [
          "your data. Look at the diagram's subtitle for the required "
          "columns and either rename your columns to match or add the "
          "missing measurements."},
+
+        {"type": "h2", "text": "A normative diagram shows no samples"},
+        {"type": "p", "text":
+         "Barker, the haplogranite and Frost's FSSI panel need a CIPW "
+         "norm for each sample, and the note in the corner of the "
+         "diagram names what is missing. Most often the iron is given "
+         "only as FeOt or Fe2O3t: split it in Data → Pre-process "
+         "majors… and tick Use majors adjusted to 100 % (section 7, "
+         "Diagrams drawn from the norm)."},
 
         {"type": "h2", "text": "Group names don't match the legend"},
         {"type": "p", "text":

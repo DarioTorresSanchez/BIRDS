@@ -64,6 +64,90 @@ def resolve_column(df: pd.DataFrame, candidates: Iterable[str]) -> Optional[str]
     return None
 
 
+#: Column names a dataset may give its own normative minerals.
+NORMATIVE_NAMES: Dict[str, Tuple[str, ...]] = {
+    "Q": ("Q", "Qz", "Quartz"),
+    "Or": ("Or", "Orthoclase"),
+    "Ab": ("Ab", "Albite"),
+    "An": ("An", "Anorthite"),
+    "Ne": ("Ne", "Nepheline"),
+    "Lc": ("Lc", "Leucite"),
+    "Kp": ("Kp", "Kaliophilite"),
+}
+
+
+def _brings_own_norm(df: pd.DataFrame, required: Sequence[str]) -> bool:
+    return all(resolve_column(df, NORMATIVE_NAMES[m]) for m in required)
+
+
+def normative(df: pd.DataFrame, required: Sequence[str],
+              optional: Sequence[str] = ()) -> Optional[pd.DataFrame]:
+    """The normative minerals a diagram plots, one column each (wt %).
+
+    A norm the dataset brings -- columns named Q, Ab, An, ... -- is used
+    as it stands when it has every *required* mineral; an *optional* one
+    it lacks counts as 0.  Otherwise the CIPW norm is computed from the
+    majors in *df*, as the Norm view computes it: the diagram needs no
+    visit to that view, and follows the adjusted-majors switch.  The
+    ``norm_*`` columns that view can write into the dataset are not
+    read, since they keep whichever majors were in use when it ran.
+
+    A row the norm cannot be computed for is NaN, so it is left off
+    rather than drawn at a corner (:func:`birds.cipw.norm_gaps`).
+    ``None`` when there are no majors to compute from either.
+    """
+    minerals = (*required, *optional)
+    if _brings_own_norm(df, required):
+        own = {m: resolve_column(df, NORMATIVE_NAMES[m]) for m in minerals}
+        return pd.DataFrame(
+            {m: (pd.to_numeric(df[own[m]], errors="coerce") if own[m]
+                 else 0.0) for m in minerals}, index=df.index)
+    if "SiO2" not in df.columns:
+        return None
+    from ...cipw import compute_cipw
+    norm = compute_cipw(df)
+    return pd.DataFrame({m: norm[f"norm_{m}"] for m in minerals},
+                        index=df.index)
+
+
+def normative_note(df: Optional[pd.DataFrame],
+                   required: Sequence[str]) -> Optional[str]:
+    """One sentence on the samples :func:`normative` leaves without a
+    norm, and why; ``None`` when every sample has one."""
+    if df is None or df.empty or _brings_own_norm(df, required):
+        return None
+    if "SiO2" not in df.columns:
+        return ("No normative minerals: the dataset has neither its own "
+                f"({', '.join(required)}) nor the majors to compute the "
+                "CIPW norm from.")
+    from ...cipw import norm_gaps
+    gaps = norm_gaps(df)
+    lacking = gaps[gaps != ""]
+    if lacking.empty:
+        return None
+    n, total = len(lacking), len(df)
+    head = (f"None of the {total} samples has a CIPW norm" if n == total
+            else f"{n} of {total} samples {'has' if n == 1 else 'have'} "
+                 f"no CIPW norm")
+    tail = f"missing {lacking.value_counts().index[0]}"
+    if lacking.nunique() > 1:
+        tail += ", among other gaps"
+    text = f"{head}: {tail}."
+    if any("only as a total" in gap for gap in lacking.unique()):
+        text += ("\nSplit the iron in Data → Pre-process majors… and use "
+                 "the adjusted majors.")
+    return text
+
+
+def draw_note(ax, text: str) -> None:
+    """Write *text* in the top-left corner of *ax*, where it says why
+    samples are missing without hiding the ones that are drawn."""
+    ax.text(0.01, 0.99, text, transform=ax.transAxes, ha="left", va="top",
+            fontsize=8, color="#a02020", wrap=True, zorder=10,
+            bbox=dict(facecolor="white", edgecolor="#a02020", alpha=0.92,
+                      boxstyle="round,pad=0.3"))
+
+
 def get_groups(df: pd.DataFrame, plot_style) -> List[Tuple[str, pd.DataFrame, object]]:
     """Split *df* into (label, sub_df, GroupStyle) tuples.
 

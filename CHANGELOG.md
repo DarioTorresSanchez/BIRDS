@@ -414,6 +414,24 @@ including what is still unverified.
 
 #### Numerical core
 
+- **The diagrams drawn from the norm drew nothing.** Barker's An–Ab–Or,
+  the haplogranite Ab–Or–Q and Frost's AI–FSSI panel looked for columns
+  named An, Ab, Or, Q, while the CIPW norm writes `norm_An`, `norm_Ab`,
+  …: computing the norm, as the Norm view's own tooltip advised, left
+  them empty. The sample tally hid it, counting every sample on Barker
+  and the haplogranite as plotted. They now compute the norm themselves
+  from the majors in use — no visit to the Norm view, and the
+  adjusted-majors switch is followed — unless the dataset brings its own
+  normative columns; the tally and Identify-sample read the same
+  coordinates as the plot.
+- **The norm read a blank oxide as zero.** Without Al2O3 a granite had
+  no feldspar and its silica became quartz, putting it on the
+  haplogranite's Q apex; with iron given only as FeOt or Fe2O3t, which
+  the norm does not read, a basalt came out quartz-normative. A sample
+  lacking SiO2, Al2O3, MgO, CaO, Na2O, K2O or FeO/Fe2O3 now gets no
+  norm: the Norm view marks it `incomplete` and lists what each lacks,
+  and the normative diagrams leave it off with a note saying why. Iron
+  as a total is split by Data → Pre-process majors….
 - **A broken `mgrs` install stopped B.I.R.D.S starting.** The package
   loads a compiled library with ctypes; when that file is missing the
   error is an `OSError`, which the optional import did not catch. It now

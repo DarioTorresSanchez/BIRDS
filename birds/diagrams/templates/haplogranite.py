@@ -6,9 +6,11 @@ import pandas as pd
 from .base import (
     Diagram,
     PlotOptions,
+    draw_note,
     draw_ternary_frame,
     get_groups,
-    resolve_column,
+    normative,
+    normative_note,
     ternary_to_xy,
 )
 
@@ -42,17 +44,16 @@ class Haplogranite(Diagram):
     citation = ("Tuttle & Bowen (1958); Johannes & Holz (1996); "
                 "Rollinson & Pease (2021) Table 3.10.")
 
-    def _abc(self, df):
-        ab = resolve_column(df, ["Ab", "Albite"])
-        orx = resolve_column(df, ["Or", "Orthoclase"])
-        q = resolve_column(df, ["Q", "Qz", "Quartz"])
-        if not (ab and orx and q):
-            return None
-        return (
-            pd.to_numeric(df[ab], errors="coerce"),
-            pd.to_numeric(df[orx], errors="coerce"),
-            pd.to_numeric(df[q], errors="coerce"),
-        )
+    _MINERALS = ("Ab", "Or", "Q")
+
+    def _compute_xy(self, df):
+        """Each sample on the triangle (Q at the top, Ab left, Or right),
+        from its norm; NaN where it has none.  The sample tally and
+        Identify-sample read the same mapping as the plot."""
+        norm = normative(df, self._MINERALS)
+        if norm is None:
+            return None, None
+        return ternary_to_xy(norm["Q"], norm["Ab"], norm["Or"])
 
     def plot(self, figure, df, plot_style, options: PlotOptions):
         figure.clear()
@@ -73,21 +74,20 @@ class Haplogranite(Diagram):
 
         if df is not None and not df.empty:
             for label, sub, gs in get_groups(df, plot_style):
-                abc = self._abc(sub)
-                if abc is None:
+                x, y = self._compute_xy(sub)
+                if x is None:
                     continue
-                a, b, c = abc  # Ab, Or, Q
-                mask = a.notna() & b.notna() & c.notna()
-                a, b, c = a[mask], b[mask], c[mask]
-                if a.empty:
+                mask = x.notna() & y.notna()
+                if not mask.any():
                     continue
-                # apex A = Q, B = Ab, C = Or
-                x, y = ternary_to_xy(c, a, b)
-                ax.scatter(x, y, s=plot_style.point_size ** 2,
+                ax.scatter(x[mask], y[mask], s=plot_style.point_size ** 2,
                            alpha=plot_style.alpha,
                            c=gs.color if gs else "#1f77b4",
                            marker=gs.marker if gs else "o",
                            label=label, edgecolors="black", linewidths=0.4,
                            zorder=4)
+        note = normative_note(df, self._MINERALS)
+        if note:
+            draw_note(ax, note)
         self._apply_legend(ax, options)
         figure.tight_layout()

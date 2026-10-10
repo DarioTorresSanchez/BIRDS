@@ -184,5 +184,8 @@ class TestRendering:
         fig.clf()
 
     def test_missing_normative_columns_are_reported_not_guessed(self):
-        diagram = get_diagram(DIAGRAM)
-        assert diagram._abc(pd.DataFrame({"An": [40.0]})) is None
+        from birds.diagrams.templates.base import normative_note
+        only_an = pd.DataFrame({"An": [40.0]})        # and no majors
+        assert get_diagram(DIAGRAM)._compute_xy(only_an) == (None, None)
+        assert "No normative minerals" in normative_note(
+            only_an, ("An", "Ab", "Or"))

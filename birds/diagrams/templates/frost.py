@@ -23,7 +23,15 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from .base import Diagram, PlotOptions, get_groups, resolve_column
+from .base import (
+    Diagram,
+    PlotOptions,
+    draw_note,
+    get_groups,
+    normative,
+    normative_note,
+    resolve_column,
+)
 
 
 #: Magnesian / ferroan divide, as Frost & Frost (2008) publish it:
@@ -155,23 +163,19 @@ class Frost(Diagram):
         al = resolve_column(df, ["Al2O3"])
         na = resolve_column(df, ["Na2O"])
         k = resolve_column(df, ["K2O"])
-        q = resolve_column(df, ["Q", "q", "Quartz"])
-        lc = resolve_column(df, ["Lc", "lc", "Leucite"])
-        ne = resolve_column(df, ["Ne", "ne", "Nepheline"])
-        kp = resolve_column(df, ["Kp", "kp", "Kaliophilite"])
         if not (al and na and k):
             return None, None
         al_m = _to_num(df, al) / MOLAR_MASS["Al2O3"] * 2.0
         na_m = _to_num(df, na) / MOLAR_MASS["Na2O"] * 2.0
         k_m = _to_num(df, k) / MOLAR_MASS["K2O"] * 2.0
         ai = al_m - (k_m + na_m)
-        if q is None:
+        norm = normative(df, ("Q",), ("Lc", "Ne", "Kp"))
+        if norm is None:
             return ai, None
-        q_v = _to_num(df, q).fillna(0)
-        lc_v = _to_num(df, lc).fillna(0) if lc else 0
-        ne_v = _to_num(df, ne).fillna(0) if ne else 0
-        kp_v = _to_num(df, kp).fillna(0) if kp else 0
-        fssi = (q_v - (lc_v + 2.0 * (ne_v + kp_v))) / 100.0
+        # A sample with no norm keeps its NaN quartz and is left off; a
+        # blank feldspathoid in a norm the dataset brings is one it lacks.
+        lc, ne, kp = (norm[m].fillna(0.0) for m in ("Lc", "Ne", "Kp"))
+        fssi = (norm["Q"] - (lc + 2.0 * (ne + kp))) / 100.0
         return ai, fssi
 
     # ---------------------------------------------------------------- plot
@@ -251,6 +255,9 @@ class Frost(Diagram):
         ax_ai.set_xlim(-2.5, 2.5)
         ax_ai.set_ylim(-1.0, 1.0)
         ax_ai.set_title("(d) AI vs FSSI", fontsize=10)
+        note = normative_note(df, ("Q",))
+        if note:
+            draw_note(ax_ai, note)
 
         # Legend only on the first axis
         if options.legend.visible:

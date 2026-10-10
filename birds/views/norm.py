@@ -43,7 +43,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ..cipw import OUTPUT_MINERALS, compute_cipw
+from ..cipw import OUTPUT_MINERALS, compute_cipw, norm_gaps
 from ..diagrams.templates.base import get_groups
 from .plot_canvas import PlotCanvas
 from .widgets import AdjustedMajorsBox
@@ -86,6 +86,7 @@ SAT_FILL: Dict[str, QColor] = {
     "oversaturated":   QColor(248, 215, 188),   # warm peach
     "saturated":       QColor(218, 235, 199),   # mint
     "undersaturated":  QColor(196, 212, 240),   # cool blue
+    "incomplete":      QColor(225, 225, 225),   # grey: no norm
 }
 
 
@@ -250,9 +251,11 @@ class NormView(QWidget):
         # Auto-fill -------------------------------------------------------
         attach_tooltip = (
             "When ON, B.I.R.D.S adds the <code>norm_*</code> columns to "
-            "the loaded dataset so the Barker An-Ab-Or, Haplogranite "
-            "Ab-Or-Q and Irvine-Baragar 1971 diagrams pick up the "
-            "computed normative values automatically."
+            "the loaded dataset, so the normative minerals can be picked "
+            "in the Bivariate view and go into the statistics and the "
+            "saved data. The normative diagrams — Barker An-Ab-Or, "
+            "Haplogranite Ab-Or-Q, Frost FSSI — do not need them: they "
+            "compute the norm themselves from the majors in use."
         )
         fill_box = QGroupBox("Integration with other views")
         fill_box.setToolTip(attach_tooltip)
@@ -474,10 +477,35 @@ class NormView(QWidget):
             "",
             "Silica saturation distribution:",
         ]
-        for label in ("oversaturated", "saturated", "undersaturated"):
+        for label in ("oversaturated", "saturated", "undersaturated",
+                      "incomplete"):
             count = int(sat_counts.get(label, 0))
+            if label == "incomplete" and not count:
+                continue
             parts.append(f"  {label:18s}{count:5d}   "
                          f"({(count/n*100 if n else 0):.1f} %)")
+
+        # Samples the norm was not computed for, and what each lacks:
+        # their blanks would otherwise have counted as zeros.  A result
+        # restored from a session has no source to ask until recomputed.
+        lacking = pd.Series(dtype=object)
+        if self._preprocessed is not None:
+            gaps = norm_gaps(self._preprocessed)
+            lacking = gaps[gaps != ""]
+        if not lacking.empty:
+            parts += [
+                "",
+                f"!! {len(lacking)} sample{'s' if len(lacking) != 1 else ''} "
+                "got no norm (blank rows in the table):",
+            ]
+            for reason, count in lacking.value_counts().items():
+                parts.append(f"   {count:4d} × missing {reason}")
+            if any("only as a total" in r for r in lacking.unique()):
+                parts += [
+                    "   Split the iron in Data → Pre-process majors… and "
+                    "tick",
+                    "   'Use majors adjusted to 100 %' above.",
+                ]
 
         # Samples too silica-poor for the implemented desilication steps.
         # Their norm total is overstated, so say so where it cannot be

@@ -110,6 +110,49 @@ INTERNAL_MINERALS: Tuple[str, ...] = (
 
 
 # ---------------------------------------------------------------------------
+# What a norm needs
+# ---------------------------------------------------------------------------
+
+#: The oxides without which a norm means nothing.  A blank is read as 0 by
+#: the allocation, so a missing Al2O3 leaves no feldspar and its silica
+#: as quartz, and a missing MgO or iron leaves the silica the mafic
+#: minerals would take as quartz too: a basalt comes out quartz-normative.
+NORM_ESSENTIALS: Tuple[str, ...] = ("SiO2", "Al2O3", "MgO", "CaO",
+                                    "Na2O", "K2O")
+
+
+def norm_gaps(df: pd.DataFrame) -> pd.Series:
+    """What each row lacks for a norm; an empty string when nothing.
+
+    Missing means blank, not zero: a 0 is a value the analyst gave.  Iron
+    counts when given as FeO or Fe2O3.  A total alone (FeOt, Fe2O3t) does
+    not, since the norm needs the split; Data → Pre-process majors… makes
+    it.
+    """
+    from .preprocess import get_feot
+
+    def present(col: str) -> np.ndarray:
+        if col not in df.columns:
+            return np.zeros(len(df), dtype=bool)
+        return pd.to_numeric(df[col], errors="coerce").notna().to_numpy()
+
+    have = {ox: present(ox) for ox in NORM_ESSENTIALS}
+    split_iron = present("FeO") | present("Fe2O3")
+    total = get_feot(df)
+    total_iron = (total.notna().to_numpy() if total is not None
+                  else np.zeros(len(df), dtype=bool))
+
+    gaps = []
+    for i in range(len(df)):
+        missing = [ox for ox in NORM_ESSENTIALS if not have[ox][i]]
+        if not split_iron[i]:
+            missing.append("FeO/Fe2O3 (iron given only as a total)"
+                           if total_iron[i] else "iron")
+        gaps.append(", ".join(missing))
+    return pd.Series(gaps, index=df.index, dtype=object)
+
+
+# ---------------------------------------------------------------------------
 # Core single-sample allocator
 # ---------------------------------------------------------------------------
 
@@ -402,6 +445,11 @@ def compute_cipw(df: pd.DataFrame) -> pd.DataFrame:
     mineral is not predicted, so the DataFrame can be summed / plotted
     immediately.
 
+    A row lacking what the norm needs (:func:`norm_gaps`) gets no norm:
+    every mineral, the total and the deficit are NaN and the saturation
+    reads ``"incomplete"``.  Computed anyway, its blanks would count as
+    zeros and give a norm that looks like any other but is wrong.
+
     ``silica_deficit`` is the wt % of SiO₂ the desilication cascade could
     not place.  It is 0 for every ordinary rock.  A non-zero value means
     the analysis is more silica-poor than Hy→Ol, Ab→Ne, Or→Lc and Lc→Kp
@@ -413,8 +461,15 @@ def compute_cipw(df: pd.DataFrame) -> pd.DataFrame:
     out_records: List[Dict[str, float]] = []
     sats: List[str] = []
     deficits: List[float] = []
+    gaps = norm_gaps(df)
 
-    for _, row in df.iterrows():
+    for (_, row), gap in zip(df.iterrows(), gaps):
+        if gap:
+            out_records.append({f"norm_{m}": np.nan
+                                for m in (*OUTPUT_MINERALS, "Total")})
+            sats.append("incomplete")
+            deficits.append(np.nan)
+            continue
         min_, _leftover, sat, unresolved = _allocate(row)
         wts = _to_weights(min_)
         record = {f"norm_{k}": v for k, v in wts.items()}

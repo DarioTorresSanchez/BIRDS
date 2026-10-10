@@ -116,7 +116,8 @@ class TestRobustness:
     def test_all_nan_row_does_not_raise(self):
         blank = pd.DataFrame([{c: np.nan for c in MAJORS}])
         result = compute_cipw(blank)
-        assert float(result["norm_Total"].iloc[0]) == 0.0
+        assert np.isnan(result["norm_Total"].iloc[0])
+        assert result["silica_saturation"].iloc[0] == "incomplete"
 
     def test_missing_columns_do_not_raise(self):
         partial = pd.DataFrame([{"SiO2": 50.0, "Al2O3": 15.0}])
