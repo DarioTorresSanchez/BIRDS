@@ -56,7 +56,11 @@ including what is still unverified.
   kriging, UTM and MGRS conversions, the CIPW norm, a session and an
   Excel file through the built program and exits non-zero if any fails —
   the first macOS build left out `mgrs`'s compiled library and would not
-  start, which is how it earned its place. Build steps in
+  start, which is how it earned its place. `packaging/update_mac_app.py`
+  rebuilds the Mac app from the source and replaces the installed copy
+  in one step — only when the new build passes the self-test, only if
+  what it replaces is B.I.R.D.S, and swapping by renaming so a failure
+  half-way still leaves a working app. Build steps in
   `packaging/README.md`.
 - **Mg# in the statistics and in the saved report.** `Mg#`, `Mg#_FeOt`
   and `Mg#_adj` are summarised like any oxide in the Descriptive, By

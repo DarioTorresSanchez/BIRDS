@@ -14,6 +14,7 @@ without Python.
 | `icons/birds_document.*` | The session-file icon: a page with the emblem small on it. |
 | `app_info.py` | Name, bundle identifier, version, and the session type the app declares. Read by the spec and by `tests/test_packaging.py`. |
 | `birds.spec` | The PyInstaller recipe, for macOS and Windows. |
+| `update_mac_app.py` | Rebuilds the Mac app and replaces the installed copy. |
 | `windows/birds.iss` | Inno Setup script: the Windows installer, with the `.birds` association. |
 | `linux/` | Desktop entry and MIME type for Linux. |
 
@@ -50,6 +51,31 @@ a copy received from someone else — downloaded, mailed, on a USB stick —
 is refused the first time as coming from an unidentified developer:
 right-click it, choose **Open**, and confirm. Distributing it without
 that step needs an Apple Developer ID to sign and notarise it.
+
+The Finder may keep drawing `.birds` files with the generic page for a
+while after the first install: macOS renders a new document icon in the
+background and shows the plain page meanwhile. Relaunching the Finder
+(⌥-right-click its Dock icon → Relaunch) picks the new one up.
+
+### Updating the installed app
+
+Changes are made to the source, never to `BIRDS.app`: the app is a
+snapshot of the source when it was built, and stays as it is until it is
+rebuilt. During development run `python3 main.py`; when the installed
+copy should catch up, run
+
+```bash
+python3 packaging/update_mac_app.py
+```
+
+It builds, runs the self-test on the new build, and only if that passes
+replaces `/Applications/BIRDS.app` — and only if what is there is
+B.I.R.D.S. The new copy is swapped in by renaming, so a failure part-way
+leaves a working app. It stops if B.I.R.D.S is open. `--tests` runs the
+test suite first; `--build-only` stops after the self-test; `--dest`
+installs somewhere other than `/Applications`. PyInstaller's output goes
+to `build/update_mac_app.log`. The identifier does not change between
+builds, so the `.birds` association and icon carry over.
 
 ## Windows
 

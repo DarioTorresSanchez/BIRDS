@@ -10,7 +10,9 @@ file just keeps the generic icon.
 
 from __future__ import annotations
 
+import plistlib
 import re
+import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -26,6 +28,7 @@ PACKAGING = ROOT / "packaging"
 sys.path.insert(0, str(PACKAGING))
 
 import app_info  # noqa: E402
+import update_mac_app as updater  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -251,3 +254,153 @@ def test_a_missing_compiled_library_costs_mgrs_not_the_program(monkeypatch):
 def test_the_spec_bundles_the_mgrs_library():
     spec = (PACKAGING / "birds.spec").read_text()
     assert 'glob("libmgrs*")' in spec and "binaries=binaries" in spec
+
+
+# ---------------------------------------------------------------------------
+# Updating the installed app (packaging/update_mac_app.py)
+# ---------------------------------------------------------------------------
+
+def _fake_app(folder, marker, identifier=app_info.BUNDLE_ID):
+    app = folder / f"{app_info.APP_NAME}.app"
+    (app / "Contents" / "MacOS").mkdir(parents=True)
+    with open(app / "Contents" / "Info.plist", "wb") as fh:
+        plistlib.dump({"CFBundleIdentifier": identifier}, fh)
+    updater.executable(app).write_text(marker)
+    return app
+
+
+def _marker(app):
+    return updater.executable(app).read_text()
+
+
+macos_only = pytest.mark.skipif(sys.platform != "darwin",
+                                reason="copies with ditto")
+
+
+@macos_only
+def test_the_new_build_replaces_the_installed_one(tmp_path):
+    built = _fake_app(tmp_path / "dist", "new")
+    installed = _fake_app(tmp_path / "Applications", "old")
+    for leftover in (".BIRDS.app.new", ".BIRDS.app.old"):   # interrupted run
+        (installed.parent / leftover).mkdir()
+    updater.replace_app(built, installed)
+    assert _marker(installed) == "new"
+    assert [p.name for p in installed.parent.iterdir()] == ["BIRDS.app"]
+
+
+@macos_only
+def test_a_first_install_needs_no_old_copy(tmp_path):
+    built = _fake_app(tmp_path / "dist", "new")
+    (tmp_path / "Applications").mkdir()
+    installed = tmp_path / "Applications" / built.name
+    updater.replace_app(built, installed)
+    assert _marker(installed) == "new"
+
+
+def test_another_app_with_the_name_is_left_alone(tmp_path):
+    built = _fake_app(tmp_path / "dist", "new")
+    other = _fake_app(tmp_path / "Applications", "theirs",
+                      identifier="org.example.birdwatching")
+    with pytest.raises(updater.Stop, match="org.example.birdwatching"):
+        updater.replace_app(built, other)
+    assert _marker(other) == "theirs"
+
+
+def test_a_failed_copy_leaves_the_installed_app(tmp_path, monkeypatch):
+    built = _fake_app(tmp_path / "dist", "new")
+    installed = _fake_app(tmp_path / "Applications", "old")
+
+    def half_a_copy(cmd, **_kw):
+        (installed.parent / ".BIRDS.app.new").mkdir()
+        return subprocess.CompletedProcess(cmd, 1, "", "No space left")
+
+    monkeypatch.setattr(updater.subprocess, "run", half_a_copy)
+    with pytest.raises(updater.Stop, match="No space left"):
+        updater.replace_app(built, installed)
+    assert _marker(installed) == "old"
+    assert [p.name for p in installed.parent.iterdir()] == ["BIRDS.app"]
+
+
+@pytest.fixture
+def pipeline(monkeypatch):
+    """Every step of update() recorded instead of run."""
+    calls = []
+    monkeypatch.setattr(updater, "MACOS", True)
+    monkeypatch.setattr(updater, "has_pyinstaller", lambda: True)
+    monkeypatch.setattr(updater, "source_state", lambda: "abc1234")
+    monkeypatch.setattr(updater, "step", lambda _text: None)
+    pipe = SimpleNamespace(calls=calls, tests=True, build=True,
+                           self_test=True, running=[])
+
+    def record(name, result=None):
+        def run(*_a):
+            calls.append(name)
+            return getattr(pipe, name) if result is None else result
+        return run
+
+    monkeypatch.setattr(updater, "run_tests", record("tests"))
+    monkeypatch.setattr(updater, "build", record("build"))
+    monkeypatch.setattr(updater, "self_test", record("self_test"))
+    monkeypatch.setattr(updater, "replace_app", record("replace", False))
+    monkeypatch.setattr(updater, "register", record("register", False))
+    monkeypatch.setattr(updater, "is_running",
+                        lambda _app: pipe.running.pop(0)
+                        if pipe.running else False)
+    return pipe
+
+
+def test_an_update_builds_checks_then_installs(pipeline, tmp_path):
+    done = updater.update(tmp_path)
+    assert pipeline.calls == ["build", "self_test", "replace", "register"]
+    assert "Installed" in done and "abc1234" in done
+
+
+def test_a_build_failing_its_self_test_is_not_installed(pipeline, tmp_path):
+    pipeline.self_test = False
+    with pytest.raises(updater.Stop, match="was not touched"):
+        updater.update(tmp_path)
+    assert pipeline.calls == ["build", "self_test"]
+
+
+def test_a_failed_build_goes_no_further(pipeline, tmp_path):
+    pipeline.build = False
+    with pytest.raises(updater.Stop, match="PyInstaller failed"):
+        updater.update(tmp_path)
+    assert pipeline.calls == ["build"]
+
+
+def test_failing_tests_stop_the_build(pipeline, tmp_path):
+    pipeline.tests = False
+    with pytest.raises(updater.Stop, match="tests failed"):
+        updater.update(tmp_path, tests=True)
+    assert pipeline.calls == ["tests"]
+
+
+def test_build_only_leaves_the_installed_copy(pipeline, tmp_path):
+    done = updater.update(tmp_path, build_only=True)
+    assert pipeline.calls == ["build", "self_test"]
+    assert "Built and checked" in done
+
+
+def test_an_open_app_is_not_replaced(pipeline, tmp_path):
+    pipeline.running = [True]                       # open from the start
+    with pytest.raises(updater.Stop, match="quit it"):
+        updater.update(tmp_path)
+    assert pipeline.calls == []
+    pipeline.running = [False, True]                # opened while building
+    with pytest.raises(updater.Stop, match="quit it"):
+        updater.update(tmp_path)
+    assert "replace" not in pipeline.calls
+
+
+def test_the_updater_refuses_other_systems(pipeline, tmp_path, monkeypatch):
+    monkeypatch.setattr(updater, "MACOS", False)
+    with pytest.raises(updater.Stop, match="macOS"):
+        updater.update(tmp_path)
+    assert pipeline.calls == []
+
+
+def test_a_stop_is_reported_not_raised(pipeline, tmp_path, capsys):
+    pipeline.self_test = False
+    assert updater.main(["--dest", str(tmp_path)]) == 1
+    assert "Stopped:" in capsys.readouterr().err
