@@ -226,6 +226,13 @@ including what is still unverified.
 
 #### Diagrams measured or recomputed against their sources
 
+- **Frost's panel (d) drew its samples transposed.** Its axes read FSSI
+  across and AI up, as published, but the samples went in as (AI,
+  FSSI). A rock whose two signs differ crossed to the opposite quadrant:
+  a nepheline syenite plotted as silica-saturated and Al-deficient, a
+  peralkaline granite as undersaturated with Al to spare. The checks of
+  the quadrant labels and of the signs passed throughout, since none
+  looked at where a sample landed; `tests/test_frost_panels.py` does.
 - **Hanski *et al.* (2001) olivine projection.** `[X] = X / (2/3 − MgO
   − FeO)` needs mole proportions normalised to unity; the code applied
   it to raw moles, whose sum is about 1.65, so the denominator came out
@@ -546,6 +553,16 @@ including what is still unverified.
   check the tally against the points actually drawn, on six dataset
   shapes, and fail if a new template draws samples without saying
   where.
+- **Frost's grid is tallied across its four panels.** It had no mapping
+  either, so every visible sample counted as plotted. Each panel needs
+  its own elements — (d) the CIPW norm — so a sample now counts as
+  plotted when any panel shows it, and a new category, *on some panels
+  only*, names those another panel leaves off; a sample on none is
+  missing data, or off the frame when it has coordinates but every one
+  is clipped. Requiring all four panels would have called a dataset
+  with no norm "nothing to show" with three panels full. Samples beyond
+  a panel's frame are now flagged at its edge, as on the other
+  fixed-frame templates.
 - **Samples off the frame were counted as plotted.** Thirty-two of the
   53 templates fix their limits to the frame their source figure is
   drawn on — the TAS is 35–78 wt.% SiO₂ by 0–16 wt.% alkalis, the Verma

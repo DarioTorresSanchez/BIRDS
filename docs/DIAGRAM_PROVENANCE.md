@@ -1119,6 +1119,20 @@ fail one each. It also pins the signs of AI and FSSI and that each of
 panel (d)'s four labels names the quadrant it sits in, which the old
 labels fail.
 
+**Panel (d) drew its data transposed** (found 2026-10-10). The axes
+read FSSI across and AI up, as Figure 3.9d has them, and the labels sat
+in the right quadrants — but the samples went in as (AI, FSSI). Every
+check above passed, because each looked at the numbers or at the
+labels, never at where a sample landed. A rock whose two signs agree
+stayed in its quadrant, only misplaced; one whose signs differ crossed
+to the opposite one: a nepheline syenite, FSSI −0.44 and AI +0.03,
+plotted as silica-saturated and Al-deficient, and a peralkaline granite,
+FSSI +0.36 and AI −0.07, as undersaturated with Al to spare. `PANELS`
+in `frost.py` now says what each panel puts on which axis, the plot and
+the sample tally both read it, and `tests/test_frost_panels.py` checks
+the drawn positions and that each of those rocks lands in its own
+quadrant.
+
 ## Method
 
 The coefficient check is reproducible: extract every decimal number from

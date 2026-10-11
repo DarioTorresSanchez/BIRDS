@@ -49,6 +49,7 @@ class CountReport:
     hidden: int = 0       # rows in groups toggled invisible
     missing: int = 0      # rows kept + visible but lacking the elements
     offframe: int = 0     # rows with real coordinates outside the frame
+    partial: int = 0      # of the plotted, those some panel leaves off
 
     names: dict = field(default_factory=dict)   # category -> [sample names]
 
@@ -69,6 +70,9 @@ class CountReport:
             return "<span style='color:#6c7388;'>No data loaded.</span>"
         parts = [self._link("plotted", f"<b>n = {self.plotted}</b> plotted",
                             "#3a5a8a")]
+        if self.partial:
+            parts.append(self._link(
+                "partial", f"{self.partial} on some panels only", "#5a7a3a"))
         if self.filtered:
             parts.append(self._link(
                 "filtered", f"{self.filtered} filtered", "#8a6d1a"))
@@ -193,11 +197,23 @@ def panel_coords(diagram, df: Optional[pd.DataFrame]):
 def count_for_diagram(diagram, source_df, filtered_df, plot_style):
     """Convenience wrapper: resolve the coordinates then tally.
 
-    Multi-panel templates are tallied against their first panel, which
-    shares its element list with all the others.  Only templates with
-    no computable mapping at all fall back to a filter/visibility-only
-    tally, where every visible surviving sample counts as plotted.
+    Templates whose panels need different elements -- Frost's grid --
+    expose every panel through ``_panels_xy`` and are tallied across
+    all of them (:func:`count_panels`).  The Verma sets are tallied
+    against their first panel, which shares its element list with all
+    the others.  Only templates with no computable mapping at all fall
+    back to a filter/visibility-only tally, where every visible
+    surviving sample counts as plotted.
     """
+    panels_xy = getattr(diagram, "_panels_xy", None)
+    if panels_xy is not None:
+        panels = []
+        if filtered_df is not None and not filtered_df.empty:
+            try:
+                panels = panels_xy(filtered_df)
+            except Exception:                              # noqa: BLE001
+                panels = []
+        return count_panels(source_df, filtered_df, panels, plot_style)
     xs, ys, single = diagram_coords(diagram, filtered_df)
     if single:
         return count_samples(source_df, filtered_df, xs, ys, plot_style,
@@ -263,22 +279,9 @@ def count_samples(
       counts every surviving sample as missing-data);
     * *plot_style*  — used to subtract samples in hidden groups.
     """
-    rep = CountReport()
-    if source_df is None or source_df.empty:
+    rep, visible = _begin_report(source_df, filtered_df, plot_style)
+    if visible is None:
         return rep
-    rep.total = len(source_df)
-    if filtered_df is None or filtered_df.empty:
-        rep.filtered = rep.total
-        rep.names["filtered"] = _names_of(source_df, source_df.index)
-        return rep
-    rep.filtered = max(rep.total - len(filtered_df), 0)
-    dropped_idx = source_df.index.difference(filtered_df.index)
-    rep.names["filtered"] = _names_of(source_df, dropped_idx)
-
-    visible = _visible_mask(filtered_df, plot_style)
-    rep.hidden = int((~visible).sum())
-    rep.names["hidden"] = _names_of(filtered_df, visible.index[~visible])
-
     if xs is None or ys is None:
         rep.missing = int(visible.sum())
         rep.names["missing"] = _names_of(filtered_df, visible.index[visible])
@@ -301,6 +304,77 @@ def count_samples(
     rep.names["missing"] = _names_of(filtered_df, missing.index[missing])
     rep.names["offframe"] = _names_of(filtered_df,
                                       offframe.index[offframe])
+    return rep
+
+
+def _begin_report(source_df, filtered_df, plot_style):
+    """The tally up to the samples a diagram could draw: the total, and
+    those dropped by a filter or in a hidden group.  Returns the report
+    and the mask of samples left to place, or ``None`` for the mask
+    when there are none."""
+    rep = CountReport()
+    if source_df is None or source_df.empty:
+        return rep, None
+    rep.total = len(source_df)
+    if filtered_df is None or filtered_df.empty:
+        rep.filtered = rep.total
+        rep.names["filtered"] = _names_of(source_df, source_df.index)
+        return rep, None
+    rep.filtered = max(rep.total - len(filtered_df), 0)
+    dropped_idx = source_df.index.difference(filtered_df.index)
+    rep.names["filtered"] = _names_of(source_df, dropped_idx)
+
+    visible = _visible_mask(filtered_df, plot_style)
+    rep.hidden = int((~visible).sum())
+    rep.names["hidden"] = _names_of(filtered_df, visible.index[~visible])
+    return rep, visible
+
+
+def count_panels(source_df: Optional[pd.DataFrame],
+                 filtered_df: Optional[pd.DataFrame],
+                 panels, plot_style=None) -> CountReport:
+    """Tally a figure whose panels each need their own elements.
+
+    *panels* is ``[(xs, ys, x_range, y_range), ...]``, one per panel,
+    with ``xs = ys = None`` for a panel that cannot place anyone.  A
+    sample is **plotted** when at least one panel shows it, and counted
+    in **partial** as well when another leaves it off -- for lacking an
+    element that panel needs or for falling outside its frame.  It is
+    **missing** when no panel has coordinates for it, and **off the
+    frame** when some do but every one is clipped.
+
+    Requiring every panel instead would call a dataset with no CIPW norm
+    "nothing to show" on Frost's grid while three of its four panels
+    were full.
+    """
+    rep, visible = _begin_report(source_df, filtered_df, plot_style)
+    if visible is None:
+        return rep
+    index = filtered_df.index
+    shown = pd.Series(False, index=index)       # inside some panel
+    placed = pd.Series(False, index=index)      # coordinates on some panel
+    everywhere = pd.Series(True, index=index)   # inside every panel
+    for xs, ys, x_range, y_range in panels:
+        if xs is None or ys is None:
+            everywhere[:] = False
+            continue
+        xs = pd.Series(xs).reindex(index)
+        ys = pd.Series(ys).reindex(index)
+        finite = xs.notna() & ys.notna()
+        inside = finite & _within(xs, x_range) & _within(ys, y_range)
+        shown |= inside
+        placed |= finite
+        everywhere &= inside
+    if not panels:
+        everywhere[:] = False
+    ok = visible & shown
+    partial = ok & ~everywhere
+    offframe = visible & ~shown & placed
+    missing = visible & ~placed
+    for name, mask in (("plotted", ok), ("partial", partial),
+                       ("missing", missing), ("offframe", offframe)):
+        setattr(rep, name, int(mask.sum()))
+        rep.names[name] = _names_of(filtered_df, mask.index[mask])
     return rep
 
 
@@ -329,6 +403,7 @@ _CATEGORY_TITLES = {
     "hidden":   "Samples in hidden groups",
     "missing":  "Samples lacking the required elements",
     "offframe": "Samples outside the diagram's frame",
+    "partial":  "Samples missing from some panels",
 }
 
 _CATEGORY_HINTS = {
@@ -343,6 +418,10 @@ _CATEGORY_HINTS = {
                 "but they fall outside the axes this diagram is published "
                 "on, so the canvas clips them. Read their values in the "
                 "Statistics view instead.",
+    "partial":  "They are on the canvas, but at least one panel leaves "
+                "them off: it needs an element they do not carry, or they "
+                "fall outside its frame. A note on the panel says why "
+                "when it can.",
 }
 
 
@@ -365,7 +444,9 @@ class CountLabel(QLabel):
             "composition range)\n"
             "• hidden — group switched off in Data → Edit plot\n"
             "• missing data — the sample lacks one of the elements this "
-            "diagram needs"
+            "diagram needs\n"
+            "• on some panels only — on a figure of several panels, drawn "
+            "on some but left off at least one"
         )
         self._report: Optional[CountReport] = None
         self.linkActivated.connect(self._on_link)

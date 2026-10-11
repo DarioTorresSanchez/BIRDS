@@ -54,14 +54,15 @@ def test_every_triangle_is_on_the_shared_mapping():
 def test_no_other_diagram_is_left_without_a_mapping():
     """A template added later without one would be counted as fully
     plotted whatever it drew.  The exceptions are the multi-panel
-    templates, which the tally reads through their panels; Frost's 2×2
-    grid; and the Petrography view's modal triangles, a view with no
-    tally."""
+    templates, which the tally reads through their panels (Frost's grid
+    through ``_panels_xy``), and the Petrography view's modal
+    triangles, a view with no tally."""
     lacking = sorted(
         k for k, d in _REGISTRY.items()
-        if not (hasattr(d, "panels") or hasattr(d, "_compute_xy_for_panel"))
+        if not (hasattr(d, "panels") or hasattr(d, "_compute_xy_for_panel")
+                or hasattr(d, "_panels_xy"))
         and not _owns_compute_xy(type(d)))
-    assert lacking == ["frost", "gabbro_pl_px_ol",
+    assert lacking == ["gabbro_pl_px_ol",
                        "streckeisen_qapf_plutonic",
                        "streckeisen_qapf_volcanic",
                        "tuff_crystal_vitric_lithic", "ultramafic_ol_opx_cpx"]

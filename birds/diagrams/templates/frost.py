@@ -4,11 +4,19 @@ Four diagrams plotted in a 2 x 2 grid:
   (a) Fe-index   = FeO* / (FeO* + MgO)         vs SiO2
   (b) MALI       = Na2O + K2O - CaO            vs SiO2
   (c) ASI        = Al / (Ca - 1.67P + Na + K)  vs SiO2  (molar)
-  (d) AI vs FSSI: AI = Al - (K + Na) molar
-                  FSSI = Q - (Lc + 2*(Ne + Kp)) / 100  (from CIPW norm)
+  (d) AI vs FSSI: AI = Al - (K + Na) molar, up
+                  FSSI = Q - (Lc + 2*(Ne + Kp)) / 100, across
+                  (from the CIPW norm)
 
-FSSI is taken from the CIPW norm if columns Q, Lc, Ne, Kp are present;
-otherwise the panel renders an empty axis.
+FSSI comes from the CIPW norm, computed from the majors in use unless
+the dataset brings its own normative columns (``base.normative``).
+
+Panel (d) used to draw AI across and FSSI up, under axes labelled the
+other way: a sample whose two signs differ landed in the opposite
+quadrant -- a nepheline syenite as silica-saturated and Al-deficient,
+a peralkaline granite as undersaturated with Al to spare.  ``PANELS``
+now says what each panel puts on which axis, and the plot and the
+sample tally both read it.
 
 ASI is Shand's index, A/CNK, with Ca in apatite taken out: molecular
 Al2O3 / (CaO - 1.67 P + Na2O + K2O), P per atom.  It is 1 for every
@@ -99,6 +107,16 @@ MOLAR_MASS = {
 #: Ca per P in apatite, as Frost et al. (2001) print it (5/3).
 APATITE_CA_PER_P = 1.67
 
+#: The four panels in drawing order: the method that gives a sample's
+#: (across, up) on it, and the frame it is published on as
+#: (across limits, up limits).
+PANELS = (
+    ("_fe_index", (45.0, 80.0), (0.3, 1.0)),
+    ("_mali", (45.0, 80.0), (-8.0, 14.0)),
+    ("_asi", (45.0, 80.0), (0.5, 1.6)),
+    ("_fssi_ai", (-2.5, 2.5), (-1.0, 1.0)),
+)
+
 
 def _to_num(df, col):
     return pd.to_numeric(df[col], errors="coerce")
@@ -108,7 +126,8 @@ class Frost(Diagram):
     key = "frost"
     title = "Frost et al. 2001 / Frost & Frost 2008 – Granitoid classification"
     citation = ("Fe-index, MALI, ASI, AI and FSSI plotted as a 2x2 grid. "
-                "Compute FSSI from the CIPW norm.")
+                "FSSI comes from the CIPW norm, computed from the majors "
+                "in use.")
 
     # ---------------------------------------------------------------- panels
     def _fe_index(self, df):
@@ -178,6 +197,18 @@ class Frost(Diagram):
         fssi = (norm["Q"] - (lc + 2.0 * (ne + kp))) / 100.0
         return ai, fssi
 
+    def _fssi_ai(self, df):
+        """Panel (d) as published: FSSI across, AI up."""
+        ai, fssi = self._ai_fssi(df)
+        return fssi, ai
+
+    def _panels_xy(self, df):
+        """Each panel's ``(across, up, across frame, up frame)``, in
+        drawing order.  The plot draws from it and the sample tally
+        counts from it, so the two cannot disagree."""
+        return [(*getattr(self, method)(df), x_frame, y_frame)
+                for method, x_frame, y_frame in PANELS]
+
     # ---------------------------------------------------------------- plot
     def plot(self, figure, df, plot_style, options: PlotOptions):
         figure.clear()
@@ -206,55 +237,48 @@ class Frost(Diagram):
             ax_ai.text(x, y, name, color="#444", fontsize=7.5,
                        ha="center", va="center")
 
-        # Data
+        # Data, each panel from PANELS
+        panel_axes = (ax_fe, ax_mali, ax_asi, ax_ai)
         if df is not None and not df.empty:
             for label, sub, gs in get_groups(df, plot_style):
-                color = gs.color if gs else "#1f77b4"
-                marker = gs.marker if gs else "o"
                 kwargs = dict(s=plot_style.point_size ** 2,
                               alpha=plot_style.alpha,
-                              c=color, marker=marker, label=label,
+                              c=gs.color if gs else "#1f77b4",
+                              marker=gs.marker if gs else "o", label=label,
                               edgecolors="black", linewidths=0.4)
-                x, y = self._fe_index(sub)
-                if x is not None and y is not None:
-                    ax_fe.scatter(x, y, **kwargs)
-                x, y = self._mali(sub)
-                if x is not None and y is not None:
-                    ax_mali.scatter(x, y, **kwargs)
-                x, y = self._asi(sub)
-                if x is not None and y is not None:
-                    ax_asi.scatter(x, y, **kwargs)
-                x, y = self._ai_fssi(sub)
-                if x is not None and y is not None:
-                    ax_ai.scatter(x, y, **kwargs)
+                for ax, (x, y, _xf, _yf) in zip(panel_axes,
+                                                 self._panels_xy(sub)):
+                    if x is None or y is None:
+                        continue
+                    keep = x.notna() & y.notna()
+                    if keep.any():
+                        ax.scatter(x[keep], y[keep], **kwargs)
 
         # Axis decoration
         ax_fe.set_xlabel("SiO$_2$ (wt.%)", **options.x_axis.label_kwargs())
         ax_fe.set_ylabel("Fe-index = FeO* / (FeO* + MgO)",
                          **options.y_axis.label_kwargs())
-        ax_fe.set_xlim(45, 80)
-        ax_fe.set_ylim(0.3, 1.0)
         ax_fe.set_title("(a) Fe-index", fontsize=10)
 
         ax_mali.set_xlabel("SiO$_2$ (wt.%)", **options.x_axis.label_kwargs())
         ax_mali.set_ylabel("MALI = Na$_2$O + K$_2$O − CaO",
                           **options.y_axis.label_kwargs())
-        ax_mali.set_xlim(45, 80)
-        ax_mali.set_ylim(-8, 14)
         ax_mali.set_title("(b) MALI", fontsize=10)
 
         ax_asi.set_xlabel("SiO$_2$ (wt.%)", **options.x_axis.label_kwargs())
         ax_asi.set_ylabel("ASI", **options.y_axis.label_kwargs())
-        ax_asi.set_xlim(45, 80)
-        ax_asi.set_ylim(0.5, 1.6)
         ax_asi.set_title("(c) Aluminium saturation index", fontsize=10)
 
         ax_ai.set_xlabel("FSSI", **options.x_axis.label_kwargs())
         ax_ai.set_ylabel("AI (molar Al − Na − K)",
                          **options.y_axis.label_kwargs())
-        ax_ai.set_xlim(-2.5, 2.5)
-        ax_ai.set_ylim(-1.0, 1.0)
         ax_ai.set_title("(d) AI vs FSSI", fontsize=10)
+        # The published frames; a sample beyond one is flagged at its
+        # edge, as on every other fixed-frame template.
+        for ax, (_method, x_frame, y_frame) in zip(panel_axes, PANELS):
+            ax.set_xlim(*x_frame)
+            ax.set_ylim(*y_frame)
+            Diagram._mark_offframe(ax)
         note = normative_note(df, ("Q",))
         if note:
             draw_note(ax_ai, note)
