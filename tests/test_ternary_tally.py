@@ -48,24 +48,23 @@ def test_every_triangle_is_on_the_shared_mapping():
         "cabanis_lecolle_1989", "harris_1986_HfRbTa", "wood_1980_ThHfTa",
         "vermeesch_EuLuSr", "vermeesch_NaNbSr", "vermeesch_SiTiSr",
         "vermeesch_SmTiV", "vermeesch_VTiSc",
+        # the Petrography view's triangles
+        "gabbro_pl_px_ol", "ultramafic_ol_opx_cpx", "tuff_schmid_1981",
+        "tuff_crystal_vitric_lithic",
     }
 
 
 def test_no_other_diagram_is_left_without_a_mapping():
     """A template added later without one would be counted as fully
-    plotted whatever it drew.  The exceptions are the multi-panel
-    templates, which the tally reads through their panels (Frost's grid
-    through ``_panels_xy``), and the Petrography view's modal
-    triangles, a view with no tally."""
+    plotted whatever it drew.  The multi-panel templates are read
+    through their panels (Frost's grid through ``_panels_xy``); every
+    other template, the QAPF included, has its own mapping."""
     lacking = sorted(
         k for k, d in _REGISTRY.items()
         if not (hasattr(d, "panels") or hasattr(d, "_compute_xy_for_panel")
                 or hasattr(d, "_panels_xy"))
         and not _owns_compute_xy(type(d)))
-    assert lacking == ["gabbro_pl_px_ol",
-                       "streckeisen_qapf_plutonic",
-                       "streckeisen_qapf_volcanic",
-                       "tuff_crystal_vitric_lithic", "ultramafic_ol_opx_cpx"]
+    assert lacking == []
 
 
 @pytest.fixture(params=["complete", "every third lacks its traces",

@@ -21,8 +21,9 @@ redrawing's error, not the equation's.
 
 The catalogue holds **48 unique diagrams**. The menus list 63 entries,
 but all 15 plutonic tectonic-discrimination entries re-use volcanic keys.
-The five modal diagrams of the Petrography view — the two QAPF
-triangles, gabbro, ultramafic and tuff — are not covered here.
+The six modal diagrams of the Petrography view are outside these
+counts; they have their own section at the end, *The Petrography
+view*.
 
 ---
 
@@ -1132,6 +1133,74 @@ in `frost.py` now says what each panel puts on which axis, the plot and
 the sample tally both read it, and `tests/test_frost_panels.py` checks
 the drawn positions and that each of those rocks lands in its own
 quadrant.
+
+## The Petrography view — the IUGS modal diagrams (6)
+
+Checked 2026-10-12. Every boundary is a definition, a percentage the
+IUGS fixed, so nothing needed measuring except the one scheme that is
+not IUGS's. The definitions were read off the BGS Rock Classification
+Scheme, Volume 1 (Gillespie & Styles 1999, Research Report RR 99-06,
+NERC Open Research Archive), which reproduces the IUGS figures: 11-12
+for the plutonic QAPF (after Streckeisen 1976), 19 for the volcanic
+one (after Streckeisen 1978), 13 for the gabbroic rocks, 16 for the
+ultramafic ones (after Streckeisen 1973) and 7 for Schmid's (1981)
+tuffs. None of these sources is on disk otherwise; Verma's book
+discusses the QAPF without drawing it.
+
+**QAPF placed every sample in the wrong spot.** Its position was
+0.5 A + P + 0.5 Q with A at x = 0, which moves every sample right by
+half its alkali feldspar: an alkali-feldspar syenite plotted on
+monzonite, a granite of Q30 A40 P30 on granodiorite. Only rocks without
+alkali feldspar — tonalites, gabbros — sat right. The lines were wrong
+too: the P/(A+P) lines ran up through the quartzolite and quartz-rich
+fields, where Figure 11 stops them at Q 60, and down through the foid
+fields at 10/35/65/90, where they are 10/50/90 and foidolite is
+undivided. Labels sat in the wrong fields (foid syenite where foid
+monzosyenite is) and field 14 had none.
+
+**The volcanic QAPF was the plutonic one renamed.** Figure 19 has its
+own fields: no names above Q 60; dacite across P/(A+P) 65-100;
+basalt / andesite from Q 20 down to F 10 with no line at 90; tephritic
+phonolite and phonolitic tephrite / basanite in the foid band; and
+three foidites. The old diagram drew the plutonic lines and used names
+the IUGS does not, among them quartzolite, phonolitic trachyte,
+tephritic latite and tephritic basalt.
+
+Both QAPF diagrams are now tables of fields, each a box in (Q or F, P/
+(A+P)), from which the lines, the IUGS field numbers, a key of the
+names and the name a sample gets all come. A sample carrying both
+quartz and a feldspathoid is left off with a note; a mineral left blank
+counts as absent, where a blank F used to drop a granite.
+
+**Gabbroic and ultramafic strips.** Gabbro / gabbronorite / norite is
+under 5 % olivine and troctolite under 5 % pyroxene; harzburgite and
+olivine orthopyroxenite are under 5 % Cpx, wehrlite and olivine
+clinopyroxenite under 5 % Opx. These are strips of constant width
+meeting at the middle of the 90 line — Figures 13 and 16 draw them so,
+and measured on the reference figures in the project material the
+inner lines keep 41-48 px from their side on every row, where rays of
+constant ratio would grow from about 10 to 41. The old strips opened by
+invented amounts ("~3 %", "~4 %"). The gabbroic diagram also never read
+the template's plagioclase, `P_mode`, and a blank `Px_mode` hid rows
+whose Opx and Cpx were filled.
+
+**Tuffs.** Schmid (1981), the IUGS classification, is the three-field
+triangle of Figure 7: glass, crystals, rock fragments, each tuff named
+for its dominant component. The diagram that cited him draws a
+different, finer scheme — lithic at the top, lines at 50, 25 and 10 %
+— from a figure in the project material whose source is not
+identified. Both are now offered: `tuff_schmid_1981` (new) and the
+banded one, cited honestly. Measuring that figure showed its dividers
+are lines of constant crystal content, parallel to the lithic-vitric
+side (Crystal 25 % below Lithic 50, and 50 and 10 % in the base band),
+each keeping 61-62, 114 and 24 px from that side; the code had rays
+from the lithic apex, which put the upper divider at Crystal 12.5 % on
+the Lithic 50 line.
+
+`tests/test_petrography_iugs.py` pins the field tables against the
+figures, checks that the fields tile each diagram, places the corners
+and a granite, names a dozen modes, and fails on each of the old
+errors put back.
 
 ## Method
 

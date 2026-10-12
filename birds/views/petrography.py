@@ -47,15 +47,17 @@ from .widgets import AxisGroup, GroupingGroup, LegendGroup
 
 # Catalogue of petrographic diagrams shown in the selector.
 _PETROGRAPHY_CATALOG: tuple[tuple[str, str], ...] = (
-    ("Streckeisen QAPF — Plutonic (Streckeisen 1976, IUGS 1989)",
+    ("Streckeisen QAPF — Plutonic (Streckeisen 1976, IUGS)",
      "streckeisen_qapf_plutonic"),
-    ("Streckeisen QAPF — Volcanic (Le Maitre 2002, IUGS)",
+    ("Streckeisen QAPF — Volcanic (Streckeisen 1978, IUGS)",
      "streckeisen_qapf_volcanic"),
-    ("Gabbroic rocks — Plagioclase / Pyroxene / Olivine (Le Maitre 2002)",
+    ("Gabbroic rocks — Plagioclase / Pyroxene / Olivine (Streckeisen 1976)",
      "gabbro_pl_px_ol"),
-    ("Ultramafic rocks — Olivine / Opx / Cpx (Streckeisen 1976)",
+    ("Ultramafic rocks — Olivine / Opx / Cpx (Streckeisen 1973)",
      "ultramafic_ol_opx_cpx"),
-    ("Pyroclastic tuffs — Crystal / Vitric / Lithic (Schmid 1981)",
+    ("Pyroclastic tuffs — Vitric / Crystal / Lithic (Schmid 1981, IUGS)",
+     "tuff_schmid_1981"),
+    ("Pyroclastic tuffs — banded Lithic / Crystal / Vitric scheme",
      "tuff_crystal_vitric_lithic"),
 )
 

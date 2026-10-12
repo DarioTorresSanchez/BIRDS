@@ -1,37 +1,56 @@
 """IUGS petrographic classification ternaries.
 
-This module ships five classical modal-mineralogy classifiers used in
-field petrography and thin-section work:
+Six modal-mineralogy classifiers used in field petrography and
+thin-section work:
 
-* ``streckeisen_qapf_plutonic``  – Streckeisen 1976 / IUGS 1989 double-
-  triangle (QAP top, APF bottom) for coarse-grained rocks.
-* ``streckeisen_qapf_volcanic``  – same double-triangle with the IUGS
-  volcanic field names (rhyolite, dacite, trachyte, phonolite, …).
-* ``gabbro_pl_px_ol``           – Plagioclase – Pyroxene – Olivine
-  ternary for the gabbroic family (Le Maitre 2002).
-* ``ultramafic_ol_opx_cpx``      – Olivine – Orthopyroxene –
-  Clinopyroxene ternary for peridotites and pyroxenites
-  (Streckeisen 1976).
-* ``tuff_crystal_vitric_lithic`` – Pyroclastic tuff classification by
-  the proportions of crystals, glass shards and lithic clasts
-  (Schmid 1981, IUGS-recommended).
+* ``streckeisen_qapf_plutonic``  – Streckeisen (1976) QAPF double
+  triangle for coarse-grained rocks.
+* ``streckeisen_qapf_volcanic``  – Streckeisen (1978) QAPF for
+  fine-grained rocks, which has its own fields, not only its own names.
+* ``gabbro_pl_px_ol``            – plagioclase – pyroxene – olivine, for
+  the gabbroic rocks.
+* ``ultramafic_ol_opx_cpx``      – olivine – orthopyroxene –
+  clinopyroxene, for peridotites and pyroxenites (Streckeisen 1973).
+* ``tuff_schmid_1981``           – vitric – crystal – lithic, the
+  three-field tuff classification the IUGS recommends (Schmid 1981).
+* ``tuff_crystal_vitric_lithic`` – a finer tuff scheme with lithic at the
+  top and bands at 50, 25 and 10 %, from the figure in the project's
+  reference material; its original source is not identified.
 
 Inputs are modal proportions read from the *Petrography* sheet of the
-data template (columns ``Q_mode``, ``A_mode``, ``P_mode``, …).  Each
-diagram is silica-saturation aware (QAPF skips rows with both Q > 0 and
-F > 0) and gracefully returns an empty plot when the required modal
-columns are missing.
+data template (``Q_mode``, ``A_mode``, ``P_mode``, ``F_mode``,
+``Ol_mode``, ``Opx_mode``, ``Cpx_mode``, ``Px_mode``, ``Crystal_pct``,
+``Vitric_pct``, ``Lithic_pct``).
+
+Provenance
+----------
+Every boundary here is a definition -- a percentage the IUGS fixed --
+not a curve to measure.  They were checked on 2026-10-12 against the
+BGS Rock Classification Scheme, Volume 1 (Gillespie & Styles 1999, BGS
+Research Report RR 99-06), which reproduces the IUGS diagrams of Le
+Maitre et al. (1989, 2002): Figures 11-12 for the plutonic QAPF, 19 for
+the volcanic one, 13 for the gabbroic rocks, 16 for the ultramafic ones
+and 7 for Schmid's tuffs.  ``docs/DIAGRAM_PROVENANCE.md`` lists what the
+check found.
 
 References
 ----------
+- Streckeisen, A. (1973). Plutonic rocks: classification and
+  nomenclature recommended by the IUGS Subcommission. *Geotimes* 18,
+  26-30.
 - Streckeisen, A. (1976). To each plutonic rock its proper name.
   *Earth-Sci. Rev.* 12, 1-33.
-- Le Bas, M.J. & Streckeisen, A. (1991). The IUGS systematics of
-  igneous rocks. *J. Geol. Soc.* 148, 825-833.
-- Le Maitre, R.W. (ed., 2002). *Igneous Rocks – A Classification and
-  Glossary of Terms* (IUGS recommendations), 2nd ed., CUP.
+- Streckeisen, A. (1978). IUGS Subcommission on the Systematics of
+  Igneous Rocks: classification and nomenclature of volcanic rocks,
+  lamprophyres, carbonatites and melilitic rocks. *N. Jb. Miner. Abh.*
+  134, 1-14.
 - Schmid, R. (1981). Descriptive nomenclature and classification of
   pyroclastic deposits and fragments. *Geology* 9, 41-43.
+- Le Maitre, R.W. (ed., 2002). *Igneous Rocks – A Classification and
+  Glossary of Terms*, 2nd ed., Cambridge University Press.
+- Gillespie, M.R. & Styles, M.T. (1999). BGS Rock Classification
+  Scheme, Volume 1: Classification of igneous rocks. British Geological
+  Survey Research Report RR 99-06.
 """
 
 from __future__ import annotations
@@ -40,261 +59,314 @@ from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
+from matplotlib.patches import Polygon
 
 from .base import (
     Diagram,
     PlotOptions,
+    TernaryDiagram,
+    draw_note,
     draw_ternary_frame,
     get_groups,
     resolve_column,
     ternary_to_xy,
 )
-from .tectonic_ternary import _draw_ternary_fields, _plot_ternary_data
 
 
 # ---------------------------------------------------------------------------
-# Common QAPF helpers
+# QAPF
 # ---------------------------------------------------------------------------
-
-# Apex coordinates for the QAPF double-triangle. We share the A-P edge
-# by drawing two triangles whose A and P apexes coincide at y = 0:
 #
-#                     Q  (0.5,  +√3/2)         ⎫  QAP triangle
-#                                              ⎬  silica-saturated
-#       A (0.0, 0)               P (1.0, 0)    ⎭  rocks plot here
-#                                              ⎫  APF triangle
-#                     F  (0.5,  −√3/2)         ⎬  silica-undersaturated
-#                                              ⎭  rocks plot here
+# A sample sits in the upper triangle when it carries quartz and in the
+# lower one when it carries a feldspathoid -- never both.  Its place is
+# given by two numbers:
+#
+#   s = 100 Q/(Q+A+P)           upper triangle, s >= 0
+#   s = -100 F/(A+P+F)          lower triangle, s < 0
+#   r = 100 P/(A+P)
+#
+# A is at (0, 0), P at (1, 0), Q at (0.5, +h), F at (0.5, -h).  Every
+# IUGS field is a box in (s, r) -- a range of Q or F against a range of
+# P/(A+P) -- so the fields below are listed as boxes, and the lines, the
+# field numbers and the name a sample gets all come from the same table.
+#
+# The plotted position used to be computed as 0.5 A + P + 0.5 Q, which
+# puts the A corner at x = 0.5: every sample shifted right by half its
+# alkali feldspar, a pure alkali-feldspar syenite on monzonite and a
+# granite (Q30 A40 P30) on granodiorite.
 
 _HALF_HEIGHT = np.sqrt(3) / 2.0
 
-
-def _qapf_position(q: float, a: float, p: float, f: float
-                    ) -> Optional[Tuple[float, float]]:
-    """Place one sample on the QAPF double-triangle.
-
-    Per IUGS rules a single rock cannot have both quartz and foid: if Q
-    is dominant the rock is silica-oversaturated (top triangle), if F
-    is dominant it is silica-undersaturated (bottom triangle). We assign
-    the sample to whichever of Q/F is larger (or to QAP when they tie at
-    zero); the smaller is silently ignored.
-    """
-    q = max(float(q), 0.0)
-    a = max(float(a), 0.0)
-    p = max(float(p), 0.0)
-    f = max(float(f), 0.0)
-    if a + p == 0 and q == 0 and f == 0:
-        return None
-    if q >= f:
-        total = q + a + p
-        if total <= 0:
-            return None
-        q_n, a_n, p_n = q / total, a / total, p / total
-        # Map (Q, A, P) onto (apex Q, apex A, apex P)
-        x = 0.5 * a_n + 1.0 * p_n + 0.5 * q_n
-        y = _HALF_HEIGHT * q_n
-        return x, y
-    total = f + a + p
-    if total <= 0:
-        return None
-    f_n, a_n, p_n = f / total, a / total, p / total
-    x = 0.5 * a_n + 1.0 * p_n + 0.5 * f_n
-    y = -_HALF_HEIGHT * f_n
-    return x, y
-
-
-def _draw_qapf_frame(ax, axis_style, *, plutonic: bool) -> None:
-    """Draw the QAPF double-triangle outline, apex labels and grid."""
-    Q = (0.5,  _HALF_HEIGHT)
-    F = (0.5, -_HALF_HEIGHT)
-    A = (0.0, 0.0)
-    P = (1.0, 0.0)
-    # Upper triangle (QAP)
-    ax.plot([A[0], Q[0], P[0], A[0]], [A[1], Q[1], P[1], A[1]],
-            color="#333", linewidth=1.0)
-    # Lower triangle (APF)
-    ax.plot([A[0], F[0], P[0], A[0]], [A[1], F[1], P[1], A[1]],
-            color="#333", linewidth=1.0)
-
-    # Apex labels
-    ax.text(Q[0], Q[1] + 0.04, "Q", ha="center", va="bottom",
-            **axis_style.label_kwargs())
-    ax.text(F[0], F[1] - 0.04, "F", ha="center", va="top",
-            **axis_style.label_kwargs())
-    ax.text(A[0] - 0.03, A[1], "A", ha="right", va="center",
-            **axis_style.label_kwargs())
-    ax.text(P[0] + 0.03, P[1], "P", ha="left", va="center",
-            **axis_style.label_kwargs())
-
-    # Silica-saturation labels along the shared edge
-    suffix = "plutonic" if plutonic else "volcanic"
-    ax.text(0.5, 0.0 + 0.015, f"silica-oversaturated ({suffix})",
-            ha="center", va="bottom", fontsize=7, style="italic",
-            color="#5b6478")
-    ax.text(0.5, 0.0 - 0.015, f"silica-undersaturated ({suffix})",
-            ha="center", va="top", fontsize=7, style="italic",
-            color="#5b6478")
-
-    ax.set_xlim(-0.12, 1.12)
-    ax.set_ylim(-_HALF_HEIGHT - 0.10, _HALF_HEIGHT + 0.08)
-    ax.set_aspect("equal")
-    ax.axis("off")
-
-
-# ---------------------------------------------------------------------------
-# Field labels — collapsed sub-fields into the principal IUGS names so the
-# diagram stays readable at print resolution. The full sub-classification
-# is documented in Streckeisen (1976) and Le Bas & Streckeisen (1991).
-# ---------------------------------------------------------------------------
-
-_QAPF_PLUTONIC_LABELS: tuple[tuple[str, float, float, float, float, float, float], ...] = (
-    # (label, x, y, font_size, rotation, alpha, color)
-    # Top half (Q-saturated)
-    ("Quartzolite",          0.50,  0.78, 7,  0, 0.85, "#333"),
-    ("Quartz-rich\ngranitoid", 0.50, 0.60, 7, 0, 0.85, "#333"),
-    ("Alkali fsp.\ngranite", 0.32,  0.42, 7,  0, 0.85, "#333"),
-    ("Granite",              0.50,  0.42, 8,  0, 0.95, "#1c2237"),
-    ("Granodiorite",         0.66,  0.42, 8,  0, 0.95, "#1c2237"),
-    ("Tonalite",             0.82,  0.32, 8,  0, 0.95, "#1c2237"),
-    ("Qz. alkali\nfsp. syenite", 0.27, 0.18, 6, 0, 0.85, "#333"),
-    ("Qz. syenite",          0.42,  0.16, 7,  0, 0.85, "#333"),
-    ("Qz. monzonite",        0.55,  0.16, 7,  0, 0.85, "#333"),
-    ("Qz. monzo-\ndiorite",  0.69,  0.16, 6,  0, 0.85, "#333"),
-    ("Qz. diorite /\ngabbro", 0.85, 0.18, 6,  0, 0.85, "#333"),
-    ("Alkali fsp.\nsyenite", 0.18,  0.04, 7,  0, 0.95, "#1c2237"),
-    ("Syenite",              0.36,  0.04, 8,  0, 0.95, "#1c2237"),
-    ("Monzonite",            0.50,  0.04, 8,  0, 0.95, "#1c2237"),
-    ("Monzo-\ndiorite",      0.66,  0.04, 7,  0, 0.95, "#1c2237"),
-    ("Diorite /\nGabbro",    0.85,  0.05, 8,  0, 0.95, "#1c2237"),
-    # Bottom half (F-undersaturated)
-    ("Foid-bearing\nsyenite", 0.36, -0.07, 6, 0, 0.85, "#333"),
-    ("Foid-bearing\nmonzonite", 0.55, -0.07, 6, 0, 0.85, "#333"),
-    ("Foid-bearing\ndiorite/gabbro", 0.78, -0.07, 6, 0, 0.85, "#333"),
-    ("Foid syenite",         0.35, -0.30, 7,  0, 0.95, "#1c2237"),
-    ("Foid\nmonzosyenite",   0.50, -0.30, 7,  0, 0.95, "#1c2237"),
-    ("Foid monzo-\ndiorite/gabbro", 0.70, -0.30, 6, 0, 0.95, "#1c2237"),
-    ("Foidolite",            0.50, -0.65, 9,  0, 0.95, "#1c2237"),
+#: Streckeisen (1976), BGS RR 99-06 Figures 11-12:
+#: ``(field number, name, s from, s to, r from, r to)``.
+QAPF_PLUTONIC_FIELDS: Tuple[Tuple[str, str, float, float, float, float], ...] = (
+    ("1a", "quartzolite", 90, 100, 0, 100),
+    ("1b", "quartz-rich granitoid", 60, 90, 0, 100),
+    ("2", "alkali feldspar granite", 20, 60, 0, 10),
+    ("3", "granite", 20, 60, 10, 65),
+    ("4", "granodiorite", 20, 60, 65, 90),
+    ("5", "tonalite", 20, 60, 90, 100),
+    ("6*", "quartz alkali feldspar syenite", 5, 20, 0, 10),
+    ("7*", "quartz syenite", 5, 20, 10, 35),
+    ("8*", "quartz monzonite", 5, 20, 35, 65),
+    ("9*", "quartz monzodiorite / quartz monzogabbro", 5, 20, 65, 90),
+    ("10*", "quartz diorite / quartz gabbro / quartz anorthosite",
+     5, 20, 90, 100),
+    ("6", "alkali feldspar syenite", 0, 5, 0, 10),
+    ("7", "syenite", 0, 5, 10, 35),
+    ("8", "monzonite", 0, 5, 35, 65),
+    ("9", "monzodiorite / monzogabbro", 0, 5, 65, 90),
+    ("10", "diorite / gabbro / anorthosite", 0, 5, 90, 100),
+    ("6'", "foid-bearing alkali feldspar syenite", -10, 0, 0, 10),
+    ("7'", "foid-bearing syenite", -10, 0, 10, 35),
+    ("8'", "foid-bearing monzonite", -10, 0, 35, 65),
+    ("9'", "foid-bearing monzodiorite / monzogabbro", -10, 0, 65, 90),
+    ("10'", "foid-bearing diorite / gabbro / anorthosite", -10, 0, 90, 100),
+    ("11", "foid syenite", -60, -10, 0, 10),
+    ("12", "foid monzosyenite", -60, -10, 10, 50),
+    ("13", "foid monzodiorite / foid monzogabbro", -60, -10, 50, 90),
+    ("14", "foid diorite / foid gabbro", -60, -10, 90, 100),
+    ("15", "foidolite", -100, -60, 0, 100),
 )
 
-_QAPF_VOLCANIC_LABELS: tuple[tuple[str, float, float, float, float, float, float], ...] = (
-    ("Quartzolite",          0.50,  0.78, 7,  0, 0.85, "#333"),
-    ("Rhyolite",             0.50,  0.42, 9,  0, 0.95, "#1c2237"),
-    ("Alkali fsp.\nrhyolite", 0.32, 0.42, 7,  0, 0.85, "#333"),
-    ("Dacite",               0.74,  0.36, 9,  0, 0.95, "#1c2237"),
-    ("Quartz\ntrachyte",     0.36,  0.16, 7,  0, 0.85, "#333"),
-    ("Quartz latite",        0.55,  0.16, 7,  0, 0.85, "#333"),
-    ("Quartz\nandesite/basalt", 0.80, 0.16, 6, 0, 0.85, "#333"),
-    ("Alkali fsp.\ntrachyte", 0.18, 0.04, 7,  0, 0.95, "#1c2237"),
-    ("Trachyte",             0.36,  0.04, 8,  0, 0.95, "#1c2237"),
-    ("Latite",               0.55,  0.04, 8,  0, 0.95, "#1c2237"),
-    ("Andesite /\nBasalt",   0.85,  0.04, 8,  0, 0.95, "#1c2237"),
-    ("Phonolitic\ntrachyte", 0.30, -0.10, 6, 0, 0.85, "#333"),
-    ("Tephritic\nlatite",    0.55, -0.10, 6, 0, 0.85, "#333"),
-    ("Tephritic\nbasalt",    0.80, -0.10, 6, 0, 0.85, "#333"),
-    ("Phonolite",            0.32, -0.30, 8,  0, 0.95, "#1c2237"),
-    ("Phono-\ntephrite",     0.50, -0.30, 7,  0, 0.95, "#1c2237"),
-    ("Tephrite /\nBasanite", 0.70, -0.30, 7,  0, 0.95, "#1c2237"),
-    ("Foidite",              0.50, -0.65, 10, 0, 0.95, "#1c2237"),
+#: Streckeisen (1978), BGS RR 99-06 Figure 19.  Not the plutonic fields
+#: renamed: above Q 60 there is no volcanic name, dacite takes
+#: P/(A+P) 65-100, basalt / andesite runs from Q 20 down to F 10 with no
+#: line at 90, and the foidites divide.  Fields 9 and 10 with and
+#: without * or ' are all basalt / andesite; colour index and SiO2 tell
+#: them apart (Figure 21), the mode cannot.
+QAPF_VOLCANIC_FIELDS: Tuple[Tuple[str, str, float, float, float, float], ...] = (
+    ("", "", 90, 100, 0, 100),
+    ("", "", 60, 90, 0, 100),
+    ("2", "alkali feldspar rhyolite", 20, 60, 0, 10),
+    ("3", "rhyolite", 20, 60, 10, 65),
+    ("4–5", "dacite", 20, 60, 65, 100),
+    ("6*", "quartz alkali feldspar trachyte", 5, 20, 0, 10),
+    ("7*", "quartz trachyte", 5, 20, 10, 35),
+    ("8*", "quartz latite", 5, 20, 35, 65),
+    ("6", "alkali feldspar trachyte", 0, 5, 0, 10),
+    ("7", "trachyte", 0, 5, 10, 35),
+    ("8", "latite", 0, 5, 35, 65),
+    ("9–10", "basalt / andesite", -10, 20, 65, 100),
+    ("6'", "foid-bearing alkali feldspar trachyte", -10, 0, 0, 10),
+    ("7'", "foid-bearing trachyte", -10, 0, 10, 35),
+    ("8'", "foid-bearing latite", -10, 0, 35, 65),
+    ("11", "phonolite", -60, -10, 0, 10),
+    ("12", "tephritic phonolite", -60, -10, 10, 50),
+    ("13", "phonolitic basanite (Ol > 10 %) / phonolitic tephrite",
+     -60, -10, 50, 90),
+    ("14", "basanite (Ol > 10 %) / tephrite", -60, -10, 90, 100),
+    ("15a", "phonolitic foidite", -90, -60, 0, 50),
+    ("15b", "tephritic foidite / basanitic foidite (Ol > 10 %)",
+     -90, -60, 50, 100),
+    ("15c", "foidite", -100, -90, 0, 100),
 )
 
+#: Sub-field lines the figures draw dashed: ``(r, s from, s to)``.  The
+#: plutonic one splits granite into syeno- (3a) and monzogranite (3b);
+#: the volcanic ones are drawn the same way inside rhyolite and dacite.
+QAPF_PLUTONIC_DASHED = ((35, 20, 60),)
+QAPF_VOLCANIC_DASHED = ((35, 20, 60), (90, 20, 60))
 
-def _draw_qapf_internal_lines(ax) -> None:
-    """Draw the IUGS field boundary lines inside the double-triangle.
 
-    The full Streckeisen 1976 grid has 30+ sub-fields; we render the
-    principal Q-isolines (90, 60, 20, 5 %) and the A/P ratio guides
-    (90/10, 65/35, 35/65, 10/90) which are the most petrologically
-    meaningful divisions.
+def qapf_xy(s, r):
+    """(x, y) on the double triangle of a point at (s, r)."""
+    s = np.asarray(s, dtype=float)
+    r = np.asarray(r, dtype=float)
+    t = np.abs(s) / 100.0
+    return 0.5 * t + (1.0 - t) * r / 100.0, np.sign(s) * _HALF_HEIGHT * t
+
+
+def _box_outline(s_lo, s_hi, r_lo, r_hi):
+    """A field's outline as (s, r) vertices, through s = 0 where the box
+    crosses from one triangle to the other: the edges are straight in
+    each triangle and bend on the A-P line."""
+    def run(s_from, s_to, r):
+        pts = [(s_from, r)]
+        if min(s_from, s_to) < 0 < max(s_from, s_to):
+            pts.append((0.0, r))
+        return pts
+    return (run(s_lo, s_hi, r_lo) + [(s_hi, r_lo)]
+            + run(s_hi, s_lo, r_hi) + [(s_lo, r_hi)])
+
+
+def _polygon_centroid(xs, ys):
+    xs, ys = np.asarray(xs, float), np.asarray(ys, float)
+    cross = xs * np.roll(ys, -1) - np.roll(xs, -1) * ys
+    area = cross.sum() / 2.0
+    if abs(area) < 1e-12:
+        return float(xs.mean()), float(ys.mean())
+    return (float(((xs + np.roll(xs, -1)) * cross).sum() / (6 * area)),
+            float(((ys + np.roll(ys, -1)) * cross).sum() / (6 * area)))
+
+
+def qapf_field(fields, s: float, r: float) -> Tuple[str, str]:
+    """``(number, name)`` of the field holding (s, r), or ``("", "")``.
+
+    Each box takes its lower bounds and leaves its upper ones to the
+    next, except at 100, so a sample on a line has one name.
     """
-    # Q-isolines (top triangle)
-    for q_pct in (0.05, 0.20, 0.60, 0.90):
-        # Endpoints at A/(A+P) = 0 and 1, with Q = q_pct
-        x0 = 0.5 * q_pct                  # A-side at A/(A+P)=1
-        x1 = 1.0 - 0.5 * q_pct            # P-side at A/(A+P)=0
-        y = q_pct * _HALF_HEIGHT
-        ax.plot([x0, x1], [y, y], color="#888", lw=0.7, alpha=0.7)
-
-    # F-isolines (bottom triangle)
-    for f_pct in (0.10, 0.60):
-        x0 = 0.5 * f_pct
-        x1 = 1.0 - 0.5 * f_pct
-        y = -f_pct * _HALF_HEIGHT
-        ax.plot([x0, x1], [y, y], color="#888", lw=0.7, alpha=0.7)
-
-    # A/P-ratio rays from Q apex down to A-P edge and then to F apex
-    for ap_ratio in (0.10, 0.35, 0.65, 0.90):
-        # x along the A-P edge at A/(A+P) = (1 - ap_ratio)
-        x_edge = ap_ratio
-        # Top ray: from (x_edge, 0) to Q apex (0.5, +√3/2)
-        ax.plot([x_edge, 0.5], [0.0,  _HALF_HEIGHT],
-                color="#888", lw=0.7, alpha=0.7)
-        # Bottom ray: from (x_edge, 0) to F apex (0.5, -√3/2)
-        ax.plot([x_edge, 0.5], [0.0, -_HALF_HEIGHT],
-                color="#888", lw=0.7, alpha=0.7)
+    if not (np.isfinite(s) and np.isfinite(r)):
+        return "", ""
+    for number, name, s_lo, s_hi, r_lo, r_hi in fields:
+        in_s = s_lo <= s < s_hi or (s_hi == 100 and s == 100)
+        in_r = r_lo <= r < r_hi or (r_hi == 100 and r == 100)
+        if in_s and in_r:
+            return number, name
+    return "", ""
 
 
-# ---------------------------------------------------------------------------
-# QAPF base class — plutonic and volcanic share everything except labels
-# ---------------------------------------------------------------------------
+def _draw_qapf_frame(ax, axis_style) -> None:
+    """The double triangle, its apexes and the A-P line."""
+    q, f = (0.5, _HALF_HEIGHT), (0.5, -_HALF_HEIGHT)
+    a, p = (0.0, 0.0), (1.0, 0.0)
+    ax.plot([a[0], q[0], p[0], f[0], a[0]], [a[1], q[1], p[1], f[1], a[1]],
+            color="#333", linewidth=1.0, zorder=3)
+    ax.plot([a[0], p[0]], [a[1], p[1]], color="#333", linewidth=1.0,
+            zorder=3)
+    style = axis_style.label_kwargs()
+    ax.text(q[0], q[1] + 0.04, "Q", ha="center", va="bottom", **style)
+    ax.text(f[0], f[1] - 0.04, "F", ha="center", va="top", **style)
+    ax.text(a[0] - 0.03, a[1], "A", ha="right", va="center", **style)
+    ax.text(p[0] + 0.03, p[1], "P", ha="left", va="center", **style)
+
+
+def _qapf_key(fields) -> Tuple[str, str]:
+    """The field-number key, split into the upper and lower triangle."""
+    upper, lower, seen = [], [], set()
+    for number, name, _s_lo, s_hi, _rl, _rh in fields:
+        if not number or number in seen:
+            continue
+        seen.add(number)
+        (upper if s_hi > 0 else lower).append(f"{number:>4}  {name}")
+    return "\n".join(upper), "\n".join(lower)
+
 
 class _QAPFDiagram(Diagram):
-    """Shared rendering for the Streckeisen QAPF double-triangle."""
-    _is_plutonic: bool = True
-    _labels: tuple = ()
+    """Shared rendering for the Streckeisen QAPF double triangle."""
 
-    def _qapf_columns(self, df: pd.DataFrame
-                       ) -> Optional[Tuple[pd.Series, pd.Series, pd.Series, pd.Series]]:
-        cols = {}
-        for key, candidates in (
-            ("Q", ("Q_mode", "Q", "Quartz_mode", "Qtz")),
-            ("A", ("A_mode", "A", "Alkali_feldspar_mode", "Alk_fsp", "Kfs")),
-            ("P", ("P_mode", "P", "Plagioclase_mode", "Pl")),
-            ("F", ("F_mode", "F", "Foid_mode", "Foid")),
-        ):
-            col = resolve_column(df, candidates)
-            if col is None:
-                return None
-            cols[key] = pd.to_numeric(df[col], errors="coerce")
-        return cols["Q"], cols["A"], cols["P"], cols["F"]
+    fields: tuple = ()
+    dashed: tuple = ()
+
+    _COLUMNS = (
+        ("Q", ("Q_mode", "Q", "Quartz_mode", "Qtz")),
+        ("A", ("A_mode", "A", "Alkali_feldspar_mode", "Alk_fsp", "Kfs")),
+        ("P", ("P_mode", "P", "Plagioclase_mode", "Pl")),
+        ("F", ("F_mode", "F", "Foid_mode", "Foid")),
+    )
+
+    def _modes(self, df: pd.DataFrame):
+        """Q, A, P and F, with an absent mineral as 0, or ``None`` when
+        the sheet has no feldspar columns at all."""
+        found = {k: resolve_column(df, names) for k, names in self._COLUMNS}
+        if found["A"] is None and found["P"] is None:
+            return None
+        values = {k: (pd.to_numeric(df[col], errors="coerce")
+                      if col else pd.Series(np.nan, index=df.index))
+                  for k, col in found.items()}
+        frame = pd.DataFrame(values)
+        blank = frame.isna().all(axis=1)
+        frame = frame.fillna(0.0).clip(lower=0.0)
+        frame[blank] = np.nan
+        return frame
+
+    def _sr(self, df: pd.DataFrame):
+        """(s, r) per sample; NaN for a blank row, a row with nothing to
+        place, and a row carrying both quartz and a feldspathoid, which
+        the QAPF cannot hold."""
+        modes = self._modes(df)
+        if modes is None:
+            return None, None
+        q, a, p, f = (modes[k] for k in "QAPF")
+        both = (q > 0) & (f > 0)
+        feldspar = a + p
+        upper = q + feldspar
+        lower = f + feldspar
+        s = pd.Series(np.where(f > 0, -100.0 * f / lower.where(lower > 0),
+                               100.0 * q / upper.where(upper > 0)),
+                      index=df.index)
+        # A pure quartz or feldspathoid rock has no P/(A+P); it sits at
+        # the apex whatever the ratio, so any value places it.
+        r = (100.0 * p / feldspar.where(feldspar > 0)).where(
+            feldspar > 0, 50.0)
+        bad = both | modes.isna().any(axis=1)
+        return s.mask(bad), r.mask(bad | s.isna())
+
+    def _compute_xy(self, df: pd.DataFrame):
+        s, r = self._sr(df)
+        if s is None:
+            return None, None
+        x, y = qapf_xy(s, r)
+        return (pd.Series(x, index=df.index), pd.Series(y, index=df.index))
+
+    def classify(self, q: float, a: float, p: float, f: float
+                 ) -> Tuple[str, str]:
+        """``(field number, name)`` for one mode; ``("", "")`` when it
+        cannot be placed or has no name on this diagram."""
+        frame = pd.DataFrame({"Q": [q], "A": [a], "P": [p], "F": [f]})
+        s, r = self._sr(frame)
+        return qapf_field(self.fields, float(s.iloc[0]), float(r.iloc[0]))
+
+    def classify_frame(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Field number and name for every row of *df*."""
+        s, r = self._sr(df)
+        if s is None:
+            return pd.DataFrame({"field": "", "name": ""}, index=df.index)
+        pairs = [qapf_field(self.fields, a, b) for a, b in zip(s, r)]
+        return pd.DataFrame(pairs, columns=["field", "name"], index=df.index)
 
     def plot(self, figure, df, plot_style, options: PlotOptions):
         figure.clear()
         ax = figure.add_subplot(111)
-        _draw_qapf_frame(ax, options.x_axis,
-                          plutonic=self._is_plutonic)
-        _draw_qapf_internal_lines(ax)
-        for label, x, y, fs, rot, alpha, color in self._labels:
-            ax.text(x, y, label, ha="center", va="center",
-                    fontsize=fs, rotation=rot, alpha=alpha,
-                    color=color, zorder=2)
+        for number, _name, s_lo, s_hi, r_lo, r_hi in self.fields:
+            sr = _box_outline(s_lo, s_hi, r_lo, r_hi)
+            x, y = qapf_xy([v[0] for v in sr], [v[1] for v in sr])
+            ax.add_patch(Polygon(np.column_stack([x, y]), closed=True,
+                                 fill=False, edgecolor="#555",
+                                 linewidth=0.7, zorder=1))
+            if number:
+                cx, cy = _polygon_centroid(x, y)
+                ax.text(cx, cy, number, ha="center", va="center",
+                        fontsize=6.5, fontweight="bold", color="#1c2237",
+                        zorder=2)
+        for r, s_lo, s_hi in self.dashed:
+            x, y = qapf_xy([s_lo, s_hi], [r, r])
+            ax.plot(x, y, color="#777", linewidth=0.7, linestyle="--",
+                    zorder=1)
+        _draw_qapf_frame(ax, options.x_axis)
+        upper, lower = _qapf_key(self.fields)
+        key_style = dict(ha="left", va="top", fontsize=6, color="#333",
+                         family="monospace", linespacing=1.25)
+        ax.text(-0.82, _HALF_HEIGHT - 0.10, upper, **key_style)
+        ax.text(-0.82, -0.08, lower, **key_style)
 
         if df is not None and not df.empty:
-            for group_label, sub, gs in get_groups(df, plot_style):
-                cols = self._qapf_columns(sub)
-                if cols is None:
+            for label, sub, gs in get_groups(df, plot_style):
+                x, y = self._compute_xy(sub)
+                if x is None:
                     continue
-                q, a, p, f = cols
-                xs, ys = [], []
-                for i in q.index:
-                    pos = _qapf_position(q[i], a[i], p[i], f[i])
-                    if pos is None:
-                        continue
-                    xs.append(pos[0])
-                    ys.append(pos[1])
-                if not xs:
+                keep = x.notna() & y.notna()
+                if not keep.any():
                     continue
-                color = gs.color if gs else "#1f77b4"
-                marker = gs.marker if gs else "o"
-                show_markers = getattr(gs, "show_markers", True) if gs else True
-                if show_markers:
-                    ax.scatter(xs, ys,
-                               s=plot_style.point_size ** 2,
-                               alpha=plot_style.alpha,
-                               c=color, marker=marker,
-                               label=group_label,
-                               edgecolors="black", linewidths=0.4,
-                               zorder=4)
+                ax.scatter(x[keep], y[keep], s=plot_style.point_size ** 2,
+                           alpha=plot_style.alpha,
+                           c=gs.color if gs else "#1f77b4",
+                           marker=gs.marker if gs else "o", label=label,
+                           edgecolors="black", linewidths=0.4, zorder=4)
+            modes = self._modes(df)
+            if modes is not None:
+                both = int(((modes["Q"] > 0) & (modes["F"] > 0)).sum())
+                if both:
+                    draw_note(ax, (
+                        f"{both} sample{'s' if both != 1 else ''} carr"
+                        f"{'y' if both != 1 else 'ies'} both quartz and a "
+                        "feldspathoid; the QAPF cannot place "
+                        f"{'them' if both != 1 else 'it'}."))
 
+        ax.set_xlim(-0.85, 1.15)
+        ax.set_ylim(-_HALF_HEIGHT - 0.10, _HALF_HEIGHT + 0.08)
+        ax.set_aspect("equal")
+        ax.axis("off")
         self._apply_legend(ax, options)
         figure.tight_layout()
 
@@ -302,200 +374,224 @@ class _QAPFDiagram(Diagram):
 class StreckeisenQAPFPlutonic(_QAPFDiagram):
     key = "streckeisen_qapf_plutonic"
     title = "Streckeisen QAPF — plutonic rocks"
-    citation = ("Streckeisen (1976); Le Bas & Streckeisen (1991). "
-                "Modal Q, A (alkali feldspar), P (plagioclase) and F "
-                "(feldspathoid) percentages renormalised so Q + A + P "
-                "(top) or A + P + F (bottom) = 100.")
-    _is_plutonic = True
-    _labels = _QAPF_PLUTONIC_LABELS
+    citation = ("Streckeisen (1976), as in BGS RR 99-06 Figures 11-12 "
+                "and Le Maitre (2002). Modal Q (quartz), A (alkali "
+                "feldspar), P (plagioclase) and F (feldspathoid), "
+                "recast so Q + A + P (top) or A + P + F (bottom) = 100. "
+                "Field numbers are IUGS's; the key gives the names. Not "
+                "for rocks with more than 90 % mafic minerals.")
+    fields = QAPF_PLUTONIC_FIELDS
+    dashed = QAPF_PLUTONIC_DASHED
 
 
 class StreckeisenQAPFVolcanic(_QAPFDiagram):
     key = "streckeisen_qapf_volcanic"
     title = "Streckeisen QAPF — volcanic rocks"
-    citation = ("Streckeisen (1978); Le Maitre (2002). IUGS-recommended "
-                "volcanic equivalents of the QAPF plutonic fields: "
-                "rhyolite ⇔ granite, dacite ⇔ granodiorite, trachyte ⇔ "
-                "syenite, andesite/basalt ⇔ diorite/gabbro, phonolite ⇔ "
-                "foid syenite, etc.")
-    _is_plutonic = False
-    _labels = _QAPF_VOLCANIC_LABELS
+    citation = ("Streckeisen (1978), as in BGS RR 99-06 Figure 19 and Le "
+                "Maitre (2002). The volcanic fields differ from the "
+                "plutonic ones: no names above Q 60, dacite over "
+                "P/(A+P) 65-100, basalt / andesite from Q 20 to F 10, "
+                "and three foidites. Basanite against tephrite is "
+                "olivine above or below 10 %; basalt against andesite "
+                "needs colour index and SiO2.")
+    fields = QAPF_VOLCANIC_FIELDS
+    dashed = QAPF_VOLCANIC_DASHED
 
 
 # ---------------------------------------------------------------------------
-# Gabbro Pl – Px – Ol (Le Maitre 2002 / IUGS)
+# The ternaries: fields as polygons, labels laid out by hand
 # ---------------------------------------------------------------------------
-# Tuples encode (Pl%, Px%, Ol%) in the apex order (A=Pl on top, B=Px on
-# left, C=Ol on right).  The classification follows the simplified IUGS
-# scheme shown in Le Maitre (2002) / Geology-is-the-Way:
+
+def _draw_fields(ax, fields: dict) -> None:
+    """Field outlines, without labels; each diagram places its own."""
+    for abc in fields.values():
+        a, b, c = zip(*abc)
+        x, y = ternary_to_xy(pd.Series(a), pd.Series(b), pd.Series(c))
+        ax.add_patch(Polygon(np.column_stack([x, y]), closed=True,
+                             fill=False, edgecolor="#444", linewidth=0.9,
+                             alpha=0.85, zorder=2))
+
+
+def _xy(abc) -> Tuple[float, float]:
+    x, y = ternary_to_xy(pd.Series([abc[0]]), pd.Series([abc[1]]),
+                         pd.Series([abc[2]]))
+    return float(x.iloc[0]), float(y.iloc[0])
+
+
+def _draw_labels(ax, labels, fontsize: float = 7.5) -> None:
+    """Each label inside its field, or outside with a leader line to it.
+
+    *labels* is ``(text, (a, b, c) in the field, text position (x, y)
+    or None for inside, horizontal alignment)``.
+    """
+    for text, abc, outside, ha in labels:
+        at = _xy(abc)
+        if outside is None:
+            ax.text(*at, text, ha="center", va="center", fontsize=fontsize,
+                    color="#333", zorder=3)
+        else:
+            ax.annotate(text, xy=at, xytext=outside, ha=ha, va="center",
+                        fontsize=fontsize, color="#333", zorder=3,
+                        arrowprops=dict(arrowstyle="-", color="#666",
+                                        linewidth=0.6, shrinkA=2,
+                                        shrinkB=0))
+
+
+# ---------------------------------------------------------------------------
+# Gabbroic rocks, plagioclase – pyroxene – olivine
+# ---------------------------------------------------------------------------
 #
-#   - Plag ≥ 90 ............. anorthosite (small cap at the Pl apex)
-#   - 10 ≤ Plag ≤ 90 ........ gabbroid family, subdivided by the
-#                              5 %-rule on Ol/(Ol+Px):
-#         Ol/(Ol+Px) ≤ 0.05 → gabbro / gabbronorite / norite
-#         0.05 < ratio < 0.95 → olivine gabbro / gabbronorite / norite
-#         Ol/(Ol+Px) ≥ 0.95 → troctolite
-#   - Plag < 10 ............. plagioclase-bearing ultramafic rocks
-#
-# The 5 %-rule endpoints (at Pl = 90 and 10) on the gabbro / olivine-gabbro
-# boundary are:    Pl=90, Px=9.5, Ol=0.5     and    Pl=10, Px=85.5, Ol=4.5
-# Symmetric values on the troctolite / olivine-gabbro boundary:
-#                  Pl=90, Px=0.5, Ol=9.5     and    Pl=10, Px=4.5, Ol=85.5
-# ---------------------------------------------------------------------------
+# BGS RR 99-06 Figure 13 (after Streckeisen 1976).  (Pl, Px, Ol) %, Pl
+# at the top.  Anorthosite above Pl 90; plagioclase-bearing ultramafic
+# rocks below Pl 10.  Between them gabbro / gabbronorite / norite has
+# less than 5 % olivine and troctolite less than 5 % pyroxene: strips of
+# constant width along the two sides, which meet at the middle of the
+# Pl 90 line.  They used to open from about 3 % at Pl 90 to 5 % of the
+# mafic minerals at Pl 10, which is no rule at all.  Measured on the
+# reference figure in the project material, the inner lines keep the
+# same distance from their sides from top to bottom, as a percentage of
+# the whole and not of the mafic part would.
 
-_GABBRO_FIELDS: dict = {
-    "Anorthosite":                  [(100, 0, 0), (90, 10, 0), (90, 0, 10)],
-    # Inner side of the gabbro / troctolite wedges opens to ~3 % of the
-    # mafic fraction at Pl = 90 (matching the Geology-is-the-Way figure)
-    # and narrows to the canonical 5 %-rule positions at Pl = 10.
-    "Gabbro /\nNorite /\nGabbronorite": [(90, 10, 0),  (10, 90, 0),
-                                          (10, 85.5, 4.5), (90, 7, 3)],
-    "Olivine gabbro /\nolivine gabbronorite /\nolivine norite":
-                                    [(90, 7, 3),     (10, 85.5, 4.5),
-                                     (10, 4.5, 85.5), (90, 3, 7)],
-    "Troctolite":                   [(90, 3, 7),     (10, 4.5, 85.5),
-                                     (10, 0, 90),    (90, 0, 10)],
-    "Plagioclase-bearing\nultramafic rocks":
-                                    [(10, 90, 0), (0, 100, 0),
-                                     (0, 0, 100), (10, 0, 90)],
+GABBRO_FIELDS: dict = {
+    "anorthosite": [(100, 0, 0), (90, 10, 0), (90, 0, 10)],
+    "gabbro / gabbronorite / norite": [(90, 10, 0), (10, 90, 0),
+                                       (10, 85, 5), (90, 5, 5)],
+    "olivine gabbro / olivine gabbronorite / olivine norite":
+        [(90, 5, 5), (10, 85, 5), (10, 5, 85)],
+    "troctolite": [(90, 0, 10), (10, 0, 90), (10, 5, 85), (90, 5, 5)],
+    "plagioclase-bearing ultramafic rocks": [(10, 90, 0), (0, 100, 0),
+                                             (0, 0, 100), (10, 0, 90)],
 }
 
-# Dashed reference isolines that mark the leuco-/meso-/mela- prefix
-# boundaries inside the gabbroid family (Plag = 90, 65, 35, 10).
-# Drawn on top of the field polygons with no rock-name labels — they only
-# clarify which prefix should be appended to the rock name.
-_GABBRO_PREFIX_ISOPLETHS = (
-    # (Plag %, label drawn on the Pl-Ol right edge, label text)
-    (90, "90", None),       # already a solid boundary of "Anorthosite"
-    (65, "65", "(LEUCO-)"),
-    (35, "35", "(MELA-)"),
-    (10, "10", None),       # already a solid boundary of the ultramafic band
+_GABBRO_LABELS = (
+    ("anorthosite", (96, 2, 2), (0.30, 0.93), "right"),
+    ("gabbro\ngabbronorite\nnorite", (50, 47.5, 2.5), (0.06, 0.56), "right"),
+    ("olivine gabbro\nolivine gabbronorite\nolivine norite",
+     (45, 27.5, 27.5), None, "center"),
+    ("troctolite", (50, 2.5, 47.5), (0.94, 0.56), "left"),
+    ("plagioclase-bearing ultramafic rocks", (5, 47.5, 47.5), None,
+     "center"),
 )
 
+#: The prefixes Figure 13 sets beside the gabbroids: leuco- for Pl 65-90,
+#: meso- 35-65, mela- 10-35.
+_GABBRO_PREFIXES = ((65, 90, "(leuco-)"), (35, 65, "(meso-)"),
+                    (10, 35, "(mela-)"))
 
-class GabbroPlPxOl(Diagram):
+
+class GabbroPlPxOl(TernaryDiagram):
     key = "gabbro_pl_px_ol"
-    title = "Plagioclase – Pyroxene – Olivine — gabbro classification"
-    citation = ("Le Maitre (2002) / IUGS.  Modal classification of "
-                "gabbroid rocks.  Apex Pl = plagioclase, Px = "
-                "pyroxene (Opx + Cpx), Ol = olivine.  The 5 %-rule on "
-                "Ol/(Ol+Px) splits the gabbroid band into gabbro/norite, "
-                "olivine gabbro/norite, and troctolite.  Dashed lines at "
-                "Pl = 65 and 35 mark the optional leuco-/mela- prefixes.")
+    title = "Plagioclase – Pyroxene – Olivine — gabbroic rocks"
+    citation = ("Streckeisen (1976), as in BGS RR 99-06 Figure 13 and Le "
+                "Maitre (2002). Pl = plagioclase, Px = pyroxene (Opx + "
+                "Cpx), Ol = olivine. Gabbro / gabbronorite / norite has "
+                "under 5 % olivine and troctolite under 5 % pyroxene; "
+                "dashed lines at Pl 65 and 35 bound the leuco-, meso- "
+                "and mela- prefixes.")
 
     def _abc(self, df):
-        pl = resolve_column(df, ("Pl_mode", "Plagioclase_mode", "Pl"))
-        px = resolve_column(df, ("Px_mode", "Pyroxene_mode", "Px"))
+        # The template's plagioclase is P_mode, as on the QAPF; the
+        # diagram used to look only for Pl_mode and found nothing.
+        pl = resolve_column(df, ("Pl_mode", "Plagioclase_mode", "Pl",
+                                 "P_mode"))
         ol = resolve_column(df, ("Ol_mode", "Olivine_mode", "Ol"))
-        if pl is None or px is None or ol is None:
-            # Fallback — if the user only filled Opx + Cpx columns,
-            # sum them on the fly.
-            opx = resolve_column(df, ("Opx_mode", "Orthopyroxene_mode", "Opx"))
-            cpx = resolve_column(df, ("Cpx_mode", "Clinopyroxene_mode", "Cpx"))
-            if pl is None or ol is None or opx is None or cpx is None:
-                return None
-            px_s = (pd.to_numeric(df[opx], errors="coerce").fillna(0)
-                    + pd.to_numeric(df[cpx], errors="coerce").fillna(0))
-            return (pd.to_numeric(df[pl], errors="coerce"),
-                    px_s,
-                    pd.to_numeric(df[ol], errors="coerce"))
-        return (pd.to_numeric(df[pl], errors="coerce"),
-                pd.to_numeric(df[px], errors="coerce"),
+        if pl is None or ol is None:
+            return None
+        # Px where given, else Opx + Cpx, row by row: the template has
+        # all three, and a blank Px_mode column hid every sample.
+        px = resolve_column(df, ("Px_mode", "Pyroxene_mode", "Px"))
+        opx = resolve_column(df, ("Opx_mode", "Orthopyroxene_mode", "Opx"))
+        cpx = resolve_column(df, ("Cpx_mode", "Clinopyroxene_mode", "Cpx"))
+        pyroxene = (pd.to_numeric(df[px], errors="coerce") if px
+                    else pd.Series(np.nan, index=df.index))
+        if opx or cpx:
+            parts = [pd.to_numeric(df[c], errors="coerce")
+                     for c in (opx, cpx) if c]
+            both = pd.concat(parts, axis=1)
+            summed = both.sum(axis=1).where(both.notna().any(axis=1))
+            pyroxene = pyroxene.fillna(summed)
+        if pyroxene.isna().all():
+            return None
+        return (pd.to_numeric(df[pl], errors="coerce"), pyroxene,
                 pd.to_numeric(df[ol], errors="coerce"))
 
     def plot(self, figure, df, plot_style, options: PlotOptions):
         figure.clear()
         ax = figure.add_subplot(111)
         draw_ternary_frame(ax, ("Pl", "Px", "Ol"), options.x_axis)
-        _draw_ternary_fields(ax, _GABBRO_FIELDS, fontsize=8)
-        self._draw_prefix_isopleths(ax)
-        _plot_ternary_data(ax, df, plot_style, self._abc)
+        _draw_fields(ax, GABBRO_FIELDS)
+        for plag in (65, 35):
+            x, y = ternary_to_xy(pd.Series([plag, plag]),
+                                 pd.Series([100 - plag, 0]),
+                                 pd.Series([0, 100 - plag]))
+            ax.plot(x, y, color="#777", linewidth=0.7, linestyle="--",
+                    alpha=0.85, zorder=1)
+        for low, high, prefix in _GABBRO_PREFIXES:
+            mid = (low + high) / 2.0
+            x, y = _xy((mid, 0, 100 - mid))
+            ax.text(x + 0.16, y, prefix, fontsize=7.5, color="#666",
+                    style="italic", ha="left", va="center")
+        _draw_labels(ax, _GABBRO_LABELS)
+        self._scatter_samples(ax, df, plot_style)
         self._apply_legend(ax, options)
         figure.tight_layout()
 
-    @staticmethod
-    def _draw_prefix_isopleths(ax) -> None:
-        """Dashed horizontal isolines at Plag = 65 and 35 with the
-        leuco-/mela- prefix labels on the right (Pl-Ol) edge."""
-        for plag, _tick, prefix in _GABBRO_PREFIX_ISOPLETHS:
-            if prefix is None:
-                continue
-            # Build the isoline at constant Plag: (Pl=plag, Px=100-plag, Ol=0)
-            # to (Pl=plag, Px=0, Ol=100-plag).
-            a = pd.Series([plag, plag])
-            b = pd.Series([100 - plag, 0])
-            c = pd.Series([0, 100 - plag])
-            xs, ys = ternary_to_xy(a, b, c)
-            ax.plot(xs, ys, color="#777", linewidth=0.7,
-                    linestyle="--", alpha=0.85, zorder=1)
-            # Place the prefix label just outside the right edge.
-            tx, ty = xs.iloc[1] + 0.015, ys.iloc[1] + 0.008
-            ax.text(tx, ty, prefix, fontsize=7.5, color="#666",
-                    style="italic", ha="left", va="center")
-
 
 # ---------------------------------------------------------------------------
-# Ultramafic Ol – Opx – Cpx (Streckeisen 1976)
+# Ultramafic rocks, olivine – orthopyroxene – clinopyroxene
 # ---------------------------------------------------------------------------
+#
+# BGS RR 99-06 Figure 16 (after Streckeisen 1973).  (Ol, Opx, Cpx) %,
+# Ol at the top.  Dunite above Ol 90; peridotites Ol 40-90; olivine
+# pyroxenites Ol 5-40; below Ol 5 the pyroxenites, with orthopyroxenite
+# and clinopyroxenite where one pyroxene is over 90 %.  Harzburgite and
+# olivine orthopyroxenite have under 5 % Cpx, wehrlite and olivine
+# clinopyroxenite under 5 % Opx: strips of constant width, as on the
+# gabbroic diagram, meeting at the middle of the Ol 90 line and ending
+# on the Ol 5 line where it meets the corner triangles.  They used to
+# open from 4 % at Ol 90 to 3 % at Ol 40.
 
-_ULTRAMAFIC_FIELDS: dict = {
-    # Apex order: A = Ol (top), B = Opx (left), C = Cpx (right).
-    # Tuples are (Ol%, Opx%, Cpx%).
-    #
-    # IUGS / Le Maitre (2002) classification (Geology-is-the-Way figure):
-    #   - Ol ≥ 90 ........ dunite (small cap)
-    #   - 40 ≤ Ol < 90 ... peridotite (harzburgite / lherzolite / wehrlite)
-    #                       split by 5 %-rule on Cpx/(Opx+Cpx); the strip
-    #                       widens at the top to a 3-pp opening so the
-    #                       labels are readable (same trick as the gabbro
-    #                       diagram).
-    #   -  5 ≤ Ol < 40 ... olivine pyroxenite (olivine ortho / webst /
-    #                       clino), split by 5 %-rule.
-    #   -  0 ≤ Ol <  5 ... pure pyroxenite, split by 10 %-rule on Cpx —
-    #                       i.e. the "10/90" labels at the bottom edge:
-    #                       orthopyroxenite (Cpx<10), websterite (10-90),
-    #                       clinopyroxenite (Cpx>90).
-    "Dunite":                  [(100, 0, 0), (90, 10, 0), (90, 0, 10)],
-    # Peridotite zone — wedges open to ~4 % of the mafic fraction at the
-    # top (Ol=90) and narrow to the canonical 5 %-rule positions at Ol=40.
-    "Harzburgite":             [(90, 10, 0), (40, 60, 0),
-                                (40, 57, 3), (90, 6, 4)],
-    "Lherzolite":              [(90, 6, 4), (40, 57, 3),
-                                (40, 3, 57), (90, 4, 6)],
-    "Wehrlite":                [(90, 0, 10), (40, 0, 60),
-                                (40, 3, 57), (90, 4, 6)],
-    # Olivine-pyroxenite zone now starts at Ol = 10 (instead of Ol = 5),
-    # so it dovetails with the bigger corner triangles below.  Inner
-    # boundaries still follow the 5 %-rule, giving (10, 85.5, 4.5) and
-    # (10, 4.5, 85.5) at the bottom.
-    "Olivine\northopyroxenite": [(40, 60, 0), (10, 90, 0),
-                                  (5, 90, 5), (40, 57, 3)],
-    "Olivine\nwebsterite":     [(40, 57, 3), (5, 90, 5),
-                                (5, 5, 90), (40, 3, 57)],
-    "Olivine\nclinopyroxenite": [(40, 0, 60), (10, 0, 90),
-                                  (5, 5, 90), (40, 3, 57)],
-    # Pure-pyroxenite corners are full diagonal triangles defined by the
-    # 10 %-rule: Opx ≥ 90 for orthopyroxenite and Cpx ≥ 90 for
-    # clinopyroxenite — they cover ~10 % of each apex corner, matching
-    # the reference Geology-is-the-Way figure.
-    "Orthopyroxenite":         [(0, 100, 0), (10, 90, 0), (0, 90, 10)],
-    "Websterite":              [(5, 90, 5), (5, 5, 90),
-                                (0, 10, 90), (0, 90, 10)],
-    "Clinopyroxenite":         [(0, 0, 100), (10, 0, 90), (0, 10, 90)],
+ULTRAMAFIC_FIELDS: dict = {
+    "dunite": [(100, 0, 0), (90, 10, 0), (90, 0, 10)],
+    "harzburgite": [(90, 10, 0), (40, 60, 0), (40, 55, 5), (90, 5, 5)],
+    "lherzolite": [(90, 5, 5), (40, 55, 5), (40, 5, 55)],
+    "wehrlite": [(90, 0, 10), (40, 0, 60), (40, 5, 55), (90, 5, 5)],
+    "olivine orthopyroxenite": [(40, 60, 0), (10, 90, 0), (5, 90, 5),
+                                (40, 55, 5)],
+    "olivine websterite": [(40, 55, 5), (5, 90, 5), (5, 5, 90),
+                           (40, 5, 55)],
+    "olivine clinopyroxenite": [(40, 0, 60), (10, 0, 90), (5, 5, 90),
+                                (40, 5, 55)],
+    "orthopyroxenite": [(0, 100, 0), (10, 90, 0), (0, 90, 10)],
+    "websterite": [(5, 90, 5), (5, 5, 90), (0, 10, 90), (0, 90, 10)],
+    "clinopyroxenite": [(0, 0, 100), (10, 0, 90), (0, 10, 90)],
 }
 
+_ULTRAMAFIC_LABELS = (
+    ("dunite", (96, 2, 2), (0.30, 0.93), "right"),
+    ("harzburgite", (65, 32.5, 2.5), (0.10, 0.68), "right"),
+    ("lherzolite", (65, 17.5, 17.5), None, "center"),
+    ("wehrlite", (65, 2.5, 32.5), (0.90, 0.68), "left"),
+    ("olivine\northopyroxenite", (22, 75.5, 2.5), (-0.04, 0.30), "right"),
+    ("olivine websterite", (22, 39, 39), None, "center"),
+    ("olivine\nclinopyroxenite", (22, 2.5, 75.5), (1.04, 0.30), "left"),
+    ("websterite", (2.5, 48.75, 48.75), None, "center"),
+    ("orthopyroxenite", (2, 95, 3), (0.14, -0.08), "center"),
+    ("clinopyroxenite", (2, 3, 95), (0.86, -0.08), "center"),
+)
 
-class UltramaficOlOpxCpx(Diagram):
+
+class UltramaficOlOpxCpx(TernaryDiagram):
     key = "ultramafic_ol_opx_cpx"
     title = "Olivine – Orthopyroxene – Clinopyroxene — ultramafic rocks"
-    citation = ("Streckeisen (1976) / Le Maitre (2002) / IUGS.  Modal "
-                "classification of ultramafic rocks (Pl < 10 %). "
-                "Peridotite zone (Ol 40-90 %) uses the 5 %-rule on Cpx/"
-                "(Opx+Cpx); olivine-pyroxenite zone (Ol 5-40 %) uses the "
-                "same 5 %-rule; pure pyroxenite zone (Ol < 5 %) uses the "
-                "10 %-rule on Cpx (orthopyroxenite < 10 %, websterite "
-                "10-90 %, clinopyroxenite > 90 %).  Apex Ol = olivine, "
-                "Opx = orthopyroxene, Cpx = clinopyroxene.")
+    citation = ("Streckeisen (1973), as in BGS RR 99-06 Figure 16 and Le "
+                "Maitre (2002). For rocks with under 10 % plagioclase. "
+                "Dunite above Ol 90, peridotites Ol 40-90, olivine "
+                "pyroxenites Ol 5-40, pyroxenites below; harzburgite and "
+                "olivine orthopyroxenite have under 5 % Cpx, wehrlite "
+                "and olivine clinopyroxenite under 5 % Opx, and "
+                "orthopyroxenite / clinopyroxenite over 90 % of one "
+                "pyroxene.")
 
     def _abc(self, df):
         ol = resolve_column(df, ("Ol_mode", "Olivine_mode", "Ol"))
@@ -511,112 +607,151 @@ class UltramaficOlOpxCpx(Diagram):
         figure.clear()
         ax = figure.add_subplot(111)
         draw_ternary_frame(ax, ("Ol", "Opx", "Cpx"), options.x_axis)
-        # Pin the websterite label at Ol=5, midway between the two
-        # corner triangles' diagonal hypotenuses — i.e. exactly at the
-        # vertical mid-line of the corner triangles (which span Ol=0-10).
-        _draw_ternary_fields(
-            ax, _ULTRAMAFIC_FIELDS, fontsize=7.5,
-            label_overrides={"Websterite": (5, 66, 66)},
-        )
-        self._draw_zone_labels(ax)
-        _plot_ternary_data(ax, df, plot_style, self._abc)
+        _draw_fields(ax, ULTRAMAFIC_FIELDS)
+        _draw_labels(ax, _ULTRAMAFIC_LABELS)
+        self._scatter_samples(ax, df, plot_style)
         self._apply_legend(ax, options)
         figure.tight_layout()
 
-    @staticmethod
-    def _draw_zone_labels(ax) -> None:
-        """Italic 'PERIDOTITE' / 'PYROXENITE' tags along the right (Ol-Cpx)
-        edge, mirroring the Geology-is-the-Way figure."""
-        # PERIDOTITE label sits around Ol≈65 on the right edge.
-        a = pd.Series([65])
-        b = pd.Series([0])
-        c = pd.Series([35])
-        x, y = ternary_to_xy(a, b, c)
-        ax.text(x.iloc[0] + 0.02, y.iloc[0] + 0.005, "PERIDOTITE",
-                fontsize=8, color="#666", style="italic",
-                rotation=-60, ha="left", va="center")
-        # PYROXENITE label sits around Ol≈20 on the right edge.
-        a = pd.Series([20])
-        b = pd.Series([0])
-        c = pd.Series([80])
-        x, y = ternary_to_xy(a, b, c)
-        ax.text(x.iloc[0] + 0.02, y.iloc[0] + 0.005, "PYROXENITE",
-                fontsize=8, color="#666", style="italic",
-                rotation=-60, ha="left", va="center")
-
 
 # ---------------------------------------------------------------------------
-# Pyroclastic Crystal – Vitric – Lithic (Schmid 1981)
+# Tuffs
 # ---------------------------------------------------------------------------
 
-# Apex order: A = Lithic (top), B = Crystal (left), C = Vitric (right).
-# Tuples are (Lithic%, Crystal%, Vitric%).
-#
-# Horizontal bands at Lithic = 50, 25, 10 split the triangle into four
-# layers.  All three internal dividers — between Lithic-crystal /
-# Lithic-vitric in band 2, Crystal-lithic / Vitric-lithic in band 3,
-# and Crystal-vitric / Vitric-crystal in the bottom band — lie on a
-# SINGLE radial line from the Lithic apex through (0, 25, 75) on the
-# bottom edge (i.e. constant Crystal:Vitric = 1:3).  On this line:
-#   at Lithic=50 → (50, 12.5, 37.5)
-#   at Lithic=25 → (25, 18.75, 56.25)
-#   at Lithic=10 → (10, 22.5, 67.5)
-#   at Lithic= 0 → (0, 25, 75)
-# The bottom band has two extra Crystal:Vitric sub-divisions at
-# Vitric/(C+V) = 0.5 and 0.9 (the "50" and "10" ticks along the bottom).
-_TUFF_FIELDS: dict = {
-    # Top layer — Lithic ≥ 50
-    "Lithic\ntuff":          [(100, 0, 0), (50, 50, 0), (50, 0, 50)],
-    # Layer 2 — 25 ≤ Lithic < 50, divider on the 1:3 radial line
-    "Lithic-\ncrystal tuff": [(50, 50, 0), (50, 12.5, 37.5),
-                              (25, 18.75, 56.25), (25, 75, 0)],
-    "Lithic-\nvitric tuff":  [(50, 0, 50), (50, 12.5, 37.5),
-                              (25, 18.75, 56.25), (25, 0, 75)],
-    # Layer 3 — 10 ≤ Lithic < 25, same 1:3 radial divider
-    "Crystal-\nlithic tuff": [(25, 75, 0), (25, 18.75, 56.25),
-                              (10, 22.5, 67.5), (10, 90, 0)],
-    "Vitric-\nlithic tuff":  [(25, 0, 75), (25, 18.75, 56.25),
-                              (10, 22.5, 67.5), (10, 0, 90)],
-    # Bottom layer — Lithic < 10, divided by Vitric/(C+V) at 0.5, 0.75, 0.9
-    "Crystal\ntuff":         [(10, 90, 0), (0, 100, 0),
-                              (0, 50, 50), (10, 45, 45)],
-    "Crystal-\nvitric tuff": [(10, 45, 45), (0, 50, 50),
-                              (0, 25, 75), (10, 22.5, 67.5)],
-    "Vitric-\ncrystal tuff": [(10, 22.5, 67.5), (0, 25, 75),
-                              (0, 10, 90), (10, 9, 81)],
-    "Vitric\ntuff":          [(10, 9, 81), (0, 10, 90),
-                              (0, 0, 100), (10, 0, 90)],
+#: Schmid (1981), BGS RR 99-06 Figure 7, as ``(Vitric, Crystal, Lithic)``
+#: %: each tuff is named for its dominant component, so the three lines
+#: run from the centre to the middle of each side.
+SCHMID_TUFF_FIELDS: dict = {
+    "vitric tuff": [(100, 0, 0), (50, 50, 0), (100 / 3, 100 / 3, 100 / 3),
+                    (50, 0, 50)],
+    "crystal tuff": [(0, 100, 0), (0, 50, 50), (100 / 3, 100 / 3, 100 / 3),
+                     (50, 50, 0)],
+    "lithic tuff": [(0, 0, 100), (50, 0, 50), (100 / 3, 100 / 3, 100 / 3),
+                    (0, 50, 50)],
+}
+
+_SCHMID_LABELS = (
+    ("vitric tuff\n(vitric ash)", (66, 17, 17), None, "center"),
+    ("crystal tuff\n(crystal ash)", (17, 66, 17), None, "center"),
+    ("lithic tuff\n(lithic ash)", (17, 17, 66), None, "center"),
+)
+
+
+def _tuff_columns(df):
+    vitric = resolve_column(df, ("Vitric_pct", "Glass_pct", "Vitric_mode",
+                                 "Vitric", "Glass"))
+    crystal = resolve_column(df, ("Crystal_pct", "Crystals_pct",
+                                  "Crystal_mode", "Crystal"))
+    lithic = resolve_column(df, ("Lithic_pct", "Lithics_pct",
+                                 "Lithic_mode", "Lithic"))
+    if vitric is None or crystal is None or lithic is None:
+        return None
+    return {k: pd.to_numeric(df[c], errors="coerce")
+            for k, c in (("V", vitric), ("C", crystal), ("L", lithic))}
+
+
+class TuffSchmid1981(TernaryDiagram):
+    key = "tuff_schmid_1981"
+    title = "Vitric – Crystal – Lithic — tuffs (Schmid 1981)"
+    citation = ("Schmid (1981), the classification the IUGS recommends, "
+                "as in BGS RR 99-06 Figure 7 and Le Maitre (2002). Glass "
+                "(pumice and shards) at the top, crystals and crystal "
+                "fragments left, rock fragments right; a tuff is named "
+                "for its dominant component, an ash likewise when "
+                "unconsolidated.")
+
+    def _abc(self, df):
+        parts = _tuff_columns(df)
+        if parts is None:
+            return None
+        return parts["V"], parts["C"], parts["L"]
+
+    def plot(self, figure, df, plot_style, options: PlotOptions):
+        figure.clear()
+        ax = figure.add_subplot(111)
+        draw_ternary_frame(ax, ("Glass", "Crystals", "Rock fragments"),
+                           options.x_axis)
+        _draw_fields(ax, SCHMID_TUFF_FIELDS)
+        _draw_labels(ax, _SCHMID_LABELS, fontsize=8)
+        self._scatter_samples(ax, df, plot_style)
+        self._apply_legend(ax, options)
+        figure.tight_layout()
+
+
+#: The finer scheme of the project's reference figure, as ``(Lithic,
+#: Crystal, Vitric)`` %, lithic at the top.  Lines at Lithic 50, 25 and
+#: 10; every divider inside is a line of constant crystal content,
+#: parallel to the lithic-vitric side: Crystal 25 % from Lithic 50 down
+#: to the base, and in the base band (Lithic < 10) Crystal 50 % and 10 %
+#: as well.  Measured on the 263-pixel figure, each keeps the same
+#: horizontal distance from that side on every row -- 61-62, 114 and
+#: 24 px of a 233-px base, so 26, 49 and 10 % -- which a ray from the
+#: lithic apex would not.  The dividers used to be such rays, putting
+#: the upper one at Crystal 12.5 % on the Lithic 50 line instead of 25.
+#: It used to be cited as Schmid (1981), whose tuffs are the three
+#: fields above.
+TUFF_FIELDS: dict = {
+    "Lithic\ntuff": [(100, 0, 0), (50, 50, 0), (50, 0, 50)],
+    "Lithic-\ncrystal tuff": [(50, 50, 0), (50, 25, 25), (25, 25, 50),
+                              (25, 75, 0)],
+    "Lithic-\nvitric tuff": [(50, 25, 25), (50, 0, 50), (25, 0, 75),
+                             (25, 25, 50)],
+    "Crystal-\nlithic tuff": [(25, 75, 0), (25, 25, 50), (10, 25, 65),
+                              (10, 90, 0)],
+    "Vitric-\nlithic tuff": [(25, 25, 50), (25, 0, 75), (10, 0, 90),
+                             (10, 25, 65)],
+    "Crystal\ntuff": [(10, 90, 0), (0, 100, 0), (0, 50, 50), (10, 50, 40)],
+    "Crystal-\nvitric tuff": [(10, 50, 40), (0, 50, 50), (0, 25, 75),
+                              (10, 25, 65)],
+    "Vitric-\ncrystal tuff": [(10, 25, 65), (0, 25, 75), (0, 10, 90),
+                              (10, 10, 80)],
+    "Vitric\ntuff": [(10, 10, 80), (0, 10, 90), (0, 0, 100), (10, 0, 90)],
 }
 
 
-class TuffCrystalVitricLithic(Diagram):
+class TuffCrystalVitricLithic(TernaryDiagram):
     key = "tuff_crystal_vitric_lithic"
-    title = "Crystal – Vitric – Lithic — pyroclastic tuff classification"
-    citation = ("Schmid (1981); IUGS.  Classification of pyroclastic "
-                "deposits by the relative proportions of crystals, glass "
-                "shards (vitric) and lithic clasts.  Apex Lithic (top), "
-                "Crystal (left), Vitric (right).  Lithic content drives "
-                "the principal name (Lithic / Lithic- / -Lithic / no "
-                "lithic prefix) via horizontal bands at Lithic = 50, 25, "
-                "10 %.  The bottom band (Lithic < 10) is further split "
-                "by the Crystal/Vitric ratio at 50/25/10 % ticks.")
+    title = "Crystal – Vitric – Lithic — tuffs, banded scheme"
+    citation = ("A finer tuff scheme than the IUGS one, from the figure "
+                "in the project's reference material; its original "
+                "source is not identified. Lithic at the top with lines "
+                "at 50, 25 and 10 %; below Lithic 50 the line Crystal "
+                "25 % divides crystal- from vitric-rich, and the base "
+                "band is cut at Crystal 50, 25 and 10 %. For the IUGS "
+                "classification use Schmid (1981).")
 
     def _abc(self, df):
-        li = resolve_column(df, ("Lithic_pct", "Lithics_pct", "Lithic_mode"))
-        cr = resolve_column(df, ("Crystal_pct", "Crystals_pct", "Crystal_mode"))
-        vt = resolve_column(df, ("Vitric_pct", "Glass_pct", "Vitric_mode"))
-        if cr is None or vt is None or li is None:
+        parts = _tuff_columns(df)
+        if parts is None:
             return None
-        return (pd.to_numeric(df[li], errors="coerce"),
-                pd.to_numeric(df[cr], errors="coerce"),
-                pd.to_numeric(df[vt], errors="coerce"))
+        return parts["L"], parts["C"], parts["V"]
 
     def plot(self, figure, df, plot_style, options: PlotOptions):
         figure.clear()
         ax = figure.add_subplot(111)
         draw_ternary_frame(ax, ("Lithic", "Crystal", "Vitric"),
-                            options.x_axis)
-        _draw_ternary_fields(ax, _TUFF_FIELDS, fontsize=7.5)
-        _plot_ternary_data(ax, df, plot_style, self._abc)
+                           options.x_axis)
+        _draw_fields(ax, TUFF_FIELDS)
+        for name, abc in TUFF_FIELDS.items():
+            a, b, c = zip(*abc)
+            x, y = ternary_to_xy(pd.Series(a), pd.Series(b), pd.Series(c))
+            ax.text(float(np.mean(x)), float(np.mean(y)), name,
+                    ha="center", va="center", fontsize=7, color="#333",
+                    zorder=3)
+        self._scatter_samples(ax, df, plot_style)
         self._apply_legend(ax, options)
         figure.tight_layout()
+
+
+def field_of(fields: dict, abc) -> Optional[str]:
+    """The name of the field of *fields* holding the point *abc*, or
+    ``None``; for checking that labels and samples land where meant."""
+    from matplotlib.path import Path
+
+    point = _xy(abc)
+    for name, vertices in fields.items():
+        a, b, c = zip(*vertices)
+        x, y = ternary_to_xy(pd.Series(a), pd.Series(b), pd.Series(c))
+        if Path(np.column_stack([x, y])).contains_point(point):
+            return name
+    return None

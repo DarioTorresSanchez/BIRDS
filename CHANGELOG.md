@@ -226,6 +226,25 @@ including what is still unverified.
 
 #### Diagrams measured or recomputed against their sources
 
+- **The Petrography view's diagrams, checked against the IUGS
+  definitions** (BGS RR 99-06, which reproduces them). The QAPF placed
+  every sample at 0.5 A + P + 0.5 Q with A at x = 0 — half the alkali
+  feldspar too far right, so a granite plotted on granodiorite and an
+  alkali-feldspar syenite on monzonite — and drew its P/(A+P) lines
+  through the quartz-rich fields and at 10/35/65/90 through the foid
+  fields, where they are 10/50/90. The volcanic QAPF was the plutonic
+  one renamed; it now has Streckeisen's (1978) fields: no names above
+  Q 60, dacite over 65-100, basalt / andesite from Q 20 to F 10, and
+  three foidites. Both are built from one table of fields, with IUGS
+  field numbers and a key, and can name a mode; a sample carrying both
+  quartz and a feldspathoid is left off with a note. The gabbroic and
+  ultramafic strips are now the 5 % lines the IUGS draws, not openings
+  of invented width; the gabbroic diagram reads the template's
+  `P_mode`, and Opx + Cpx where `Px_mode` is blank. The tuff diagram
+  cited Schmid (1981) for a scheme that is not his: Schmid's three-field
+  triangle is added as `tuff_schmid_1981`, the banded one keeps an
+  honest citation, and its dividers are now the lines of constant
+  crystal content its figure draws rather than rays from the apex.
 - **Frost's panel (d) drew its samples transposed.** Its axes read FSSI
   across and AI up, as published, but the samples went in as (AI,
   FSSI). A rock whose two signs differ crossed to the opposite quadrant:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Optional, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -15,9 +15,7 @@ from .base import (
     draw_ternary_frame,
     resolve_column,
     inverse_logratio as _inverse_logratio,
-    scatter_groups,
     ternary_to_xy,
-    ternary_xy,
 )
 
 
@@ -54,17 +52,6 @@ def _draw_ternary_fields(ax, fields: dict, *, linewidth: float = 0.9,
             cy = float(np.mean(y))
         ax.text(cx, cy, name, ha="center", va="center",
                 fontsize=fontsize, color="#333", alpha=0.9, zorder=3)
-
-
-def _plot_ternary_data(ax, df: Optional[pd.DataFrame], plot_style,
-                        abc_fn: Callable[[pd.DataFrame],
-                                          Optional[Tuple[pd.Series, pd.Series, pd.Series]]]) -> None:
-    """Scatter the grouped samples using a callable that returns (a, b, c).
-
-    For the Petrography view's modal triangles; the diagrams here are
-    :class:`TernaryDiagram` and scatter through their own mapping.
-    """
-    scatter_groups(ax, df, plot_style, lambda d: ternary_xy(abc_fn(d)))
 
 
 # ---------------------------------------------------------------------------

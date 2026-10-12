@@ -22,6 +22,7 @@ from .templates.petrography import (
     StreckeisenQAPFPlutonic,
     StreckeisenQAPFVolcanic,
     TuffCrystalVitricLithic,
+    TuffSchmid1981,
     UltramaficOlOpxCpx,
 )
 from .templates.tas import TASPlutonic, TASVolcanic
@@ -94,7 +95,8 @@ _REGISTRY: Dict[str, object] = {
         Verma2013AcidMajor, Verma2013AcidImMt, Verma2013AcidTrace,
         # ----- Petrography — IUGS modal ternaries ----------------------------
         StreckeisenQAPFPlutonic, StreckeisenQAPFVolcanic,
-        GabbroPlPxOl, UltramaficOlOpxCpx, TuffCrystalVitricLithic,
+        GabbroPlPxOl, UltramaficOlOpxCpx, TuffSchmid1981,
+        TuffCrystalVitricLithic,
     )
 }
 

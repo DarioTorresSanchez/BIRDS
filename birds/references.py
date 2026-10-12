@@ -243,10 +243,19 @@ REFERENCES: List[Section] = [
     ]),
     # ----------------------------------------------------------------------
     ("Petrography (IUGS)", [
+        ("Streckeisen, A. (1973). Plutonic rocks: Classification and "
+         "nomenclature recommended by the IUGS Subcommission on the "
+         "Systematics of Igneous Rocks. *Geotimes*, *18*(10), 26-30.",
+         "Ultramafic Ol-Opx-Cpx classification."),
         ("Streckeisen, A. (1976). To each plutonic rock its proper name. "
          "*Earth-Science Reviews*, *12*(1), 1-33. "
          "https://doi.org/10.1016/0012-8252(76)90052-0",
-         "QAPF plutonic / volcanic."),
+         "QAPF plutonic; gabbroic Pl-Px-Ol classification."),
+        ("Streckeisen, A. (1978). IUGS Subcommission on the Systematics "
+         "of Igneous Rocks. Classification and nomenclature of volcanic "
+         "rocks, lamprophyres, carbonatites and melilitic rocks. "
+         "*Neues Jahrbuch für Mineralogie, Abhandlungen*, *134*, 1-14.",
+         "QAPF volcanic."),
         ("Streckeisen, A. (1979). Classification and nomenclature of "
          "volcanic rocks, lamprophyres, carbonatites, and melilitic "
          "rocks: Recommendations and suggestions of the IUGS "
@@ -257,7 +266,15 @@ REFERENCES: List[Section] = [
          "of pyroclastic deposits and fragments: Recommendations of the "
          "IUGS Subcommission on the Systematics of Igneous Rocks. "
          "*Geology*, *9*(1), 41-43.",
-         "Tuff classification (crystal/vitric/lithic ternary)."),
+         "Tuff classification: vitric, crystal or lithic by the dominant "
+         "component."),
+        ("Gillespie, M. R., & Styles, M. T. (1999). *BGS rock "
+         "classification scheme, Volume 1: Classification of igneous "
+         "rocks* (2nd ed.; British Geological Survey Research Report RR "
+         "99-06). British Geological Survey.",
+         "Reproduces the IUGS modal diagrams; every boundary of the "
+         "Petrography view was checked against its Figures 7, 11-13, 16 "
+         "and 19."),
     ]),
     # ----------------------------------------------------------------------
     ("Spider diagrams & geochemical normalisations", [

@@ -240,7 +240,8 @@ class BirdsMainWindow(QMainWindow):
             ("Streckeisen QAPF — Volcanic", "streckeisen_qapf_volcanic"),
             ("Gabbroic rocks — Pl / Px / Ol", "gabbro_pl_px_ol"),
             ("Ultramafic rocks — Ol / Opx / Cpx", "ultramafic_ol_opx_cpx"),
-            ("Pyroclastic tuffs — Crystal / Vitric / Lithic",
+            ("Pyroclastic tuffs — Schmid (1981)", "tuff_schmid_1981"),
+            ("Pyroclastic tuffs — banded scheme",
              "tuff_crystal_vitric_lithic"),
         )
         for label, key in entries:

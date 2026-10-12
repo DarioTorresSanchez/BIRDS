@@ -25,7 +25,7 @@ SECTIONS = [
         {"type": "p", "text":
          "B.I.R.D.S (Broad Igneous Rocks — Diagrams & Statistics) is a desktop "
          "application for plotting and analysing whole-rock geochemical "
-         "data of igneous rocks. It bundles 53 plotting templates, a "
+         "data of igneous rocks. It bundles 54 plotting templates, a "
          "spider-diagram engine with 28 published normalisers "
          "(REE chondrites and shales, multi-element references and "
          "Ni-Cu-PGE metal references), a discrimination module with 34 "
@@ -203,7 +203,10 @@ SECTIONS = [
             "export of reports and plots.",
             "Map — sample locations and kriging (section 12).",
             "Petrography — the IUGS modal diagrams: QAPF plutonic and "
-            "volcanic, gabbroic, ultramafic and pyroclastic.",
+            "volcanic (each with its own fields, numbered as the IUGS "
+            "numbers them, with a key), gabbroic, ultramafic, and two "
+            "tuff schemes — Schmid (1981), which the IUGS recommends, "
+            "and a finer banded one.",
             "Norm — the classical CIPW norm.",
             "Classification diagrams — TAS, K2O–SiO2, AFM, Jensen, "
             "Frost and others, volcanic and plutonic.",
@@ -897,6 +900,20 @@ SECTIONS = [
             "Yang, Z.-F. et al. (2019). Using major element logratios "
             "to recognize compositional patterns of basalt. J. Geophys. "
             "Res. Solid Earth 124, 3458–3490.",
+            "Streckeisen, A. (1973). Plutonic rocks: classification and "
+            "nomenclature recommended by the IUGS Subcommission. "
+            "Geotimes 18, 26–30.",
+            "Streckeisen, A. (1976). To each plutonic rock its proper "
+            "name. Earth-Sci. Rev. 12, 1–33.",
+            "Streckeisen, A. (1978). Classification and nomenclature of "
+            "volcanic rocks, lamprophyres, carbonatites and melilitic "
+            "rocks. N. Jb. Miner. Abh. 134, 1–14.",
+            "Schmid, R. (1981). Descriptive nomenclature and "
+            "classification of pyroclastic deposits and fragments. "
+            "Geology 9, 41–43.",
+            "Gillespie, M.R., Styles, M.T. (1999). BGS Rock "
+            "Classification Scheme, Vol. 1: Classification of igneous "
+            "rocks. British Geological Survey Research Report RR 99-06.",
             "Sun, S.-S., McDonough, W.F. (1989). Chemical and isotopic "
             "systematics of oceanic basalts. GSL Sp. Pub. 42, 313–345.",
             "McDonough, W.F., Sun, S.-S. (1995). The composition of the "
