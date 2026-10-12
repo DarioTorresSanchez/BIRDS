@@ -58,6 +58,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ..plot_style import legend_columns
 from .. import coords as _coords
 from ..coords import km_per_degree_lat, km_per_degree_lon
 from ..diagrams.templates.base import get_groups
@@ -1162,7 +1163,8 @@ class MapView(QWidget):
             if handles:
                 ax.legend(handles, labels, loc="lower right", fontsize=9,
                           framealpha=0.85, facecolor="white",
-                          edgecolor="#666")
+                          edgecolor="#666",
+                          ncol=legend_columns(len(handles)))
         ax.set_xlabel("Longitude")
         ax.set_ylabel("Latitude")
 

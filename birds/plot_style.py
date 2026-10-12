@@ -6,6 +6,15 @@ from dataclasses import dataclass, field
 from typing import List
 
 
+#: How many groups B.I.R.D.S lets you style.  It was 10, which ran short;
+#: the palette below gives every one of the 25 its own colour.
+MAX_GROUPS = 25
+
+#: One colour per group, all 25 different.  The first ten are the ones
+#: B.I.R.D.S always used, so existing sessions and figures keep their
+#: look; the other fifteen come from matplotlib's tab20b, tab20c, Dark2,
+#: Set1 and Paired palettes, picked so that every pair stays at least
+#: 18 CIELAB units (Delta E) apart and reads on a white background.
 DEFAULT_COLORS = (
     "#1f77b4",  # blue
     "#d62728",  # red
@@ -17,8 +26,26 @@ DEFAULT_COLORS = (
     "#17becf",  # cyan
     "#bcbd22",  # olive
     "#7f7f7f",  # grey
+    "#393b79",  # indigo
+    "#637939",  # moss
+    "#8c6d31",  # ochre
+    "#1b9e77",  # jade
+    "#7b4173",  # plum
+    "#e7ba52",  # gold
+    "#9c9ede",  # lavender
+    "#b5cf6b",  # pistachio
+    "#d6616b",  # rose
+    "#a65628",  # rust
+    "#000000",  # black
+    "#9ecae1",  # sky
+    "#ffbb78",  # apricot
+    "#00796b",  # teal
+    "#a1d99b",  # mint
 )
 
+#: The filled marker shapes matplotlib has; outline-only ones (+, x) would
+#: lose the group colour under the black edge every sample gets.  With 15
+#: shapes and 25 colours no two groups share both.
 DEFAULT_MARKERS = (
     "o",  # circle
     "s",  # square
@@ -30,7 +57,18 @@ DEFAULT_MARKERS = (
     "X",  # cross
     "p",  # pentagon
     "h",  # hexagon
+    "<",  # triangle left
+    ">",  # triangle right
+    "d",  # thin diamond
+    "H",  # hexagon, flat
+    "8",  # octagon
 )
+
+
+def legend_columns(n_entries: int, per_column: int = 12) -> int:
+    """Columns for a legend of *n_entries*, so that a long one -- up to
+    ``MAX_GROUPS`` groups -- wraps instead of running down off the axes."""
+    return max(1, -(-int(n_entries) // per_column))
 
 
 @dataclass

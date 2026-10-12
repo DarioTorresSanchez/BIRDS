@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ..plot_style import legend_columns
 from ..diagrams.templates.base import get_groups, resolve_column
 from ..normalizations import (
     MULTIELEMENT_NORMS,
@@ -730,7 +731,8 @@ class SpiderView(QWidget):
         if legend_style.visible:
             handles, labels = ax.get_legend_handles_labels()
             if handles:
-                kwargs = {"fontsize": legend_style.font_size}
+                kwargs = {"fontsize": legend_style.font_size,
+                          "ncol": legend_columns(len(handles))}
                 if legend_style.title:
                     kwargs["title"] = legend_style.title
                 if legend_style.location == "outside":

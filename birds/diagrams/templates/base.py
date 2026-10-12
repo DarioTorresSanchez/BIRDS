@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.figure import Figure
 from matplotlib.patches import Polygon
+from ...plot_style import legend_columns
 
 
 # ---------------------------------------------------------------------------
@@ -537,7 +538,8 @@ class Diagram:
         handles, labels = ax.get_legend_handles_labels()
         if not handles:
             return
-        kwargs: dict = {"fontsize": options.legend.font_size}
+        kwargs: dict = {"fontsize": options.legend.font_size,
+                        "ncol": legend_columns(len(handles))}
         if options.legend.location == "outside":
             kwargs.update(loc="upper left", bbox_to_anchor=(1.02, 1.0),
                           borderaxespad=0.0)

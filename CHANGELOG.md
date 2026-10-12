@@ -571,6 +571,15 @@ including what is still unverified.
 
 #### Interface
 
+- **Up to 25 sample groups, from 10.** The limit now lives in one place,
+  `plot_style.MAX_GROUPS`, read by the Edit plot dialog and its
+  auto-fill. The palette had 10 colours and 10 markers cycled together,
+  so an eleventh group would have been the first again: it now has 25
+  colours, every pair at least 18 CIELAB units apart (the first ten
+  unchanged, so older sessions keep their look), and 15 filled markers,
+  which the dialog's symbol list now offers too — a marker missing from
+  it would have shown, and saved, as a circle. The group rows scroll,
+  and every group legend wraps into columns past 12 entries.
 - **On the triangles the sample tally counted everything as plotted.**
   The ternary diagrams — the eight tectonic ones (Wood, Cabanis &
   Lecolle, Harris, Vermeesch ×5), AFM and Jensen — placed their samples

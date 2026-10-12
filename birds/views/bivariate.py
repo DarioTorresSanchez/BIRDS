@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ..plot_style import legend_columns
 from .. import annotations as _ann
 from ..diagrams.templates.base import (
     get_groups,
@@ -797,6 +798,7 @@ class BivariateView(QWidget):
             if legend.visible and handles:
                 fig.legend(handles, labels, loc="upper right",
                            fontsize=legend.font_size, title=legend.title,
+                           ncol=legend_columns(len(handles)),
                            bbox_to_anchor=(0.99, 0.99))
         else:
             ax = fig.add_subplot(111)
@@ -813,7 +815,8 @@ class BivariateView(QWidget):
             if legend.visible:
                 handles, lbls = ax.get_legend_handles_labels()
                 if handles:
-                    kwargs = {"fontsize": legend.font_size}
+                    kwargs = {"fontsize": legend.font_size,
+                              "ncol": legend_columns(len(handles))}
                     if legend.title:
                         kwargs["title"] = legend.title
                     if legend.location == "outside":

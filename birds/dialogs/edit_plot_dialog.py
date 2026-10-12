@@ -20,15 +20,20 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
+    QScrollArea,
     QSpinBox,
     QVBoxLayout,
     QWidget,
 )
 
-from ..plot_style import DEFAULT_COLORS, DEFAULT_MARKERS, GroupStyle, PlotStyle
+from ..plot_style import (
+    DEFAULT_COLORS,
+    DEFAULT_MARKERS,
+    MAX_GROUPS,
+    GroupStyle,
+    PlotStyle,
+)
 
-
-MAX_GROUPS = 10
 MAX_GROUPING_COLUMNS = 3
 
 
@@ -43,6 +48,11 @@ MARKER_CHOICES: tuple[tuple[str, str], ...] = (
     ("Cross",         "X"),
     ("Pentagon",      "p"),
     ("Hexagon",       "h"),
+    ("Triangle left", "<"),
+    ("Triangle right", ">"),
+    ("Thin diamond",  "d"),
+    ("Hexagon (flat)", "H"),
+    ("Octagon",       "8"),
 )
 
 
@@ -353,9 +363,19 @@ class EditPlotDialog(QDialog):
         header.addWidget(h_shaded)
         groups_layout.addLayout(header)
 
-        self.rows_container = QVBoxLayout()
+        # The rows scroll: at MAX_GROUPS of them the dialog would
+        # otherwise outgrow the screen.
+        rows_holder = QWidget()
+        self.rows_container = QVBoxLayout(rows_holder)
         self.rows_container.setSpacing(6)
-        groups_layout.addLayout(self.rows_container)
+        self.rows_container.setContentsMargins(0, 0, 0, 0)
+        self.rows_container.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.rows_scroll = QScrollArea()
+        self.rows_scroll.setWidgetResizable(True)
+        self.rows_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        self.rows_scroll.setMinimumHeight(240)
+        self.rows_scroll.setWidget(rows_holder)
+        groups_layout.addWidget(self.rows_scroll, stretch=1)
 
         self._group_rows: list[GroupRow] = []
         # Initial population:
@@ -492,6 +512,9 @@ class EditPlotDialog(QDialog):
             item = self.rows_container.takeAt(0)
             widget = item.widget()
             if widget is not None:
+                # Hidden at once: deleteLater waits for the event loop, and
+                # until then the old row would still paint over the new.
+                widget.hide()
                 widget.deleteLater()
         self._group_rows = []
 

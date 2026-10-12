@@ -261,7 +261,10 @@ SECTIONS = [
             "Open Data → Edit plot.",
             "Pick up to 3 grouping columns (for instance: Type, Locality, Age).",
             "B.I.R.D.S auto-fills the group names from the unique values "
-            "in those columns. You can edit each name, colour and symbol.",
+            "in those columns — up to 25 groups, each with its own colour "
+            "and no two with the same colour and symbol. You can edit each "
+            "name, colour and symbol. With many groups, set the legend "
+            "to Outside so it does not cover the plot.",
             "Click OK. From now on every plot will respect those group "
             "styles.",
         ]},

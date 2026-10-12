@@ -53,6 +53,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ..plot_style import legend_columns
 from ..diagrams.templates.base import get_groups, resolve_column
 from ..isotope_fields import (
     BSE_SR_87_86,
@@ -793,7 +794,8 @@ class IsotopesView(QWidget):
             handles, labels = ax.get_legend_handles_labels()
             if handles:
                 ax.legend(handles, labels, loc="best", fontsize=8,
-                          framealpha=0.85)
+                          framealpha=0.85,
+                          ncol=legend_columns(len(handles)))
 
         fig.tight_layout()
         # Replay user annotations on the primary axis.
@@ -947,7 +949,8 @@ class IsotopesView(QWidget):
             handles, labels = ax.get_legend_handles_labels()
             if handles:
                 ax.legend(handles, labels, loc="best", fontsize=9,
-                          framealpha=0.85)
+                          framealpha=0.85,
+                          ncol=legend_columns(len(handles)))
         fig.tight_layout()
         # Replay user annotations on the primary axis.
         if fig.axes:

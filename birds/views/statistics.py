@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ..plot_style import legend_columns
 from ..stats_engine import (
     available_normalisers,
     compute_anomalies_extended,
@@ -1159,8 +1160,9 @@ class StatisticsView(QWidget):
                 for label, sub, gs in subsets:
                     self._draw_stat_plot(ax, kind, sub, label=label,
                                          style=gs, overlay=True)
-                if ax.get_legend_handles_labels()[0]:
-                    ax.legend(fontsize=8)
+                handles = ax.get_legend_handles_labels()[0]
+                if handles:
+                    ax.legend(fontsize=8, ncol=legend_columns(len(handles)))
             else:
                 ncols = min(len(subsets), 2)
                 nrows = -(-len(subsets) // ncols)

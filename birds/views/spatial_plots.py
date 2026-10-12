@@ -26,6 +26,7 @@ from matplotlib.ticker import (
     NullFormatter,
 )
 
+from ..plot_style import legend_columns
 from ..geostats import RELIABLE_N, Grid, hull_mask, write_esri_ascii
 
 #: Colours for the two surfaces.  Uncertainty runs the other way round
@@ -249,7 +250,8 @@ def draw_variogram(ax, results, styles, *, variable: str,
     ax.set_ylabel(f"Semivariance of {kriged_name(variable, transform)}")
     ax.grid(True, linestyle=":", linewidth=0.5, alpha=0.6)
     if analysed:
-        ax.legend(fontsize=8, loc="lower right", framealpha=0.85)
+        ax.legend(fontsize=8, loc="lower right", framealpha=0.85,
+                  ncol=legend_columns(len(ax.get_legend_handles_labels()[0])))
 
 
 # ---------------------------------------------------------------------------
@@ -298,7 +300,8 @@ def draw_cross_validation(ax, results, styles, *, variable: str,
     ax.set_xlabel(f"Observed {variable}")
     ax.set_ylabel(f"{variable} predicted from the other samples")
     ax.grid(True, linestyle=":", linewidth=0.5, alpha=0.6)
-    ax.legend(fontsize=8, loc="upper left", framealpha=0.85)
+    ax.legend(fontsize=8, loc="upper left", framealpha=0.85,
+              ncol=legend_columns(len(ax.get_legend_handles_labels()[0])))
 
 
 # ---------------------------------------------------------------------------

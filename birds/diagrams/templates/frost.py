@@ -40,6 +40,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from ...plot_style import legend_columns
 from .base import (
     Diagram,
     PlotOptions,
@@ -325,6 +326,7 @@ class Frost(Diagram):
             handles, labels_ = ax_fe.get_legend_handles_labels()
             if handles:
                 ax_fe.legend(loc=options.legend.location or "best",
-                              fontsize=options.legend.font_size)
+                              fontsize=options.legend.font_size,
+                              ncol=legend_columns(len(handles)))
 
         figure.tight_layout()
