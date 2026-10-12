@@ -127,3 +127,78 @@ def test_a_sample_off_every_frame_is_off_the_frame():
     far = ROCKS.iloc[[0]].assign(SiO2=95.0, Al2O3=np.nan)  # no ASI, no norm
     report = _tally(far)
     assert (report.plotted, report.offframe, report.missing) == (0, 1, 0)
+
+
+# ---------------------------------------------------------------------------
+# Against Frost et al. (2001) and Frost & Frost (2008), on disk since
+# 2026-10-12
+# ---------------------------------------------------------------------------
+
+def test_panel_d_has_the_frame_of_frost_and_frost_figure_11():
+    """Figure 8 is schematic; Figure 11 carries the scale: FSSI -1.2 to
+    0.6, AI -0.10 to 0.16.  It was +-2.5 by +-1."""
+    method, fssi_frame, ai_frame = PANELS[3]
+    assert method == "_fssi_ai"
+    assert fssi_frame == (-1.2, 0.6) and ai_frame == (-0.10, 0.16)
+
+
+def _plagioclase(an):
+    """Wt % oxides of plagioclase An_an, from its formula."""
+    f = an / 100.0
+    moles = {"SiO2": 3 - f, "Al2O3": (1 + f) / 2, "CaO": f,
+             "Na2O": (1 - f) / 2}
+    mass = {"SiO2": 60.084, "Al2O3": 101.961, "CaO": 56.077,
+            "Na2O": 61.979}
+    wt = {k: moles[k] * mass[k] for k in moles}
+    total = sum(wt.values())
+    row = {k: 100 * v / total for k, v in wt.items()}
+    row.update(TiO2=0.0, Fe2O3=0.0, FeO=0.0, MnO=0.0, MgO=0.0, K2O=0.0,
+               P2O5=0.0)
+    return row
+
+
+def test_ai_is_on_the_oxide_basis_frost_plots_plagioclase_on():
+    """Figure 11c places An10-An40 at AI 0.035, 0.073, 0.110 and 0.146
+    (read from the vector figure) with FSSI 0.  The cation basis the
+    code had gives twice that."""
+    rows = pd.DataFrame([_plagioclase(an) for an in (10, 20, 30, 40)])
+    ai, fssi = get_diagram("frost")._ai_fssi(rows)
+    np.testing.assert_allclose(ai, [0.035, 0.073, 0.110, 0.146], atol=0.005)
+    np.testing.assert_allclose(fssi, 0.0, atol=1e-3)
+
+
+def test_the_mali_boundaries_are_the_published_fits():
+    """Frost et al. (2001) Figure 2 caption, through MALI = 0 at the SiO2
+    Peacock fixed, drawn over 51-75 as in Frost & Frost (2008) Fig. 6."""
+    from birds.diagrams.templates.frost import (
+        MALI_BOUNDARIES,
+        MALI_COEFFICIENTS,
+        MALI_SIO2_RANGE,
+        mali_boundary,
+    )
+    assert MALI_COEFFICIENTS == {
+        "alkalic / alkali-calcic": (-41.86, 1.112, -0.00572),
+        "alkali-calcic / calc-alkalic": (-44.72, 1.094, -0.00527),
+        "calc-alkalic / calcic": (-45.36, 1.0043, -0.00427),
+    }
+    for name, peacock in (("alkalic / alkali-calcic", 51.0),
+                          ("alkali-calcic / calc-alkalic", 56.0),
+                          ("calc-alkalic / calcic", 61.0)):
+        assert mali_boundary(name, peacock) == pytest.approx(0.0, abs=0.03)
+        xs = [p[0] for p in MALI_BOUNDARIES[name]]
+        assert (xs[0], xs[-1]) == MALI_SIO2_RANGE == (51.0, 75.0)
+
+
+def test_the_fe_index_line_starts_where_it_applies():
+    """Frost & Frost (2008): applicable to silica as low as 48 %."""
+    fig = _render(ROCKS)
+    line = next(ln for ln in fig.axes[0].lines
+                if ln.get_label() == "Magn / Ferroan")
+    assert line.get_xdata()[0] == 48.0
+
+
+def test_the_quadrant_labels_sit_inside_the_frame():
+    from birds.diagrams.templates.frost import AI_FSSI_LABELS
+    (_m, (x0, x1), (y0, y1)) = PANELS[3]
+    for name, (x, y) in AI_FSSI_LABELS.items():
+        assert x0 < x < x1 and y0 < y < y1, name

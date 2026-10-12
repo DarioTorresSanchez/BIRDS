@@ -319,7 +319,9 @@ water-saturated rows in Table 3.10 — a curation choice, now documented.
 * **`frost`** had the Fe-index boundary right — it is the published
   `0.46 + 0.005·SiO₂` — and ASI, AI and FSSI are definitional. Its
   three MALI boundaries were straight lines between invented endpoints;
-  the published ones are curves. Measured from Fig. 3.9b and replaced.
+  the published ones are curves. Measured from Fig. 3.9b and replaced
+  — and since 2026-10-12 computed from the fits Frost *et al.* (2001)
+  print, see below.
   Being definitional did not make the ASI right: it was computed on a
   mixed basis that put anorthite at 2. See *Frost et al. (2001)* below.
 * **`pearce_1976_DF`** and **`butler_woronow_DF`** were the real find.
@@ -1050,8 +1052,9 @@ mixtures.
 ## Frost *et al.* (2001) — the ASI was not Shand's index
 
 Rollinson & Pease (2021) Figure 3.9 and Table 3.4, after Frost *et al.*
-(2001) and Frost & Frost (2008); neither original is on disk. Key
-`frost`, panel (c).
+(2001) and Frost & Frost (2008). Both originals are on disk since
+2026-10-12 (`Frost_etal_2001.pdf`, `Frost_2008.pdf`); see the end of
+this section for what they changed. Key `frost`, panel (c).
 
 The index is printed as molecular **Al/(Ca − 1.67P + Na + K)**, and
 Rollinson & Pease say on p. 127 what its line at 1 means: peraluminous
@@ -1104,11 +1107,8 @@ divides Q too changes nothing read off the panel: a CIPW norm never
 carries quartz and a feldspathoid together, so one term is always zero
 and the sign of FSSI is the same either way.
 
-**Not settled, and left alone**: the frames. Panel (c) runs ASI
-0.5–1.6 where Figure 3.9c runs 0.8–1.2, and panel (d) runs FSSI ±2.5
-and AI ±1 where real rocks fall within about ±0.6 and ±0.2, so they
-crowd the centre. Figure 3.9 is a redrawing and (d) has no scale, so
-neither gives a frame worth copying.
+**The frames** were left open until the originals came (2026-10-12),
+and are settled now — see *Against the originals* below.
 
 `tests/test_frost_2001.py` pins the molar masses against the atomic
 weights, ASI = 1 for albite, orthoclase, anorthite, An₅₀ and a ternary
@@ -1133,6 +1133,46 @@ in `frost.py` now says what each panel puts on which axis, the plot and
 the sample tally both read it, and `tests/test_frost_panels.py` checks
 the drawn positions and that each of those rocks lands in its own
 quadrant.
+
+### Against the originals (2026-10-12)
+
+With Frost *et al.* (2001) and Frost & Frost (2008) on disk, both
+vector PDFs, so the figures could be read as coordinates:
+
+* **Panel (d)'s frame is Frost & Frost (2008) Figure 11.** Figure 8,
+  the classification diagram, marks only the signs. Figure 11 plots
+  real suites on FSSI −1.2 to 0.6 and AI −0.10 to 0.16 (read: −1.21 to
+  0.59 and −0.100 to 0.162). The panel ran ±2.5 by ±1. One AI tick of
+  Figure 11 is printed 0.04 where 0.06 belongs; the ticks are evenly
+  spaced 0.04 apart.
+* **AI was twice Frost's.** Figure 11c draws plagioclase An10 to An40
+  at AI 0.035, 0.073, 0.110 and 0.146. The oxide-molecule basis, Al₂O₃
+  − (Na₂O + K₂O) in moles per 100 g, gives 0.038, 0.075, 0.112 and
+  0.149; the cation basis the code used gives twice that. Harmless
+  while only the sign was read, not with the published frame.
+* **The MALI boundaries have published equations.** The caption of
+  2001 Figure 2 prints all three as quadratics in SiO₂, and each passes
+  through MALI = 0 at Peacock's 51, 56 and 61 % (−0.03, 0.02, 0.01), as
+  Frost & Frost (2008) say they were built to. The curves traced off
+  Rollinson & Pease came within 0.25 MALI of them. They are computed
+  now, over SiO₂ 51–75 as 2008 Figure 6a draws them (51.0 to 74.9 on
+  the vector figure).
+* **The Fe-index line starts at SiO₂ 48**, where Frost & Frost (2008)
+  say the boundary applies from; it was drawn from 45. The boundary
+  itself, 0.46 + 0.005 SiO₂ with FeO* = FeO + 0.9 Fe₂O₃, is theirs; it
+  revises the 0.486 + 0.0046 SiO₂ of 2001.
+* **Panel (c) keeps ASI 0.5–1.6.** The scheme defines only ASI = 1;
+  Frost's one plot of ASI against silica (2008 Figure 6c, 0.7–1.1) is
+  of a single intrusion, not a classification frame. 0.5–1.6 keeps
+  peraluminous leucogranites and peralkaline rocks inside, and anything
+  beyond is flagged at the edge.
+* **FSSI is as printed**: normative (Q − [Lc + 2(Ne + Kp)])/100, which
+  runs from +1 for pure quartz to −2 for pure nepheline, the ends of
+  2008 Figure 7.
+
+`tests/test_frost_panels.py` pins the frame, the plagioclase AI values,
+the MALI coefficients and their Peacock crossings, and the start of the
+Fe-index line; putting any of the old values back fails it.
 
 ## The Petrography view — the IUGS modal diagrams (6)
 

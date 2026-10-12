@@ -22,9 +22,18 @@ ASI is Shand's index, A/CNK, with Ca in apatite taken out: molecular
 Al2O3 / (CaO - 1.67 P + Na2O + K2O), P per atom.  It is 1 for every
 feldspar, which is what ASI = 1 between metaluminous and peraluminous
 means.  It used to double Al, Na and K to cations and leave Ca alone,
-which put anorthite at 2 and a granite at A/CNK 1.03 at 1.23.  AI is
-still on the cation basis, Al - (Na + K) per atom; only its sign is
-read, and the sign is the same on either basis.
+which put anorthite at 2 and a granite at A/CNK 1.03 at 1.23.
+
+AI is molecular too, Al2O3 - (Na2O + K2O) in moles per 100 g.  Frost &
+Frost (2008) Figure 11c settles the basis: its plagioclase markers An10
+to An40 sit at AI 0.035, 0.073, 0.110 and 0.146 (read from the vector
+figure), where the oxide basis gives 0.038, 0.075, 0.112 and 0.149 and
+the cation basis twice that.  The code had the cation basis, harmless
+while only the sign was read and not once the panel has the published
+frame.
+
+Sources on disk: Frost et al. (2001), J. Petrol. 42, 2033-2048, and
+Frost & Frost (2008), J. Petrol. 49, 1955-1969 (checked 2026-10-12).
 """
 
 from __future__ import annotations
@@ -43,36 +52,49 @@ from .base import (
 
 
 #: Magnesian / ferroan divide, as Frost & Frost (2008) publish it:
-#: ``Fe-index = 0.46 + 0.005 · SiO2``.
+#: ``Fe-index = 0.46 + 0.005 · SiO2``, with FeO* = FeO + 0.9 Fe2O3.  It
+#: revises the 0.486 + 0.0046 SiO2 of Frost et al. (2001) and, being set
+#: at low silica by the ferrobasalt-basalt transition, "is applicable to
+#: rocks with silica as low as 48%"; it is drawn from there.
 FE_INDEX_INTERCEPT, FE_INDEX_SLOPE = 0.46, 0.005
+FE_INDEX_FROM_SIO2 = 48.0
 
 # --------------------------------------------------------------------------
 # MALI boundaries
 # --------------------------------------------------------------------------
-# These are the one part of this diagram with no published equation — the
-# source draws them as curves.  Measured from Rollinson & Pease (2021)
-# Figure 3.9b: the panel was calibrated on its own tick marks, the three
-# blue curves separated by colour and traced column by column, then
-# resampled onto a common SiO2 grid.  The nine-point polylines reproduce
-# the traced curves to within 0.14 MALI.
+# Frost et al. (2001) print them, as fits, in the caption of their
+# Figure 2: MALI = a + b SiO2 + c SiO2^2.  Each passes through MALI = 0
+# at the SiO2 Peacock (1931) fixed -- 51, 56 and 61 % -- as Frost & Frost
+# (2008) say they were constrained to.  They are drawn over SiO2 51-75,
+# where Frost & Frost (2008) Figure 6a draws them (measured on the
+# vector figure: 51.0 to 74.9).
 #
-# They replace three straight lines drawn between invented endpoints at
-# SiO2 45 and 75, which had the wrong shape as well as the wrong values:
-# the published boundaries flatten towards high silica.
+# They used to be traced off Rollinson & Pease (2021) Figure 3.9b, which
+# came within 0.25 MALI of the equations; before that, three straight
+# lines between invented endpoints.
+
+#: ``(a, b, c)`` of each boundary, Frost et al. (2001) Figure 2.
+MALI_COEFFICIENTS = {
+    "alkalic / alkali-calcic": (-41.86, 1.112, -0.00572),
+    "alkali-calcic / calc-alkalic": (-44.72, 1.094, -0.00527),
+    "calc-alkalic / calcic": (-45.36, 1.0043, -0.00427),
+}
+
+#: Where Frost & Frost (2008) draw the boundaries.
+MALI_SIO2_RANGE = (51.0, 75.0)
+
+
+def mali_boundary(name: str, sio2):
+    """MALI on the boundary *name* at *sio2*."""
+    a, b, c = MALI_COEFFICIENTS[name]
+    sio2 = np.asarray(sio2, dtype=float)
+    return a + b * sio2 + c * sio2 ** 2
+
 
 MALI_BOUNDARIES = {
-    "alkalic / alkali-calcic": (
-        (52.0, 0.74), (55.0, 2.07), (58.0, 3.40), (61.0, 4.73),
-        (64.0, 5.98), (67.0, 7.01), (70.0, 8.02), (73.0, 8.86),
-        (74.5, 9.24)),
-    "alkali-calcic / calc-alkalic": (
-        (52.0, -1.91), (55.0, -0.47), (58.0, 1.03), (61.0, 2.38),
-        (64.0, 3.70), (67.0, 4.89), (70.0, 6.08), (73.0, 7.01),
-        (74.5, 7.48)),
-    "calc-alkalic / calcic": (
-        (52.0, -4.48), (55.0, -3.00), (58.0, -1.41), (61.0, 0.04),
-        (64.0, 1.41), (67.0, 2.73), (70.0, 4.01), (73.0, 5.19),
-        (74.5, 5.73)),
+    name: tuple((float(x), float(mali_boundary(name, x)))
+                for x in np.linspace(*MALI_SIO2_RANGE, 49))
+    for name in MALI_COEFFICIENTS
 }
 
 #: Field names, one per band, placed where the bands are widest.
@@ -84,14 +106,16 @@ MALI_LABELS = {
 }
 
 
-#: The four quadrants of AI against FSSI, named as Rollinson & Pease
-#: (2021) Figure 3.9d names them: FSSI < 0 is silica-undersaturated,
-#: AI < 0 is Al-deficient (peralkaline).  Placed at quadrant centres.
+#: The four quadrants of AI against FSSI, named as Frost & Frost (2008)
+#: Figure 8 and Rollinson & Pease (2021) Figure 3.9d name them: FSSI < 0
+#: is silica-undersaturated, AI < 0 is Al-deficient (peralkaline).
+#: Placed towards the outer corners of the published frame, clear of
+#: where granites (FSSI 0.2-0.4, AI 0-0.08) fall.
 AI_FSSI_LABELS = {
-    "silica-\nundersaturated\nAl adequate\nto excessive": (-1.25, 0.5),
-    "silica-\nsaturated\nAl adequate\nto excessive":      (1.25, 0.5),
-    "silica-\nundersaturated\nAl deficient":              (-1.25, -0.5),
-    "silica-\nsaturated\nAl deficient":                   (1.25, -0.5),
+    "silica-\nundersaturated\nAl adequate\nto excessive": (-0.85, 0.12),
+    "silica-\nsaturated\nAl adequate\nto excessive":      (0.42, 0.125),
+    "silica-\nundersaturated\nAl deficient":              (-0.85, -0.07),
+    "silica-\nsaturated\nAl deficient":                   (0.42, -0.075),
 }
 
 #: Oxide molar masses (g/mol); IUPAC atomic weights give 101.9601,
@@ -108,13 +132,24 @@ MOLAR_MASS = {
 APATITE_CA_PER_P = 1.67
 
 #: The four panels in drawing order: the method that gives a sample's
-#: (across, up) on it, and the frame it is published on as
-#: (across limits, up limits).
+#: (across, up) on it, and its frame as (across limits, up limits).
+#:
+#: Panel (d) is Frost & Frost (2008) Figure 11, the one AI-FSSI figure
+#: with a scale -- Figure 8 marks only the signs: FSSI -1.2 to 0.6 and AI
+#: -0.10 to 0.16, read from the vector figure (-1.21 to 0.59 and -0.100
+#: to 0.162).  Its AI ticks are every 0.04 although one is printed 0.04
+#: where 0.06 belongs.  It used to be +-2.5 by +-1, where every rock sat
+#: in the middle.
+#:
+#: Panel (c) has no published classification frame: the scheme defines
+#: only ASI = 1, and Frost's one plot of ASI (2008 Figure 6c, 0.7-1.1) is
+#: of a single intrusion.  0.5-1.6 keeps peraluminous leucogranites and
+#: peralkaline rocks inside; anything beyond is flagged at the edge.
 PANELS = (
     ("_fe_index", (45.0, 80.0), (0.3, 1.0)),
     ("_mali", (45.0, 80.0), (-8.0, 14.0)),
     ("_asi", (45.0, 80.0), (0.5, 1.6)),
-    ("_fssi_ai", (-2.5, 2.5), (-1.0, 1.0)),
+    ("_fssi_ai", (-1.2, 0.6), (-0.10, 0.16)),
 )
 
 
@@ -184,9 +219,11 @@ class Frost(Diagram):
         k = resolve_column(df, ["K2O"])
         if not (al and na and k):
             return None, None
-        al_m = _to_num(df, al) / MOLAR_MASS["Al2O3"] * 2.0
-        na_m = _to_num(df, na) / MOLAR_MASS["Na2O"] * 2.0
-        k_m = _to_num(df, k) / MOLAR_MASS["K2O"] * 2.0
+        # Moles of oxide per 100 g, as Frost & Frost (2008) Figure 11c
+        # places its plagioclases; the cation basis doubled every value.
+        al_m = _to_num(df, al) / MOLAR_MASS["Al2O3"]
+        na_m = _to_num(df, na) / MOLAR_MASS["Na2O"]
+        k_m = _to_num(df, k) / MOLAR_MASS["K2O"]
         ai = al_m - (k_m + na_m)
         norm = normative(df, ("Q",), ("Lc", "Ne", "Kp"))
         if norm is None:
@@ -217,7 +254,7 @@ class Frost(Diagram):
 
         # Reference lines
         # Fe-index boundary (Frost & Frost 2008) magnesian/ferroan
-        x_si = np.array([45, 80])
+        x_si = np.array([FE_INDEX_FROM_SIO2, 80.0])
         ax_fe.plot(x_si, FE_INDEX_INTERCEPT + FE_INDEX_SLOPE * x_si,
                    color="#b13a3a", lw=1.0, label="Magn / Ferroan")
         for polyline in MALI_BOUNDARIES.values():
@@ -234,8 +271,8 @@ class Frost(Diagram):
         ax_ai.axvline(0.0, color="#b13a3a", lw=0.7, ls="--")
         ax_ai.axhline(0.0, color="#b13a3a", lw=0.7, ls="--")
         for name, (x, y) in AI_FSSI_LABELS.items():
-            ax_ai.text(x, y, name, color="#444", fontsize=7.5,
-                       ha="center", va="center")
+            ax_ai.text(x, y, name, color="#444", fontsize=6.5,
+                       ha="center", va="center", linespacing=1.0)
 
         # Data, each panel from PANELS
         panel_axes = (ax_fe, ax_mali, ax_asi, ax_ai)
@@ -270,7 +307,7 @@ class Frost(Diagram):
         ax_asi.set_title("(c) Aluminium saturation index", fontsize=10)
 
         ax_ai.set_xlabel("FSSI", **options.x_axis.label_kwargs())
-        ax_ai.set_ylabel("AI (molar Al − Na − K)",
+        ax_ai.set_ylabel("AI = Al$_2$O$_3$ − (Na$_2$O + K$_2$O), molar",
                          **options.y_axis.label_kwargs())
         ax_ai.set_title("(d) AI vs FSSI", fontsize=10)
         # The published frames; a sample beyond one is flagged at its

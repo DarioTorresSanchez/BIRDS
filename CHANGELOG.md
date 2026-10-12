@@ -226,6 +226,18 @@ including what is still unverified.
 
 #### Diagrams measured or recomputed against their sources
 
+- **Frost's grid, against Frost et al. (2001) and Frost & Frost
+  (2008).** Panel (d) now has the frame of their Figure 11, FSSI −1.2
+  to 0.6 and AI −0.10 to 0.16, instead of ±2.5 by ±1, where every rock
+  crowded the centre. AI was on the cation basis, twice Frost's: their
+  Figure 11c places plagioclase An10–An40 at 0.035–0.146, which the
+  oxide basis, Al₂O₃ − (Na₂O + K₂O) molar, reproduces. The MALI
+  boundaries are now the quadratics the 2001 Figure 2 caption prints,
+  through MALI = 0 at Peacock's 51, 56 and 61 % SiO₂, drawn over
+  51–75 as in 2008 Figure 6; the curves traced off Rollinson & Pease
+  were within 0.25 of them. The Fe-index line starts at SiO₂ 48, where
+  Frost & Frost say it applies. Panel (c) keeps ASI 0.5–1.6: the scheme
+  fixes only ASI = 1.
 - **The Petrography view's diagrams, checked against the IUGS
   definitions** (BGS RR 99-06, which reproduces them). The QAPF placed
   every sample at 0.5 A + P + 0.5 Q with A at x = 0 — half the alkali
