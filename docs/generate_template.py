@@ -14,7 +14,9 @@ to (re)create:
 The XLSX workbook ships five sheets:
 
     1. ``Data``         - the empty bulk-analysis table.
-    2. ``Isotopes``     - empty isotope table (Sr-Nd-Pb-Hf-Os-Re-O-C-H).
+    2. ``Isotopes``     - empty isotope table (Sr-Nd-Pb-Hf-Os-Re-O-C-H),
+                          opening with the same identity and context
+                          columns as the Data sheet, then SiO2.
                           Linked to the Data sheet via ``Sample_Name``.
     3. ``Petrography``  - modal mineralogy (Q-A-P-F, Ol-Opx-Cpx, tuff
                           Crystal-Vitric-Lithic, textures). Linked to
@@ -82,7 +84,6 @@ CATEGORY_FILL = {
     "Traces":     "DDEBF7",   # cooler blue
     "REE":        "E2EFDA",   # mint
     # Isotope categories — each radiogenic / stable system gets its own tint
-    "Iso-ID":     "FCE7CB",   # peach (same as ID; doubles as the join key)
     "Iso-Sr":     "FBE0DC",   # warm pink
     "Iso-Nd":     "F4D7A8",   # soft amber
     "Iso-Pb":     "E0D9F0",   # lavender
@@ -196,7 +197,11 @@ REE = (
 )
 
 
-def build_columns() -> List[Column]:
+def context_columns() -> List[Column]:
+    """The sample's identity and context: every column the Data sheet has
+    before its major elements.  The Isotopes sheet opens with exactly
+    the same columns, from this one list, so the two sheets read alike
+    and cannot drift apart."""
     cols: List[Column] = []
 
     # 1) Identification
@@ -306,6 +311,11 @@ def build_columns() -> List[Column]:
                "Free-text notes (anomalies, dilutions, repeated "
                "analyses, etc.).", ""),
     ]
+    return cols
+
+
+def build_columns() -> List[Column]:
+    cols: List[Column] = context_columns()
 
     # 6) Majors
     cols += _major_columns()
@@ -330,37 +340,30 @@ def build_columns() -> List[Column]:
 def build_isotope_columns() -> List[Column]:
     """Column spec for the Isotopes sheet.
 
-    Covers the four standard radiogenic systems (Sr, Nd, Pb, Hf), the
-    Os-Re system frequently used for mantle/mafic rocks, and the most
-    common stable isotopes (O, C, H, B). Each isotope ratio has a 2σ
-    column for the analytical uncertainty.
+    Opens with the same identity and context columns as the Data sheet
+    has before its majors (:func:`context_columns`) -- so a row can be
+    copied across whole -- then SiO2, then the four standard radiogenic
+    systems (Sr, Nd, Pb, Hf), the Os-Re system frequently used for
+    mantle/mafic rocks, and the most common stable isotopes (O, C, H,
+    B). Each isotope ratio has a 2σ column for the analytical
+    uncertainty.  ``Sample_Name`` is the key that joins the two sheets
+    and must match exactly; where a column is filled on both, the Data
+    sheet's value is the one kept at import, except ``Sample_Label`` and
+    ``Group``, which fill in from here when Data leaves them blank.
+    ``Age`` with ``Age_Unit`` is the age the initial-ratio correction
+    uses in the Isotopes view.
     """
-    cols: List[Column] = []
+    cols: List[Column] = context_columns()
 
-    # ---- Link to the main Data sheet ----------------------------------
+    # ---- SiO2, to read the isotopes against silica ---------------------
     cols += [
-        Column("Sample_Name", "Iso-ID", "",
-               "Must exactly match the Sample_Name in the Data sheet — "
-               "this is how B.I.R.D.S joins the isotopic analysis back "
-               "to the bulk composition.",
-               "VOL-2024-018"),
-        Column("Sample_Label", "Iso-ID", "",
-               "Optional friendly label used in plots.  Leave blank to "
-               "inherit the value from the Data sheet (B.I.R.D.S fills "
-               "this column automatically at import time).",
-               "Mt. Pico flow 18"),
-        Column("Group", "Iso-ID", "",
-               "Optional group for colouring / legend.  Like "
-               "Sample_Label, B.I.R.D.S inherits this from the Data "
-               "sheet at import time so you only need to set it once.",
-               "Lower flow"),
-        Column("Age", "Iso-ID", "Ma",
-               "Crystallisation / eruption age used for the initial-"
-               "ratio correction. Leave empty to plot only present-day "
-               "ratios.", "0.45"),
-        Column("Age_Method", "Iso-ID", "",
-               "Method used to obtain the age (K-Ar, Ar-Ar, U-Pb, "
-               "stratigraphic …).", "Ar-Ar"),
+        Column("SiO2", "Majors", "wt%",
+               "Silica of the sample, for reading the isotope ratios "
+               "against differentiation on this sheet (e.g. ⁸⁷Sr/⁸⁶Sr vs "
+               "SiO2 for crustal assimilation). Copy it from the Data "
+               "sheet, or give the value measured on the isotope "
+               "aliquot. At import the Data sheet's SiO2 is kept for the "
+               "bulk analysis.", "52.4"),
     ]
 
     # ---- Sr ------------------------------------------------------------
@@ -713,7 +716,7 @@ def _build_table_sheet(ws: Worksheet, columns: List[Column], *,
     ws.sheet_view.zoomScale = 100
     if text_cats is None:
         text_cats = {"ID", "Location", "Source", "Geology", "Analysis",
-                     "Iso-ID", "Iso-Meta"}
+                     "Iso-Meta"}
     if wide_columns is None:
         wide_columns = {"Sample_Name", "Locality", "Reference",
                         "Lithology", "Mineral_Assemblage", "Notes",
@@ -768,8 +771,8 @@ def _build_data_sheet(ws: Worksheet, columns: List[Column]) -> None:
 
 
 def _build_isotopes_sheet(ws: Worksheet, columns: List[Column]) -> None:
-    # Freeze first column (Sample_Name, the join key) + 2 header rows
-    _build_table_sheet(ws, columns, title="Isotopes", freeze="B3")
+    # Same identity columns as the Data sheet, frozen the same way
+    _build_table_sheet(ws, columns, title="Isotopes", freeze="E3")
 
 
 def _build_petrography_sheet(ws: Worksheet, columns: List[Column]) -> None:
@@ -864,9 +867,15 @@ def _build_instructions_sheet(ws: Worksheet, columns: List[Column]) -> None:
     W(r, "Isotopes sheet (optional)", bold=True, size=13); r += 1
     W(r, "6. The 'Isotopes' sheet is independent of the 'Data' sheet. "
          "Use it to record Sr-Nd-Pb-Hf-Os-Re-O-C-H-B isotopic analyses. "
-         "Rows are joined back to the bulk composition through the "
+         "Its first columns — identification, location, source, "
+         "geology and analysis — are the same, in the same order, as "
+         "the columns before the major elements in 'Data', so a "
+         "sample's context can be copied across in one block; then "
+         "comes SiO2, to read the isotopes against silica. Rows are "
+         "joined back to the bulk composition through the "
          "'Sample_Name' column, which MUST match exactly between the "
-         "two sheets (case-sensitive)."); r += 1
+         "two sheets (case-sensitive). Where both sheets fill a "
+         "column, 'Data' is kept."); r += 1
     W(r, "7. Common workflow:  (a) fill in the bulk analysis in 'Data', "
          "(b) for the subset of samples with isotopic data, paste the "
          "ratios in 'Isotopes' next to the matching 'Sample_Name'. "

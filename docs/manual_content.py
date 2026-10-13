@@ -247,6 +247,19 @@ SECTIONS = [
         {"type": "p", "text":
          "Matching is case-insensitive (SiO2, sio2 and  SiO2 are "
          "equivalent). At least one numeric column is required."},
+        {"type": "p", "text":
+         "The template in the templates folder, BIRDS_data_template.xlsx, "
+         "has a Data sheet for the bulk analyses and optional Isotopes "
+         "and Petrography sheets, joined to Data by Sample_Name. The "
+         "Isotopes sheet opens with the same columns, in the same order, "
+         "as Data has before its major elements — identification, "
+         "location, source, geology and analysis — so a sample's "
+         "context can be copied across in one block; then comes SiO2, "
+         "to read the isotopes against silica, and the isotope systems. "
+         "Where a column is filled on both sheets, the Data value is "
+         "kept, except that a blank Sample_Label or Group fills in from "
+         "Isotopes. Age is read with its Age_Unit (Ma, ka, Ga or yr) "
+         "for the initial-ratio correction."},
         {"type": "h2", "text": "6.3  Import dialog"},
         {"type": "bullet", "items": [
             "Click Data → Import data (.xls / .csv)…",

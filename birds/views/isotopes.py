@@ -131,10 +131,33 @@ _RB_SR_PARENT  = ("87Rb/86Sr", "Rb87/86Sr", "87Rb_86Sr")
 _SM_ND_PARENT  = ("147Sm/144Nd", "Sm147/144Nd", "147Sm_144Nd")
 _AGE_ALIASES   = ("Age", "AGE", "Age_Ma", "Age (Ma)", "age", "age_Ma")
 
+#: Million years per unit of the template's Age_Unit column.
+_MA_PER_UNIT = {"ma": 1.0, "myr": 1.0, "my": 1.0, "ka": 1e-3, "kyr": 1e-3,
+                "ga": 1e3, "gyr": 1e3, "yr": 1e-6, "y": 1e-6, "a": 1e-6}
+
 
 # ---------------------------------------------------------------------------
 # Calculations
 # ---------------------------------------------------------------------------
+
+def ages_in_ma(df: pd.DataFrame, col: str) -> pd.Series:
+    """The ages in *col* in Ma, whatever unit each row gives.
+
+    The template pairs ``Age`` with ``Age_Unit`` (Ma, ka, Ga or yr), on
+    the Data sheet and the Isotopes sheet alike; read as Ma, an age of
+    450 ka became 450 Ma.  A column whose name says Ma (``Age_Ma``) or a
+    row with no unit is taken as Ma; an unknown unit gives no age.
+    """
+    ages = pd.to_numeric(df[col], errors="coerce")
+    unit_col = next((c for c in df.columns
+                     if str(c).strip().lower() in ("age_unit", "age unit")),
+                    None)
+    if unit_col is None or "ma" in str(col).lower().replace("age", ""):
+        return ages
+    units = df[unit_col].astype("string").str.strip().str.lower()
+    factor = units.map(_MA_PER_UNIT).astype("float64")
+    factor = factor.where(units.notna() & (units != ""), 1.0)
+    return ages * factor
 
 def compute_initial_ratio(measured: pd.Series, parent: pd.Series,
                           age_Ma: pd.Series, lam: float) -> pd.Series:
@@ -567,7 +590,7 @@ class IsotopesView(QWidget):
         col = self.age_column.currentData()
         if col is None or col not in df.columns:
             return None
-        return pd.to_numeric(df[col], errors="coerce")
+        return ages_in_ma(df, col)
 
     def _initials_and_eps(self, df: pd.DataFrame) -> dict:
         """Compute initial ratios + epsilons for every sample. Returns a

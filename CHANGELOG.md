@@ -571,6 +571,19 @@ including what is still unverified.
 
 #### Interface
 
+- **The template's Isotopes sheet opens like the Data sheet.** Its first
+  28 columns are the ones Data has before its majors — identification,
+  location, source, geology and analysis — from one shared list in
+  `docs/generate_template.py`, with the same dropdowns and frozen panes,
+  followed by a new SiO2 column and the isotope systems. It used to
+  carry only Sample_Name, Sample_Label, Group, Age (in Ma) and
+  Age_Method. Where both sheets fill a column, Data's value is kept at
+  import, as before.
+- **The Isotopes view read every age as Ma.** With Age now paired with
+  Age_Unit on both sheets, an age of 450 ka was taken for 450 Ma in the
+  initial-ratio correction. Ages are converted by their unit (Ma, ka,
+  Ga, yr, and the Myr/kyr/Gyr spellings); a column named in Ma or a
+  row without a unit is read as Ma, and an unknown unit gives no age.
 - **Up to 25 sample groups, from 10.** The limit now lives in one place,
   `plot_style.MAX_GROUPS`, read by the Edit plot dialog and its
   auto-fill. The palette had 10 colours and 10 markers cycled together,
