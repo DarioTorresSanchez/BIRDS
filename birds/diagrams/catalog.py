@@ -45,6 +45,7 @@ TECTONIC_VOLCANIC: dict[str, list[tuple[str, str]]] = {
     "Mafic": [
         ("Th/Yb vs Nb/Yb - Pearce 2008", "pearce2008_thyb_nbyb"),
         ("TiO2/Yb vs Nb/Yb - Pearce 2008", "pearce2008_tiyb_nbyb"),
+        ("Nb/Yb vs Th/Nb - Li et al. 2025 (mafic to felsic)", "li2025_nbyb_thnb"),
         ("ThN vs NbN - Saccani 2015", "saccani2015_nb_th"),
         ("YbN vs DyN - Saccani 2015 (Boninite vs IAT)", "saccani2015_dy_yb"),
         ("(Dy/Yb)N vs (Ce/Yb)N - Saccani 2015 (N-MORB vs G-MORB)", "saccani2015_ce_dy_yb"),
@@ -67,6 +68,7 @@ TECTONIC_VOLCANIC: dict[str, list[tuple[str, str]]] = {
     "Intermediate": [
         ("Sr/Y vs Y (adakite) - Defant & Drummond 1990", "defant_drummond_YSrY"),
         ("La/Yb vs Yb (adakite) - Defant & Drummond 1990", "defant_drummond_YbLaYb"),
+        ("Nb/Yb vs Th/Nb - Li et al. 2025 (mafic to felsic)", "li2025_nbyb_thnb"),
         ("Majors DF set (5 panels) - Verma & Verma 2013", "verma_verma_2013_major"),
         ("Immobile majors + traces DF set (5 panels) - Verma & Verma 2013", "verma_verma_2013_imint"),
         ("Immobile traces DF set (5 panels) - Verma & Verma 2013", "verma_verma_2013_trace"),
@@ -77,6 +79,7 @@ TECTONIC_VOLCANIC: dict[str, list[tuple[str, str]]] = {
         ("Rb vs (Yb+Ta) - Pearce et al. 1984", "pearce1984_YbTaRb"),
         ("Rb vs (Y+Nb) - Pearce et al. 1984", "pearce1984_YNbRb"),
         ("Rb/30 - Hf - 3Ta (ternary) - Harris et al. 1986", "harris_1986_HfRbTa"),
+        ("Nb/Yb vs Th/Nb - Li et al. 2025 (mafic to felsic)", "li2025_nbyb_thnb"),
         ("Majors DF set (5 panels) - Verma et al. 2012", "verma_2012_acid"),
         ("Majors DF set (5 panels) - Verma et al. 2013", "verma_2013_acid_macid"),
         ("Immobile mj + traces DF set (5 panels) - Verma et al. 2013", "verma_2013_acid_mtacid"),
@@ -92,8 +95,10 @@ TECTONIC_PLUTONIC: dict[str, list[tuple[str, str]]] = {
         ("Major elements DF (no FeO) - Pearce 1976 / Vermeesch 2006", "pearce_1976_DF"),
         ("TiO2-Zr-Y-Sr DF - Butler & Woronow / Vermeesch 2006", "butler_woronow_DF"),
         ("TiO2-Nb-V-Y-Zr DF set (5 panels) - Verma & Agrawal 2011", "verma_agrawal_2011"),
+        ("Nb/Yb vs Th/Nb - Li et al. 2025 (mafic to felsic)", "li2025_nbyb_thnb"),
     ],
     "Intermediate": [
+        ("Nb/Yb vs Th/Nb - Li et al. 2025 (mafic to felsic)", "li2025_nbyb_thnb"),
         ("Majors DF set - Verma & Verma 2013", "verma_verma_2013_major"),
         ("Immobile majors + traces DF set - Verma & Verma 2013", "verma_verma_2013_imint"),
         ("Immobile traces DF set - Verma & Verma 2013", "verma_verma_2013_trace"),
@@ -104,6 +109,7 @@ TECTONIC_PLUTONIC: dict[str, list[tuple[str, str]]] = {
         ("Rb vs (Yb+Ta) - Pearce et al. 1984", "pearce1984_YbTaRb"),
         ("Rb vs (Y+Nb) - Pearce et al. 1984", "pearce1984_YNbRb"),
         ("Rb/30 - Hf - 3Ta (ternary) - Harris et al. 1986", "harris_1986_HfRbTa"),
+        ("Nb/Yb vs Th/Nb - Li et al. 2025 (mafic to felsic)", "li2025_nbyb_thnb"),
         ("Majors DF set (5 panels) - Verma et al. 2012", "verma_2012_acid"),
         ("Majors DF set (5 panels) - Verma et al. 2013", "verma_2013_acid_macid"),
         ("Immobile mj + traces DF set (5 panels) - Verma et al. 2013", "verma_2013_acid_mtacid"),

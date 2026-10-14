@@ -25,10 +25,10 @@ SECTIONS = [
         {"type": "p", "text":
          "B.I.R.D.S (Broad Igneous Rocks — Diagrams & Statistics) is a desktop "
          "application for plotting and analysing whole-rock geochemical "
-         "data of igneous rocks. It bundles 54 plotting templates, a "
+         "data of igneous rocks. It bundles 55 plotting templates, a "
          "spider-diagram engine with 28 published normalisers "
          "(REE chondrites and shales, multi-element references and "
-         "Ni-Cu-PGE metal references), a discrimination module with 34 "
+         "Ni-Cu-PGE metal references), a discrimination module with 35 "
          "tectonic diagrams, and a statistics dashboard with REE-anomaly "
          "indices, a correlation-matrix heat-map and 208 tectonic "
          "discrimination parameters. A map view plots every sample at "
@@ -213,7 +213,8 @@ SECTIONS = [
             "Bivariate diagrams — single and paired Harker-style plots.",
             "Spider diagrams — REE and multi-element patterns.",
             "Tectonic diagrams — 34 discrimination diagrams.",
-            "Isotopes — Sr–Nd and Pb–Pb diagrams.",
+            "Isotopes — Sr–Nd and Pb–Pb diagrams, and any isotope ratio, "
+            "δ value or ε against SiO2.",
             "Statistics and Anomalies — descriptive statistics, REE "
             "anomalies, correlation matrix and tectonic discrimination "
             "parameters.",
@@ -469,7 +470,7 @@ SECTIONS = [
         {"type": "p", "text":
          "Open Tectonic diagrams → Volcanic or → Plutonic. Inside the "
          "window, choose the composition (Mafic, Intermediate or Acid) "
-         "and the specific discriminator from the second combo. 34 "
+         "and the specific discriminator from the second combo. 35 "
          "published discriminators are implemented, each with the "
          "boundaries of its own source. Each plot prints its citation "
          "as a subtitle, and the entry in the combo names the axes in "
@@ -501,6 +502,10 @@ SECTIONS = [
             "triplet DF panels.",
             "Yang et al. (2019) ln(FeO/CaO) vs ln(MgO/SiO2), the FCMS "
             "plane, and FCKANTMS vs ln(SiO2/(CaO+Na2O+TiO2)).",
+            "Li, Godang & Saputro (2025) Nb/Yb vs Th/Nb — nine settings, "
+            "from N-MORB to alkaline arc; for mafic to felsic rocks, so "
+            "it is listed under all three compositions. The menu entry "
+            "names its axes y first; on the plot Th/Nb runs across.",
         ]},
         {"type": "h2", "text": "Intermediate"},
         {"type": "bullet", "items": [
@@ -508,6 +513,7 @@ SECTIONS = [
             "Defant & Drummond (1990) La/Yb vs Yb — adakite.",
             "Verma & Verma (2013) — three five-panel DF sets: majors, "
             "immobile majors + traces, and immobile traces.",
+            "Li et al. (2025) Nb/Yb vs Th/Nb (see Mafic).",
         ]},
         {"type": "h2", "text": "Acid (granitoids)"},
         {"type": "bullet", "items": [
@@ -519,6 +525,7 @@ SECTIONS = [
             "five triplet DF panels.",
             "Verma et al. (2013) — three further five-panel DF sets: "
             "majors, immobile majors + traces, and immobile traces.",
+            "Li et al. (2025) Nb/Yb vs Th/Nb (see Mafic).",
         ]},
         {"type": "note", "text":
          "The Verma sets assume the rock type has already been fixed, "

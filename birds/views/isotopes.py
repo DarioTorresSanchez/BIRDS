@@ -31,6 +31,7 @@ References
 
 from __future__ import annotations
 
+import re
 from typing import Dict, Optional, Tuple
 
 import numpy as np
@@ -215,30 +216,42 @@ def epsilon_sr(sr_ratio, age_Ma=0.0):
 # Helper: parent ratio either from a dedicated column or from concentrations
 # ---------------------------------------------------------------------------
 
+def _parent_from_pair(df: pd.DataFrame, pairs, factor: float
+                      ) -> Optional[pd.Series]:
+    """factor x daughter-element ratio, row by row from the first pair
+    whose value is there: the isotope aliquot's concentrations
+    (``Sm_iso`` / ``Nd_iso``, as the template names them) before the
+    bulk ones, which may come from another aliquot."""
+    out = None
+    for num_names, den_names in pairs:
+        num = resolve_column(df, num_names)
+        den = resolve_column(df, den_names)
+        if num is None or den is None:
+            continue
+        ratio = factor * (pd.to_numeric(df[num], errors="coerce")
+                          / pd.to_numeric(df[den], errors="coerce"))
+        out = ratio if out is None else out.fillna(ratio)
+    return out
+
+
 def _resolve_parent_rb_sr(df: pd.DataFrame) -> Optional[pd.Series]:
     col = resolve_column(df, _RB_SR_PARENT)
-    if col is not None:
-        return pd.to_numeric(df[col], errors="coerce")
-    rb = resolve_column(df, ("Rb",))
-    sr = resolve_column(df, ("Sr",))
-    if rb is None or sr is None:
-        return None
-    rb_s = pd.to_numeric(df[rb], errors="coerce")
-    sr_s = pd.to_numeric(df[sr], errors="coerce")
-    return RB_SR_TO_87_86 * (rb_s / sr_s)
+    pair = _parent_from_pair(df, ((("Rb_iso",), ("Sr_iso",)),
+                                  (("Rb",), ("Sr",))), RB_SR_TO_87_86)
+    if col is None:
+        return pair
+    given = pd.to_numeric(df[col], errors="coerce")
+    return given if pair is None else given.fillna(pair)
 
 
 def _resolve_parent_sm_nd(df: pd.DataFrame) -> Optional[pd.Series]:
     col = resolve_column(df, _SM_ND_PARENT)
-    if col is not None:
-        return pd.to_numeric(df[col], errors="coerce")
-    sm = resolve_column(df, ("Sm",))
-    nd = resolve_column(df, ("Nd",))
-    if sm is None or nd is None:
-        return None
-    sm_s = pd.to_numeric(df[sm], errors="coerce")
-    nd_s = pd.to_numeric(df[nd], errors="coerce")
-    return SM_ND_TO_147_144 * (sm_s / nd_s)
+    pair = _parent_from_pair(df, ((("Sm_iso",), ("Nd_iso",)),
+                                  (("Sm",), ("Nd",))), SM_ND_TO_147_144)
+    if col is None:
+        return pair
+    given = pd.to_numeric(df[col], errors="coerce")
+    return given if pair is None else given.fillna(pair)
 
 
 # ---------------------------------------------------------------------------
@@ -249,7 +262,23 @@ DIAGRAMS = (
     ("Sr-Nd:  ⁸⁷Sr/⁸⁶Sr  vs  ¹⁴³Nd/¹⁴⁴Nd",     "sr_nd"),
     ("Pb:      ²⁰⁶Pb/²⁰⁴Pb  vs  ²⁰⁷Pb/²⁰⁴Pb",   "pb_207"),
     ("Pb:      ²⁰⁶Pb/²⁰⁴Pb  vs  ²⁰⁸Pb/²⁰⁴Pb",   "pb_208"),
+    ("vs SiO₂:  an isotope ratio or ε against silica", "vs_sio2"),
 )
+
+#: An isotope column worth offering against SiO2: a ratio such as
+#: 87Sr/86Sr or 176Hf/177Hf, or a delta / epsilon / gamma value -- never
+#: its 2-sigma uncertainty.
+_ISOTOPE_COLUMN = re.compile(
+    r"^(\d{1,3}[A-Z][a-z]?\s*/\s*\d{1,3}[A-Z][a-z]?|[δεγ].+)$")
+
+#: Quantities computed from the Sr-Nd inputs, offered against SiO2:
+#: key -> (label at present, label at the age, reference value).
+_SIO2_DERIVED = {
+    "derived:eps_nd": ("εNd", "εNd(t)", 0.0),
+    "derived:eps_sr": ("εSr", "εSr(t)", 0.0),
+    "derived:sr_i": (None, "(⁸⁷Sr/⁸⁶Sr)ᵢ", None),
+    "derived:nd_i": (None, "(¹⁴³Nd/¹⁴⁴Nd)ᵢ", None),
+}
 
 
 class IsotopesView(QWidget):
@@ -449,6 +478,33 @@ class IsotopesView(QWidget):
         pb_v.addLayout(pbf)
         layout.addWidget(self.pb_box)
 
+        # ---- vs SiO2 controls ---------------------------------------------
+        self.sio2_box = QGroupBox("Against SiO₂")
+        sio2_v = _wrap(self.sio2_box)
+        sio2_f = _compact_form()
+        self.sio2_y_combo = QComboBox()
+        self.sio2_y_combo.setToolTip(
+            "Any isotope ratio or δ / ε / γ column of the sheet, plus εNd "
+            "and εSr from the Sr-Nd inputs; with the age correction on, "
+            "the initial ratios and ε at the age too.")
+        self.sio2_y_combo.currentIndexChanged.connect(
+            lambda _i: self.update_plot())
+        sio2_f.addRow("Vertical axis:", self.sio2_y_combo)
+        sio2_v.addLayout(sio2_f)
+        self.sio2_ref_chk = QCheckBox(
+            "Reference value (BSE ⁸⁷Sr/⁸⁶Sr, CHUR ¹⁴³Nd/¹⁴⁴Nd, ε = 0)")
+        self.sio2_ref_chk.setChecked(True)
+        self.sio2_ref_chk.toggled.connect(lambda _on: self.update_plot())
+        sio2_v.addWidget(self.sio2_ref_chk)
+        sio2_note = QLabel(
+            "<i>SiO₂ is read from the Isotopes sheet; where it is blank "
+            "or absent, from the Data sheet by Sample_Name.</i>")
+        sio2_note.setStyleSheet("color: #6c7388; font-size: 11px;")
+        sio2_note.setTextFormat(Qt.TextFormat.RichText)
+        sio2_note.setWordWrap(True)
+        sio2_v.addWidget(sio2_note)
+        layout.addWidget(self.sio2_box)
+
         # ---- Reservoirs ---------------------------------------------------
         self.res_box = QGroupBox("Mantle reservoirs")
         rv = _wrap(self.res_box)
@@ -497,17 +553,32 @@ class IsotopesView(QWidget):
     def _on_diagram_changed(self, _index: int) -> None:
         key = self.diagram_combo.currentData()
         is_snd = key == "sr_nd"
-        self.snd_box.setVisible(is_snd)
-        self.age_box.setVisible(is_snd)
-        self.pb_box.setVisible(not is_snd)
+        is_sio2 = key == "vs_sio2"
+        is_pb = not (is_snd or is_sio2)
+        # Against SiO2, ε and initial ratios come from the Sr-Nd inputs
+        # and the age correction, so those stay on show.
+        self.snd_box.setVisible(is_snd or is_sio2)
+        self.age_box.setVisible(is_snd or is_sio2)
+        self.pb_box.setVisible(is_pb)
+        self.sio2_box.setVisible(is_sio2)
         self.mantle_array_chk.setVisible(is_snd)
         self.eps_axes_chk.setVisible(is_snd)
         self.res_box.setVisible(is_snd)
         # Hart publishes the NHRL for both Pb planes, so it is offered
         # on both; the old code drew it only on ²⁰⁸Pb.
-        self.nhrl_chk.setVisible(not is_snd)
+        self.nhrl_chk.setVisible(is_pb)
 
-        if key == "sr_nd":
+        if key == "vs_sio2":
+            self.title_label.setText("Isotope ratio  vs  SiO₂")
+            self.subtitle_label.setText(
+                "An isotope ratio, δ value or ε against silica, to read "
+                "isotopic change with differentiation — a rise of "
+                "⁸⁷Sr/⁸⁶Sr or fall of εNd with SiO₂ points to crustal "
+                "assimilation (AFC), a flat trend to closed-system "
+                "fractional crystallisation. Turn on the age correction "
+                "for initial ratios and ε at the age."
+            )
+        elif key == "sr_nd":
             self.title_label.setText("⁸⁷Sr/⁸⁶Sr  vs  ¹⁴³Nd/¹⁴⁴Nd")
             self.subtitle_label.setText(
                 "Classical mantle-source diagram with the six end-member "
@@ -578,8 +649,79 @@ class IsotopesView(QWidget):
                 if i >= 0:
                     combo.setCurrentIndex(i)
             combo.blockSignals(False)
+        self._populate_sio2_choices(df)
+
+    def _populate_sio2_choices(self, df) -> None:
+        """Fill the vertical-axis list of the SiO2 diagram, keeping the
+        current choice when it is still on offer."""
+        keep = self.sio2_y_combo.currentData()
+        self.sio2_y_combo.blockSignals(True)
+        self.sio2_y_combo.clear()
+        if df is not None and not df.empty:
+            for col in df.columns:
+                name = str(col).strip()
+                if _ISOTOPE_COLUMN.match(name) and "2σ" not in name \
+                        and "2s" not in name.lower():
+                    self.sio2_y_combo.addItem(name, col)
+            for key, (label, label_t, _ref) in _SIO2_DERIVED.items():
+                self.sio2_y_combo.addItem(
+                    f"{label or label_t} (from the Sr-Nd inputs)", key)
+        i = self.sio2_y_combo.findData(keep) if keep is not None else -1
+        if i < 0:
+            sr = resolve_column(df, _SR_RATIO_ALIASES) if df is not None \
+                else None
+            i = self.sio2_y_combo.findData(sr) if sr is not None else 0
+        self.sio2_y_combo.setCurrentIndex(max(i, 0))
+        self.sio2_y_combo.blockSignals(False)
 
     # ------------------------------------------------------------------ data
+    def _silica(self, df: pd.DataFrame) -> Optional[pd.Series]:
+        """SiO2 for every row of *df*: the sheet's own where given, else
+        the Data sheet's for the same Sample_Name, so an Isotopes sheet
+        without the column still plots."""
+        own = resolve_column(df, ["SiO2"])
+        sio2 = (pd.to_numeric(df[own], errors="coerce") if own
+                else pd.Series(np.nan, index=df.index, dtype="float64"))
+        main = getattr(self.data, "df", None)
+        if (sio2.isna().any() and main is not None and main is not df
+                and "Sample_Name" in df.columns
+                and "Sample_Name" in main.columns):
+            main_col = resolve_column(main, ["SiO2"])
+            if main_col:
+                lookup = (pd.to_numeric(main[main_col], errors="coerce")
+                          .groupby(main["Sample_Name"].astype(str)).first())
+                sio2 = sio2.fillna(
+                    df["Sample_Name"].astype(str).map(lookup))
+        return None if sio2.isna().all() else sio2
+
+    def _sio2_y(self, df: pd.DataFrame):
+        """``(values, axis label, reference value or None)`` for the
+        vertical axis of the SiO2 diagram; ``values`` is None when the
+        choice cannot be computed."""
+        key = self.sio2_y_combo.currentData()
+        if key is None:
+            return None, "", None
+        if isinstance(key, str) and key in _SIO2_DERIVED:
+            label, label_t, ref = _SIO2_DERIVED[key]
+            derived = self._initials_and_eps(df)
+            at_age = self.age_box.isChecked()
+            name = key.split(":", 1)[1]
+            if name in ("eps_nd", "eps_sr"):
+                values = derived.get(f"{name}_i") if at_age else None
+                if values is None:
+                    values, label_t = derived.get(f"{name}_now"), label
+            else:
+                values = derived.get(name)
+            return values, label_t, ref
+        if key not in df.columns:
+            return None, str(key), None
+        name = str(key)
+        refs = {"87sr/86sr": SR_UR_87_86, "143nd/144nd": ND_CHUR}
+        ref = refs.get(name.replace(" ", "").lower())
+        if name.startswith(("ε", "γ")):
+            ref = 0.0
+        return pd.to_numeric(df[key], errors="coerce"), name, ref
+
     def _measured_sr_nd(self) -> Tuple[Optional[str], Optional[str]]:
         return self.sr_combo.currentData(), self.nd_combo.currentData()
 
@@ -638,6 +780,8 @@ class IsotopesView(QWidget):
         key = self.diagram_combo.currentData()
         if key == "sr_nd":
             self._plot_sr_nd(df)
+        elif key == "vs_sio2":
+            self._plot_vs_sio2(df)
         elif key == "pb_207":
             self._plot_pb(df, y_iso="207")
         else:
@@ -652,6 +796,12 @@ class IsotopesView(QWidget):
         or (None, None) when the required columns aren't configured.
         Shared by the identify resolver and the brushing overlay."""
         key = self.diagram_combo.currentData()
+        if key == "vs_sio2":
+            ys, _label, _ref = self._sio2_y(df)
+            xs = self._silica(df)
+            if xs is None or ys is None:
+                return None, None
+            return xs, pd.Series(ys, index=df.index)
         if key == "sr_nd":
             sr_col, nd_col = self._measured_sr_nd()
             if not sr_col or not nd_col:
@@ -981,6 +1131,63 @@ class IsotopesView(QWidget):
         self.canvas.draw()
         self.summary_label.setText("")
 
+    # ------------------- vs SiO2
+    def _plot_vs_sio2(self, df: pd.DataFrame) -> None:
+        fig = self.canvas.figure
+        fig.clear()
+        sio2 = self._silica(df)
+        values, label, ref = self._sio2_y(df)
+        if sio2 is None:
+            self._empty("No SiO₂ found: fill the SiO2 column of the "
+                        "Isotopes sheet, or import a Data sheet with SiO2 "
+                        "and matching Sample_Name values.")
+            return
+        if values is None:
+            self._empty(f"“{label or 'This choice'}” cannot be computed "
+                        "from the current inputs — pick the Sr-Nd columns "
+                        "(and the parents and age for initial values).")
+            return
+        ys_all = pd.Series(values, index=df.index)
+        ax = fig.add_subplot(111)
+        plotted = 0
+        for group, sub, gs in get_groups(df, self.plot_style):
+            if gs is not None and not getattr(gs, "visible", True):
+                continue
+            xs, ys = sio2.loc[sub.index], ys_all.loc[sub.index]
+            keep = xs.notna() & ys.notna()
+            if not keep.any():
+                continue
+            ax.scatter(xs[keep], ys[keep], s=self.plot_style.point_size ** 2,
+                       alpha=self.plot_style.alpha,
+                       c=gs.color if gs else "#1f77b4",
+                       marker=gs.marker if gs else "o", label=group,
+                       edgecolors="black", linewidths=0.5, zorder=5)
+            plotted += int(keep.sum())
+        if ref is not None and self.sio2_ref_chk.isChecked():
+            names = {SR_UR_87_86: "BSE", ND_CHUR: "CHUR"}
+            ax.axhline(ref, color="#888", linewidth=0.9, linestyle="--",
+                       zorder=1)
+            ax.annotate(f"{names.get(ref, label.split('(')[0])} "
+                        f"= {ref:g}", (0.995, ref),
+                        xycoords=("axes fraction", "data"), ha="right",
+                        va="bottom", fontsize=8, color="#666")
+        ax.set_xlabel("SiO₂ (wt.%)", fontsize=12)
+        ax.set_ylabel(label, fontsize=12)
+        ax.grid(True, which="major", linestyle=":", linewidth=0.5,
+                color="#aaa", alpha=0.7)
+        if self.legend_chk.isChecked():
+            handles, labels = ax.get_legend_handles_labels()
+            if handles:
+                ax.legend(handles, labels, loc="best", fontsize=9,
+                          framealpha=0.85,
+                          ncol=legend_columns(len(handles)))
+        fig.tight_layout()
+        if fig.axes:
+            self.annotation_ctl.draw(fig.axes[0])
+        self.canvas.draw()
+        self.summary_label.setText(
+            f"{plotted} of {len(df)} samples have both SiO₂ and {label}.")
+
     # ------------------------------------------------------------ epsilon UI
     def compute_initials_dialog(self) -> None:
         """Compute initials & ε on the full dataframe, attach them as new
@@ -1081,6 +1288,8 @@ class IsotopesView(QWidget):
             "pb206": self.pb206_combo.currentText(),
             "pb207": self.pb207_combo.currentText(),
             "pb208": self.pb208_combo.currentText(),
+            "sio2_y": self.sio2_y_combo.currentText(),
+            "sio2_reference": ws.check_state(self.sio2_ref_chk),
             "reservoirs": {name: cb.isChecked()
                            for name, cb in self.res_checks.items()},
             "mantle_array": ws.check_state(self.mantle_array_chk),
@@ -1107,7 +1316,7 @@ class IsotopesView(QWidget):
             (self.parent_sr_combo, "parent_sr"),
             (self.parent_nd_combo, "parent_nd"),
             (self.pb206_combo, "pb206"), (self.pb207_combo, "pb207"),
-            (self.pb208_combo, "pb208"),
+            (self.pb208_combo, "pb208"), (self.sio2_y_combo, "sio2_y"),
         ]:
             ws.restore_combo(combo, {"text": state.get(key_name, "")})
         ws.restore_check(self.age_box, state.get("age_correction"))
@@ -1129,4 +1338,5 @@ class IsotopesView(QWidget):
         ws.restore_check(self.nhrl_chk, state.get("nhrl"))
         ws.restore_check(self.eps_axes_chk, state.get("eps_axes"))
         ws.restore_check(self.legend_chk, state.get("legend"))
+        ws.restore_check(self.sio2_ref_chk, state.get("sio2_reference"))
         self.annotation_ctl.restore(state.get("annotations"))

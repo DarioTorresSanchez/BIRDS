@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Dict
 
+from .templates.li2025 import Li2025NbYbThNb
 from .templates.afm import AFM
 from .templates.barker import BarkerAnAbOr
 from .templates.frost import Frost
@@ -81,6 +82,7 @@ _REGISTRY: Dict[str, object] = {
         DefantDrummondYSrY, DefantDrummondYbLaYb,
         Pearce1984YbTa, Pearce1984YNb, Pearce1984YbTaRb, Pearce1984YNbRb,
         Yang2019FCMS, Yang2019FCKANTMS,
+        Li2025NbYbThNb,
         # ----- Tectonic — ternary --------------------------------------------
         Wood1980ThHfTa, CabanisLecolle1989,
         Vermeesch2006NaNbSr, Vermeesch2006SiTiSr, Vermeesch2006EuLuSr,

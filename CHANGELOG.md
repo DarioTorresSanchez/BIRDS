@@ -18,6 +18,23 @@ including what is still unverified.
 
 ### Added
 
+- **Nb/Yb vs Th/Nb — Li, Godang & Saputro (2025).** Nine tectonic
+  settings, from N-MORB to alkaline arc and continental extension, with
+  the new sub-alkaline enriched tholeiitic field, Wei et al.'s
+  interaction line between asthenospheric and lithospheric mantle, and
+  Pearce's AFC and subduction vectors. The paper means it for mafic to
+  felsic rocks, so it sits under all three compositions, volcanic and
+  plutonic. Ratios the text states are used as stated; the rest was
+  measured on Figure 1 and tied down independently — the N-MORB | E-MORB
+  line is the primitive mantle's Nb/Yb, the enriched-tholeiite corner
+  sits on Th/Yb = 0.65. `classify()` names the setting, splitting the
+  rift field by La/Yb and the lithospheric one by TiO2 against Al2O3.
+- **Isotopes against SiO2.** A fourth Isotopes diagram plots any isotope
+  ratio, δ value or ε against silica — and εNd, εSr and the initial
+  ratios, computed as the Sr-Nd diagram computes them, at the age when
+  the age correction is on — with BSE, CHUR or ε = 0 for reference.
+  SiO2 comes from the Isotopes sheet and, where that is blank or
+  missing, from the Data sheet by Sample_Name.
 - **Adjusted majors beside the analysed ones, and one switch to choose.**
   *Data → Pre-process majors…* used to overwrite the analysed oxides with
   the adjusted values; from then on every diagram plotted adjusted values
@@ -571,6 +588,11 @@ including what is still unverified.
 
 #### Interface
 
+- **The template's isotope-aliquot concentrations were never read.**
+  Without a 87Rb/86Sr or 147Sm/144Nd column the parent ratios came only
+  from bulk Rb, Sr, Sm and Nd columns; the Isotopes sheet's Rb_iso,
+  Sr_iso, Sm_iso and Nd_iso were ignored. They are now used, before the
+  bulk values, row by row.
 - **The template's Isotopes sheet opens like the Data sheet.** Its first
   28 columns are the ones Data has before its majors — identification,
   location, source, geology and analysis — from one shared list in

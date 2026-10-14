@@ -168,6 +168,15 @@ REFERENCES: List[Section] = [
          "FCKANTMS source proxy."),
     ]),
     # ----------------------------------------------------------------------
+    ("Tectonic discrimination — Th-Nb-Yb (Li et al.)", [
+        ("Li, H., Godang, S., & Saputro, S. P. (2025). Revealing "
+         "unmapped tectonic settings through geochemical "
+         "fingerprinting of Th-Nb-Yb. *Lithosphere*, *2025*(2), "
+         "lithosphere_2025_125. "
+         "https://doi.org/10.2113/2025/lithosphere_2025_125",
+         "Nb/Yb vs Th/Nb, nine tectonic settings, mafic to felsic."),
+    ]),
+    # ----------------------------------------------------------------------
     ("Tectonic discrimination — ternary", [
         ("Wood, D. A. (1980). The application of a Th-Hf-Ta diagram to "
          "problems of tectonomagmatic classification and to establishing "

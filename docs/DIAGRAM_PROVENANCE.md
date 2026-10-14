@@ -19,8 +19,8 @@ apply. This was the lesson of the Pb NHRL: the drawn line in the source
 figure sits 5–7 px off Hart's published equation, which is the
 redrawing's error, not the equation's.
 
-The catalogue holds **48 unique diagrams**. The menus list 63 entries,
-but all 15 plutonic tectonic-discrimination entries re-use volcanic keys.
+The catalogue holds **49 unique diagrams**. The menus list 69 entries,
+but all 18 plutonic tectonic-discrimination entries re-use volcanic keys.
 The six modal diagrams of the Petrography view are outside these
 counts; they have their own section at the end, *The Petrography
 view*.
@@ -31,7 +31,7 @@ view*.
 
 | Status | Count | Section |
 |---|---|---|
-| Measured from the figure, or checked against the centroids it prints | 13 | *Measured, or checked against printed centroids* |
+| Measured from the figure, or checked against the centroids it prints | 14 | *Measured, or checked against printed centroids* |
 | Equation or table, compared with the published numbers | 9 | *Equation or table* |
 | TAS, volcanic and plutonic, vertex by vertex | 2 | *Retracted findings*, *Middlemost (1994)* |
 | Rule, with the arithmetic under it checked | 1 | *Maniar & Piccoli (1989)* |
@@ -39,7 +39,7 @@ view*.
 | A plane computed from printed equations, with no fields to check | 1 | *Yang et al. (2019)* |
 | **Known wrong — fix first** | **0** | |
 | Still drawn by eye, blocked on sources | 3 | *Still drawn by eye* |
-| **Total** | **48** | |
+| **Total** | **49** | |
 
 One curve inside the checked set is not verified: the Irvine & Baragar
 (1971) overlay on `afm`, whose coordinates the caption does not print.
@@ -53,7 +53,7 @@ came from a different bad method and both are easy to repeat.
 
 ---
 
-## Measured, or checked against printed centroids (13)
+## Measured, or checked against printed centroids (14)
 
 **Measured from the published figure**, with the measurement pinned as
 tests and the method recorded in each module's *Provenance* section:
@@ -63,6 +63,8 @@ tests and the method recorded in each module's *Provenance* section:
 - `hanski` — Hanski et al. (2001) high-Mg, including the olivine projection
 - `highmg_tas` — Le Maitre (2002) high-Mg subdivision
 - `barker_anaborn` — Barker (1979) An–Ab–Or
+- `li2025_nbyb_thnb` — Li, Godang & Saputro (2025) Nb/Yb vs Th/Nb; see
+  *Li et al. (2025)* below
 
 **Coefficients checked against the group centroids each paper prints.**
 These papers publish, per panel, the group centroid in DF1–DF2 space and,
@@ -1173,6 +1175,42 @@ vector PDFs, so the figures could be read as coordinates:
 `tests/test_frost_panels.py` pins the frame, the plagioclase AI values,
 the MALI coefficients and their Peacock crossings, and the start of the
 Fe-index line; putting any of the old values back fails it.
+
+## Li et al. (2025) — Nb/Yb vs Th/Nb
+
+`Lietal2025.pdf` — Li, Godang & Saputro (2025) *Lithosphere* 2025(2),
+lithosphere_2025_125 (CC BY 4.0), Figure 1. Key `li2025_nbyb_thnb`.
+
+The paper states most boundaries as ratios, used as stated: Th/Nb 0.04,
+0.11 and 0.67; Nb/Yb 6 and 4; Th/Yb 0.35 and 0.65 (straight lines of
+slope −1 on the log axes); La/Yb 20 inside the rift field; TiO₂ =
+−1.1610 + 0.1935 Al₂O₃ between alkaline arc and continental extension.
+Th/Nb runs across and Nb/Yb up, although the title names Nb/Yb first.
+
+What the text leaves out was measured on Figure 1, a 2203 × 2317
+raster, calibrated on the labelled lines Th/Nb 0.04, 0.11, 0.67 and the
+frame at Nb/Yb 0.1 and 100 (717.7 and 718.7 px per decade; Nb/Yb 6 and
+4 then land within 2 px of where they are drawn):
+
+* the N-MORB | E-MORB horizontal at Nb/Yb 1.489 — the McDonough & Sun
+  (1995) primitive mantle, 0.658/0.441 = 1.492, whose point the figure
+  puts on it; it ends on Th/Yb = 0.35;
+* the right side of the new sub-alkaline enriched tholeiitic field at
+  Th/Nb 0.24, down to Nb/Yb 2.69 where Th/Yb = 0.65 takes over
+  (0.65/0.24 = 2.71);
+* the eleven 0–100 % points of Wei et al.'s interaction line, and the
+  AFC and subduction vectors, as drawn.
+
+Between Nb/Yb 1.49 and 2.71 nothing separates the enriched tholeiitic
+field from the transitional band on the figure; the classification uses
+Th/Nb 0.24 there. The reference stars land on Sun & McDonough's (1989)
+N-MORB, E-MORB and OIB. The paper means the diagram for mafic to felsic
+rocks (Section 2.1), a supporting tool only for continental collision
+(2.3); it is offered under all three compositions.
+
+`tests/test_li2025.py` pins the stated values, ties each measured one to
+the primitive mantle or the Th/Yb line it meets, and classifies the
+paper's own case studies by the ratios Section 3 prints.
 
 ## The Petrography view — the IUGS modal diagrams (6)
 
