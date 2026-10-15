@@ -18,6 +18,24 @@ including what is still unverified.
 
 ### Added
 
+- **Nb/Zr vs Th/Nb — Godang, Saputro & Li (2024).** The diagram Li et
+  al. (2025) reproduce as their Figure 5: Nb/Zr sorts the mantle source
+  (enriched above the primitive mantle's 0.0627, slightly enriched to
+  0.04, depleted below) and Th/Nb the setting — the non-subduction
+  array split into N-MORB, OIB and E-MORB and mantle plume basalts, the
+  intracontinental rift (La/Yb 20), continental extension or alkaline
+  arc past Th/Nb 0.67, and the continental and island arcs either side
+  of a diagonal from PM. The printed ratios are used as printed; the
+  line ends and the diagonal were measured on Figure 5 and tied to the
+  McDonough & Sun primitive mantle and the frame corner. Under all
+  three compositions, volcanic and plutonic, like Li et al.'s own.
+  `classify()` names the setting and, for arcs, the source.
+- **Annotations and Identify sample in Bivariate → Paired.** The
+  Annotations panel was Individual-only. In Paired each annotation
+  belongs to the panel clicked in: the sample identified is the nearest
+  on that panel's pair, and the label stays with the pair when the grid
+  is rearranged and through a saved session. Alt / Cmd + click
+  selection now works there too, ringing the sample on every panel.
 - **Nb/Yb vs Th/Nb — Li, Godang & Saputro (2025).** Nine tectonic
   settings, from N-MORB to alkaline arc and continental extension, with
   the new sub-alkaline enriched tholeiitic field, Wei et al.'s
@@ -588,6 +606,10 @@ including what is still unverified.
 
 #### Interface
 
+- **Identify sample in Bivariate could name a hidden sample.** It
+  searched every row, so a click near where a switched-off group's
+  sample would sit labelled that invisible sample. It now searches
+  only the samples drawn, in both sub-modes.
 - **The template's isotope-aliquot concentrations were never read.**
   Without a 87Rb/86Sr or 147Sm/144Nd column the parent ratios came only
   from bulk Rb, Sr, Sm and Nd columns; the Isotopes sheet's Rb_iso,

@@ -251,6 +251,13 @@ class _PairedControls(QWidget):
         self.reservoirs_grp = _ReservoirGroup()
         self.reservoirs_grp.tree.setMaximumHeight(220)
         layout.addWidget(self.reservoirs_grp)
+        # Annotation toolkit; each annotation belongs to the panel it
+        # was placed on and is redrawn there.
+        self.annotations_grp = _AnnotationGroup()
+        self.annotations_grp.setToolTip(
+            "Each annotation belongs to the panel you click in, and "
+            "stays with that X-Y pair when the grid is rearranged.")
+        layout.addWidget(self.annotations_grp)
         layout.addStretch(1)
 
 
@@ -370,17 +377,21 @@ class BivariateView(QWidget):
             self._paired.y_expr_add.click
         )
 
-        # Annotation state — initialised BEFORE set_mode() because
-        # _render_individual() reads self._annotations on first paint.
-        # Only the Individual mode wires it up (Paired uses many small
-        # axes so click-based placement would be ambiguous).
+        # Annotation state — initialised BEFORE set_mode() because the
+        # renderers read it on first paint.  Individual annotations sit
+        # on its single axis; Paired ones are (panel, annotation) pairs,
+        # the panel being the (x, y) variables of the axes clicked in.
         self._annotations: list = []
+        self._paired_annotations: list = []
+        self._paired_axes: dict = {}
         self._ann_mode = ANN_MODE_NONE
         self._ann_pending: tuple | None = None
-        ag = self._individual.annotations_grp
-        ag.mode_requested.connect(self._on_ann_mode_requested)
-        ag.clear_requested.connect(self._on_ann_clear)
-        ag.delete_index.connect(self._on_ann_delete)
+        self._ann_pending_panel: tuple | None = None
+        for ag in (self._individual.annotations_grp,
+                   self._paired.annotations_grp):
+            ag.mode_requested.connect(self._on_ann_mode_requested)
+            ag.clear_requested.connect(self._on_ann_clear)
+            ag.delete_index.connect(self._on_ann_delete)
         self.canvas.mpl_connect("button_press_event", self._on_canvas_click)
 
         self.set_mode("individual")
@@ -415,6 +426,12 @@ class BivariateView(QWidget):
     # ------------------------------------------------------------------ API
     def set_mode(self, mode: str) -> None:
         self._mode = mode
+        # A tool armed in the other mode must not fire in this one.
+        for ag in (self._individual.annotations_grp,
+                   self._paired.annotations_grp):
+            ag.cancel_mode()
+        self._ann_mode = ANN_MODE_NONE
+        self._ann_pending = self._ann_pending_panel = None
         if mode == "individual":
             self.controls_stack.setCurrentWidget(self._individual)
             self.title_label.setText("Bivariate diagrams – Individual")
@@ -537,94 +554,128 @@ class BivariateView(QWidget):
     def _on_ann_mode_requested(self, mode: str) -> None:
         """User pressed one of the annotation tool buttons."""
         self._ann_mode = mode
-        self._ann_pending = None
+        self._ann_pending = self._ann_pending_panel = None
+
+    def _ann_group(self):
+        """The annotation panel of the active mode."""
+        return (self._individual.annotations_grp
+                if self._mode == "individual"
+                else self._paired.annotations_grp)
+
+    def _refresh_ann_list(self) -> None:
+        """Repopulate both annotation lists.  Paired rows say which
+        panel each annotation is on."""
+        self._individual.annotations_grp.refresh(self._annotations)
+        grp = self._paired.annotations_grp
+        grp.refresh([ann for _panel, ann in self._paired_annotations])
+        for row, ((x_col, y_col), _ann_obj) in enumerate(
+                self._paired_annotations):
+            item = grp.list.item(row)
+            item.setText(f"[{y_col} vs {x_col}]  {item.text()}")
 
     def _on_ann_clear(self) -> None:
-        if not self._annotations:
-            return
-        self._annotations = []
-        self._individual.annotations_grp.refresh(self._annotations)
+        if self._mode == "individual":
+            if not self._annotations:
+                return
+            self._annotations = []
+        else:
+            if not self._paired_annotations:
+                return
+            self._paired_annotations = []
+        self._refresh_ann_list()
         self.update_plot()
 
     def _on_ann_delete(self, index: int) -> None:
-        if 0 <= index < len(self._annotations):
-            del self._annotations[index]
-            self._individual.annotations_grp.refresh(self._annotations)
+        items = (self._annotations if self._mode == "individual"
+                 else self._paired_annotations)
+        if 0 <= index < len(items):
+            del items[index]
+            self._refresh_ann_list()
             self.update_plot()
+
+    def _end_ann_tool(self) -> None:
+        self._ann_group().cancel_mode()
+        self._ann_mode = ANN_MODE_NONE
+        self._ann_pending = self._ann_pending_panel = None
 
     def _on_canvas_click(self, event) -> None:
         """Matplotlib click handler — translates a click into the
-        appropriate annotation based on the active tool."""
+        appropriate annotation based on the active tool.  In Paired
+        mode the annotation goes to the panel clicked in."""
         # Modifier+left-click belongs to cross-view brushing.
         from .brushing import is_select_click
         if is_select_click(event):
             return
+        if event.inaxes is None:
+            return
+        panel = None
         if self._mode != "individual":
-            return  # Annotations are Individual-only
-        # Right-click: delete the closest annotation regardless of mode.
-        if event.button == 3 and event.inaxes is not None:
-            x, y = event.xdata, event.ydata
-            if x is None or y is None:
-                return
+            panel = self._paired_axes.get(event.inaxes)
+            if panel is None:
+                return          # an empty grid cell, or a stale figure
+        x, y = event.xdata, event.ydata
+        if x is None or y is None:
+            return
+        # Right-click: delete the closest annotation regardless of mode
+        # (in Paired, the closest on the panel clicked).
+        if event.button == 3:
             xlim = event.inaxes.get_xlim()
             ylim = event.inaxes.get_ylim()
             tol = 0.04 * max(abs(xlim[1] - xlim[0]),
                              abs(ylim[1] - ylim[0]))
-            idx = _ann.closest(self._annotations, x, y, tol)
+            if panel is None:
+                idx = _ann.closest(self._annotations, x, y, tol)
+                if idx is not None:
+                    del self._annotations[idx]
+            else:
+                rows = [i for i, (p, _a) in
+                        enumerate(self._paired_annotations) if p == panel]
+                hit = _ann.closest([self._paired_annotations[i][1]
+                                    for i in rows], x, y, tol)
+                idx = None if hit is None else rows[hit]
+                if idx is not None:
+                    del self._paired_annotations[idx]
             if idx is not None:
-                del self._annotations[idx]
-                self._individual.annotations_grp.refresh(self._annotations)
+                self._refresh_ann_list()
                 self.update_plot()
             return
-        if (self._ann_mode == ANN_MODE_NONE
-                or event.button != 1
-                or event.inaxes is None):
-            return
-        x, y = event.xdata, event.ydata
-        if x is None or y is None:
+        if self._ann_mode == ANN_MODE_NONE or event.button != 1:
             return
 
         mode = self._ann_mode
-        if mode == ANN_MODE_LINE:
-            if self._ann_pending is None:
+        if mode in (ANN_MODE_LINE, ANN_MODE_ARROW):
+            # Both ends on one panel: a second click on another panel
+            # starts the line again there.
+            if self._ann_pending is None or self._ann_pending_panel != panel:
                 self._ann_pending = (x, y)
+                self._ann_pending_panel = panel
                 return
             x1, y1 = self._ann_pending
-            self._add_annotation(_ann.LineAnnotation(x1=x1, y1=y1, x2=x, y2=y))
-            self._ann_pending = None
-            self._individual.annotations_grp.cancel_mode()
-            self._ann_mode = ANN_MODE_NONE
-        elif mode == ANN_MODE_ARROW:
-            if self._ann_pending is None:
-                self._ann_pending = (x, y)
-                return
-            x1, y1 = self._ann_pending
-            self._add_annotation(_ann.ArrowAnnotation(x1=x1, y1=y1, x2=x, y2=y))
-            self._ann_pending = None
-            self._individual.annotations_grp.cancel_mode()
-            self._ann_mode = ANN_MODE_NONE
+            kind = (_ann.LineAnnotation if mode == ANN_MODE_LINE
+                    else _ann.ArrowAnnotation)
+            self._end_ann_tool()
+            self._add_annotation(kind(x1=x1, y1=y1, x2=x, y2=y), panel)
         elif mode == ANN_MODE_TEXT:
             text, ok = self._ask_text("Annotation text", "Text to display:")
-            if not ok or not text:
-                self._individual.annotations_grp.cancel_mode()
-                self._ann_mode = ANN_MODE_NONE
-                return
-            self._add_annotation(_ann.TextAnnotation(x=x, y=y, text=text))
-            self._individual.annotations_grp.cancel_mode()
-            self._ann_mode = ANN_MODE_NONE
+            self._end_ann_tool()
+            if ok and text:
+                self._add_annotation(_ann.TextAnnotation(x=x, y=y, text=text),
+                                     panel)
         elif mode == ANN_MODE_SAMPLE:
-            self._add_sample_annotation(x, y)
-            self._individual.annotations_grp.cancel_mode()
-            self._ann_mode = ANN_MODE_NONE
+            self._end_ann_tool()
+            self._add_sample_annotation(x, y, event.inaxes, panel)
 
     def _ask_text(self, title: str, prompt: str) -> tuple[str, bool]:
         from PySide6.QtWidgets import QInputDialog
         text, ok = QInputDialog.getText(self, title, prompt)
         return text.strip(), ok
 
-    def _add_annotation(self, ann_obj) -> None:
-        self._annotations.append(ann_obj)
-        self._individual.annotations_grp.refresh(self._annotations)
+    def _add_annotation(self, ann_obj, panel: tuple | None = None) -> None:
+        if panel is None:
+            self._annotations.append(ann_obj)
+        else:
+            self._paired_annotations.append((panel, ann_obj))
+        self._refresh_ann_list()
         self.update_plot()
 
     def _current_plot_xy(self):
@@ -645,82 +696,105 @@ class BivariateView(QWidget):
             return None, None, None
         return df, xs, ys
 
-    def _resolve_sample(self, x: float, y: float):
-        """Nearest-sample resolver for cross-view brushing (Individual
-        mode only)."""
-        df, xs, ys = self._current_plot_xy()
-        if df is None:
-            return None
-        fig = self.canvas.figure
-        if not fig.axes:
-            return None
-        from .annotation_controller import nearest_sample
-        ax = fig.axes[0]
-        return nearest_sample(df, xs, ys, x, y,
-                              ax.get_xlim(), ax.get_ylim())
-
-    def _selection_points(self, names):
-        """Coordinates of the selected samples on the Individual panel."""
-        from .brushing import names_series
-        df, xs, ys = self._current_plot_xy()
-        fig = self.canvas.figure
-        if df is None or not fig.axes:
-            return []
-        nm = names_series(df)
-        m = nm.isin(names) & xs.notna() & ys.notna()
-        return [(fig.axes[0], list(zip(xs[m], ys[m])))]
-
-    def _add_sample_annotation(self, x: float, y: float) -> None:
-        """Find the data row whose (x_col, y_col) is closest to (x, y),
-        then add a SampleAnnotation pointing at it."""
+    def _panel_xy(self, x_col: str, y_col: str):
+        """(df, xs, ys) of one X-Y pair, NaN wherever the sample is not
+        drawn -- its group switched off -- so it cannot be picked."""
         df = self.data.df
         if df is None or df.empty:
-            return
-        ctrl = self._individual
-        x_col = ctrl.x_combo.currentText().strip()
-        y_col = ctrl.y_combo.currentText().strip()
+            return None, None, None
         try:
             xs = evaluate(df, x_col)
             ys = evaluate(df, y_col)
         except ExpressionError:
-            return
-        # Normalise to the current axis ranges so the distance metric is
-        # isotropic in screen space, not in data units (which may differ
-        # by orders of magnitude on log axes).
+            return None, None, None
+        shown = pd.Series(False, index=df.index)
+        for _label, sub, _gs in get_groups(df, self.plot_style):
+            shown[sub.index] = True
+        return df, xs.where(shown), ys.where(shown)
+
+    def _axes_panel(self, ax):
+        """The (x, y) variables plotted on *ax*, or None."""
+        if self._mode == "individual":
+            ctrl = self._individual
+            return (ctrl.x_combo.currentText().strip(),
+                    ctrl.y_combo.currentText().strip())
+        return self._paired_axes.get(ax)
+
+    def _resolve_sample_in(self, ax, x: float, y: float):
+        """Nearest drawn sample to a click on *ax* -- whichever panel it
+        is -- as ``(px, py, label)``.  Used by Identify sample and by
+        cross-view brushing."""
+        if ax is None:
+            return None
+        panel = self._axes_panel(ax)
+        if panel is None:
+            return None
+        df, xs, ys = self._panel_xy(*panel)
+        if df is None:
+            return None
+        from .annotation_controller import nearest_sample
+        return nearest_sample(df, xs, ys, x, y,
+                              ax.get_xlim(), ax.get_ylim())
+
+    def _resolve_sample(self, x: float, y: float):
+        """Nearest-sample resolver on the Individual axis (Paired needs
+        the axes clicked: see :meth:`_resolve_sample_in`)."""
+        fig = self.canvas.figure
+        if self._mode != "individual" or not fig.axes:
+            return None
+        return self._resolve_sample_in(fig.axes[0], x, y)
+
+    def _selection_points(self, names):
+        """Coordinates of the selected samples on every panel drawn."""
+        from .brushing import names_series
         fig = self.canvas.figure
         if not fig.axes:
+            return []
+        if self._mode == "individual":
+            df, xs, ys = self._current_plot_xy()
+            if df is None:
+                return []
+            nm = names_series(df)
+            m = nm.isin(names) & xs.notna() & ys.notna()
+            return [(fig.axes[0], list(zip(xs[m], ys[m])))]
+        out = []
+        for ax, (x_col, y_col) in self._paired_axes.items():
+            df, xs, ys = self._panel_xy(x_col, y_col)
+            if df is None:
+                continue
+            nm = names_series(df)
+            m = nm.isin(names) & xs.notna() & ys.notna()
+            out.append((ax, list(zip(xs[m], ys[m]))))
+        return out
+
+    def _add_sample_annotation(self, x: float, y: float, ax=None,
+                               panel: tuple | None = None) -> None:
+        """Label the drawn sample nearest (x, y) on *ax* -- the
+        Individual axis when not given."""
+        fig = self.canvas.figure
+        if ax is None:
+            if not fig.axes:
+                return
+            ax = fig.axes[0]
+        hit = self._resolve_sample_in(ax, x, y)
+        if hit is None:
             return
-        ax = fig.axes[0]
+        px, py, name = hit
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
-        sx = max(abs(xlim[1] - xlim[0]), 1e-9)
-        sy = max(abs(ylim[1] - ylim[0]), 1e-9)
-        dx = (xs - x) / sx
-        dy = (ys - y) / sy
-        dist = (dx ** 2 + dy ** 2) ** 0.5
-        dist = dist.where(xs.notna() & ys.notna())
-        if dist.dropna().empty:
-            return
-        idx = dist.idxmin()
-        # Resolve a human-readable label from Sample_Name / Sample_Label.
-        name = None
-        for col in ("Sample_Name", "Sample_Label", "Sample", "No.", "id"):
-            if col in df.columns:
-                v = df.at[idx, col]
-                if pd.notna(v):
-                    name = str(v)
-                    break
-        if name is None:
-            name = str(idx)
-        px = float(xs.loc[idx])
-        py = float(ys.loc[idx])
-        # Offset label up-right by ~5 % of the axis range.
+        # Offset label up-right by ~4 % of the axis range.
         self._add_annotation(_ann.SampleAnnotation(
             px=px, py=py,
             dx=0.04 * (xlim[1] - xlim[0]),
             dy=0.04 * (ylim[1] - ylim[0]),
             label=name,
-        ))
+        ), panel)
+
+    def _paired_panel_done(self, ax, x_col: str, y_col: str) -> None:
+        """Record which pair *ax* shows and replay its annotations."""
+        self._paired_axes[ax] = (x_col, y_col)
+        _ann.draw_all(ax, [a for p, a in self._paired_annotations
+                           if p == (x_col, y_col)])
 
     def update_plot(self) -> None:
         if self.data.df is None or self.data.df.empty:
@@ -1006,6 +1080,7 @@ class BivariateView(QWidget):
 
         fig = self.canvas.figure
         fig.clear()
+        self._paired_axes = {}
 
         # ── Decide the layout ──────────────────────────────────────────
         force_matrix = layout_choice == "matrix"
@@ -1069,6 +1144,7 @@ class BivariateView(QWidget):
             ax.set_xlabel(x_col, **ctrl.axis_grp.axis_style(x_col).label_kwargs())
             ax.tick_params(labelsize=max(ctrl.axis_grp.font_size.value() - 4, 6))
             ax.set_box_aspect(1)
+            self._paired_panel_done(ax, x_col, y_col)
 
         # Hide unused cells
         for k in range(n, nrows * ncols):
@@ -1104,6 +1180,8 @@ class BivariateView(QWidget):
                 fig.subplots_adjust(top=0.9)
 
         fig.tight_layout()
+        from .brushing import draw_selection_overlay
+        draw_selection_overlay(self)
         self.canvas.draw()
 
     def _render_paired_matrix(self, ctrl, df, x_vars, y_vars, groups_data,
@@ -1136,6 +1214,7 @@ class BivariateView(QWidget):
                                   **ctrl.axis_grp.axis_style(y_col).label_kwargs())
                 ax.tick_params(labelsize=max(ctrl.axis_grp.font_size.value() - 4, 6))
                 ax.set_box_aspect(1)
+                self._paired_panel_done(ax, x_col, y_col)
 
         if legend.visible:
             handles, labels = axes[0][0].get_legend_handles_labels()
@@ -1146,6 +1225,8 @@ class BivariateView(QWidget):
                            bbox_to_anchor=(0.5, 1.0))
                 fig.subplots_adjust(top=0.9)
         fig.tight_layout()
+        from .brushing import draw_selection_overlay
+        draw_selection_overlay(self)
         self.canvas.draw()
 
     # ------------------------------------------------------- reservoirs
@@ -1226,6 +1307,10 @@ class BivariateView(QWidget):
                 "grouping": ws.grouping_group_state(paired.grouping_grp),
                 "regression": ws.regression_group_state(paired.regression_grp),
                 "reservoirs": ws.reservoirs_state(paired.reservoirs_grp),
+                # Annotations with the panel (X-Y pair) each is on.
+                "annotations": [
+                    {"x": x_col, "y": y_col, "annotation": ann.to_dict()}
+                    for (x_col, y_col), ann in self._paired_annotations],
             },
         }
 
@@ -1285,5 +1370,14 @@ class BivariateView(QWidget):
                                         paired_s.get("regression"))
             ws.restore_reservoirs(paired.reservoirs_grp,
                                   paired_s.get("reservoirs"))
+            self._paired_annotations = []
+            for entry in paired_s.get("annotations") or []:
+                if not isinstance(entry, dict):
+                    continue
+                anns = _ann.deserialize([entry.get("annotation")])
+                if anns and entry.get("x") and entry.get("y"):
+                    self._paired_annotations.append(
+                        ((str(entry["x"]), str(entry["y"])), anns[0]))
 
         self.set_mode(state.get("mode", "individual"))
+        self._refresh_ann_list()

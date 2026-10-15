@@ -14,7 +14,9 @@ Wiring a view
 A view participates by
 
 1. implementing ``_resolve_sample(x, y) -> (px, py, label) | None``
-   (all diagram views already have this for Identify-sample), and
+   (all diagram views already have this for Identify-sample) -- or,
+   for a view with several panels, ``_resolve_sample_in(ax, x, y)``,
+   which is handed the axes clicked -- and
 2. implementing ``_selection_points(names) -> [(ax, [(x, y), …]), …]``
    returning the plotted coordinates of the given sample names, and
 3. calling :func:`draw_selection_overlay` at the end of its
@@ -76,7 +78,11 @@ def wire_brushing(view, bus) -> None:
     def on_click(event):
         if not is_select_click(event):
             return
-        hit = view._resolve_sample(event.xdata, event.ydata)
+        # A view with several panels resolves against the one clicked.
+        resolve_in = getattr(view, "_resolve_sample_in", None)
+        hit = (resolve_in(event.inaxes, event.xdata, event.ydata)
+               if resolve_in is not None
+               else view._resolve_sample(event.xdata, event.ydata))
         if hit is None:
             bus.clear()
             return

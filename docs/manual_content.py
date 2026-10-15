@@ -25,10 +25,10 @@ SECTIONS = [
         {"type": "p", "text":
          "B.I.R.D.S (Broad Igneous Rocks — Diagrams & Statistics) is a desktop "
          "application for plotting and analysing whole-rock geochemical "
-         "data of igneous rocks. It bundles 55 plotting templates, a "
+         "data of igneous rocks. It bundles 56 plotting templates, a "
          "spider-diagram engine with 28 published normalisers "
          "(REE chondrites and shales, multi-element references and "
-         "Ni-Cu-PGE metal references), a discrimination module with 35 "
+         "Ni-Cu-PGE metal references), a discrimination module with 36 "
          "tectonic diagrams, and a statistics dashboard with REE-anomaly "
          "indices, a correlation-matrix heat-map and 208 tectonic "
          "discrimination parameters. A map view plots every sample at "
@@ -426,6 +426,19 @@ SECTIONS = [
             "N-MORB, OIB, KLB-1, …) to add labelled stars at the "
             "corresponding (X, Y) coordinates.",
         ]},
+        {"type": "h2", "text": "Annotations and Identify sample"},
+        {"type": "p", "text":
+         "Both sub-modes have the Annotations panel: lines, arrows, "
+         "text and Identify sample, which labels the sample nearest the "
+         "click. In Paired each annotation belongs to the panel clicked "
+         "in — the sample is looked up on that panel's X and Y — and "
+         "stays with that pair of variables when the grid is "
+         "rearranged; a pair taken off the grid keeps its annotations "
+         "for when it comes back. A line or arrow needs both clicks on "
+         "the same panel. Right-click removes the nearest annotation, "
+         "and samples of a group switched off cannot be identified. "
+         "Alt / Cmd + click selects a sample here as in every other "
+         "view, and in Paired it is ringed on every panel."},
     ]),
 
     ("9. Spider diagrams", [
@@ -470,7 +483,7 @@ SECTIONS = [
         {"type": "p", "text":
          "Open Tectonic diagrams → Volcanic or → Plutonic. Inside the "
          "window, choose the composition (Mafic, Intermediate or Acid) "
-         "and the specific discriminator from the second combo. 35 "
+         "and the specific discriminator from the second combo. 36 "
          "published discriminators are implemented, each with the "
          "boundaries of its own source. Each plot prints its citation "
          "as a subtitle, and the entry in the combo names the axes in "
@@ -506,6 +519,14 @@ SECTIONS = [
             "from N-MORB to alkaline arc; for mafic to felsic rocks, so "
             "it is listed under all three compositions. The menu entry "
             "names its axes y first; on the plot Th/Nb runs across.",
+            "Godang, Saputro & Li (2024) Nb/Zr vs Th/Nb, as Li et al. "
+            "(2025) Figure 5 draws it — Nb/Zr sorts the mantle source "
+            "(enriched above the primitive mantle's 0.0627, slightly "
+            "enriched down to 0.04, depleted below) and Th/Nb the "
+            "setting: the non-subduction array, the intracontinental "
+            "rift, continental extension or alkaline arc, and the "
+            "continental and island arcs either side of a diagonal "
+            "from PM. Also under all three compositions.",
         ]},
         {"type": "h2", "text": "Intermediate"},
         {"type": "bullet", "items": [
@@ -513,7 +534,8 @@ SECTIONS = [
             "Defant & Drummond (1990) La/Yb vs Yb — adakite.",
             "Verma & Verma (2013) — three five-panel DF sets: majors, "
             "immobile majors + traces, and immobile traces.",
-            "Li et al. (2025) Nb/Yb vs Th/Nb (see Mafic).",
+            "Li et al. (2025) Nb/Yb vs Th/Nb and Godang et al. (2024) "
+            "Nb/Zr vs Th/Nb (see Mafic).",
         ]},
         {"type": "h2", "text": "Acid (granitoids)"},
         {"type": "bullet", "items": [
@@ -525,7 +547,8 @@ SECTIONS = [
             "five triplet DF panels.",
             "Verma et al. (2013) — three further five-panel DF sets: "
             "majors, immobile majors + traces, and immobile traces.",
-            "Li et al. (2025) Nb/Yb vs Th/Nb (see Mafic).",
+            "Li et al. (2025) Nb/Yb vs Th/Nb and Godang et al. (2024) "
+            "Nb/Zr vs Th/Nb (see Mafic).",
         ]},
         {"type": "note", "text":
          "The Verma sets assume the rock type has already been fixed, "

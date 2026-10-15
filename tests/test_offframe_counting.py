@@ -157,20 +157,22 @@ class TestCoverage:
         Drummond do not publish that diagram, so there was no figure to
         take a frame from and the one it had was invented.  Back to 24
         when `yang_2019_fcms` arrived carrying the frame of Figure 1a,
-        which is published, and to 25 with `li2025_nbyb_thnb`, the
-        frame of Li et al. (2025) Figure 1.  A template may fix its
-        limits exactly when a published figure fixes them.
+        which is published, to 25 with `li2025_nbyb_thnb`, the frame of
+        Li et al. (2025) Figure 1, and to 26 with `godang2024_nbzr_thnb`,
+        the frame of their Figure 5.  A template may fix its limits
+        exactly when a published figure fixes them.
         """
         own = [k for k, d in _REGISTRY.items()
                if getattr(d, "x_range", None) or getattr(d, "y_range", None)]
         panelled = [k for k, d in _REGISTRY.items()
                     if getattr(d, "panels", None)
                     and getattr(d.panels[0], "x_range", None)]
-        assert len(own) == 25, f"{len(own)} templates carry their own frame"
+        assert len(own) == 26, f"{len(own)} templates carry their own frame"
         assert len(panelled) == 8, f"{len(panelled)} carry it on panels"
         assert "defant_drummond_YbLaYb" not in own
         assert "yang_2019_fcms" in own
         assert "li2025_nbyb_thnb" in own
+        assert "godang2024_nbzr_thnb" in own
 
     def test_a_hidden_sample_is_not_also_off_the_frame(self):
         """The categories have to stay disjoint or the total stops

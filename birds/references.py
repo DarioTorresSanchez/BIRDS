@@ -168,13 +168,28 @@ REFERENCES: List[Section] = [
          "FCKANTMS source proxy."),
     ]),
     # ----------------------------------------------------------------------
-    ("Tectonic discrimination — Th-Nb-Yb (Li et al.)", [
+    ("Tectonic discrimination — Th-Nb-Yb and Th-Nb-Zr (Li, Godang et al.)", [
         ("Li, H., Godang, S., & Saputro, S. P. (2025). Revealing "
          "unmapped tectonic settings through geochemical "
          "fingerprinting of Th-Nb-Yb. *Lithosphere*, *2025*(2), "
          "lithosphere_2025_125. "
          "https://doi.org/10.2113/2025/lithosphere_2025_125",
          "Nb/Yb vs Th/Nb, nine tectonic settings, mafic to felsic."),
+        ("Godang, S., Saputro, S. P., & Li, H. (2024). The slab failure "
+         "in Central Java (Indonesia): New insight into its tectonic "
+         "setting and origin. *Solid Earth Sciences*, *9*(3), 100199.",
+         "Nb/Zr vs Th/Nb, as drawn in Li et al. (2025) Figure 5."),
+        ("Saputro, S. P., Godang, S., Priadi, B., Basuki, N. I., & "
+         "Himawan, B. (2022). Geochemical study of Al-Fe-Ti enrichment "
+         "in rock weathering: Implications for the recognizing of "
+         "igneous protolith and the enrichment of REE in soil profile. "
+         "*Applied Geochemistry*, *140*, 105259.",
+         "Nb/Zr vs Th/Nb: the rift field and its La/Yb = 20."),
+        ("Sun, S. Q., Zhang, C. J., & Huang, R. Q. (2006). The tectonic "
+         "settings discrimination of the basalts in the convergent "
+         "margin of plate by Th, Nb, and Zr. *Advances in Earth "
+         "Science*, *21*(6), 593-598.",
+         "Nb/Zr vs Th/Nb: Nb/Zr = 0.15, mantle plume basalts."),
     ]),
     # ----------------------------------------------------------------------
     ("Tectonic discrimination — ternary", [

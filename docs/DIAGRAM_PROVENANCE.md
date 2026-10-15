@@ -19,8 +19,8 @@ apply. This was the lesson of the Pb NHRL: the drawn line in the source
 figure sits 5–7 px off Hart's published equation, which is the
 redrawing's error, not the equation's.
 
-The catalogue holds **49 unique diagrams**. The menus list 69 entries,
-but all 18 plutonic tectonic-discrimination entries re-use volcanic keys.
+The catalogue holds **50 unique diagrams**. The menus list 75 entries,
+but all 21 plutonic tectonic-discrimination entries re-use volcanic keys.
 The six modal diagrams of the Petrography view are outside these
 counts; they have their own section at the end, *The Petrography
 view*.
@@ -31,7 +31,7 @@ view*.
 
 | Status | Count | Section |
 |---|---|---|
-| Measured from the figure, or checked against the centroids it prints | 14 | *Measured, or checked against printed centroids* |
+| Measured from the figure, or checked against the centroids it prints | 15 | *Measured, or checked against printed centroids* |
 | Equation or table, compared with the published numbers | 9 | *Equation or table* |
 | TAS, volcanic and plutonic, vertex by vertex | 2 | *Retracted findings*, *Middlemost (1994)* |
 | Rule, with the arithmetic under it checked | 1 | *Maniar & Piccoli (1989)* |
@@ -39,7 +39,7 @@ view*.
 | A plane computed from printed equations, with no fields to check | 1 | *Yang et al. (2019)* |
 | **Known wrong — fix first** | **0** | |
 | Still drawn by eye, blocked on sources | 3 | *Still drawn by eye* |
-| **Total** | **49** | |
+| **Total** | **50** | |
 
 One curve inside the checked set is not verified: the Irvine & Baragar
 (1971) overlay on `afm`, whose coordinates the caption does not print.
@@ -53,7 +53,7 @@ came from a different bad method and both are easy to repeat.
 
 ---
 
-## Measured, or checked against printed centroids (14)
+## Measured, or checked against printed centroids (15)
 
 **Measured from the published figure**, with the measurement pinned as
 tests and the method recorded in each module's *Provenance* section:
@@ -65,6 +65,8 @@ tests and the method recorded in each module's *Provenance* section:
 - `barker_anaborn` — Barker (1979) An–Ab–Or
 - `li2025_nbyb_thnb` — Li, Godang & Saputro (2025) Nb/Yb vs Th/Nb; see
   *Li et al. (2025)* below
+- `godang2024_nbzr_thnb` — Godang, Saputro & Li (2024) Nb/Zr vs Th/Nb;
+  see *Godang et al. (2024)* below
 
 **Coefficients checked against the group centroids each paper prints.**
 These papers publish, per panel, the group centroid in DF1–DF2 space and,
@@ -1211,6 +1213,47 @@ rocks (Section 2.1), a supporting tool only for continental collision
 `tests/test_li2025.py` pins the stated values, ties each measured one to
 the primitive mantle or the Th/Yb line it meets, and classifies the
 paper's own case studies by the ratios Section 3 prints.
+
+## Godang et al. (2024) — Nb/Zr vs Th/Nb
+
+Godang, Saputro & Li (2024) *Solid Earth Sciences* 9(3) 100199, after
+Saputro et al. (2022) and Sun, Zhang & Huang (2006), as reproduced in
+`Lietal2025.pdf`, Figure 5 (Figure 6 is the same diagram with other
+data). Key `godang2024_nbzr_thnb`. The 2024 paper itself is open access
+but not on disk; the geometry comes from the 2025 reproduction.
+
+The figure prints its ratios and they are used as printed: Th/Nb 0.04,
+0.11 and 0.67; Nb/Zr 0.04, 0.0627 (PM) and 0.15; La/Yb 20 inside the
+rift field. Th/Nb runs across on a log axis from 0.015 to 5, Nb/Zr up
+from 0.01 to 1.
+
+Measured on Figure 5, a 2205 × 1665 raster, calibrated on the labelled
+lines Th/Nb 0.04, 0.11 and 0.67 (773.4 px per decade) and the frame at
+Nb/Zr 0.01 and 1 (774 px per decade; the right edge lands on 4.985):
+
+* where each line stops — Nb/Zr 0.15 only across the array (Th/Nb
+  0.04–0.11), 0.0627 and 0.04 from Th/Nb 0.04 to the right edge, Th/Nb
+  0.67 from 0.0627 to the top;
+* the PM dot, at (0.1206, 0.0630): McDonough & Sun's (1995) primitive
+  mantle, Th/Nb 0.0795/0.658 = 0.1208 and Nb/Zr 0.658/10.5 = 0.06267,
+  the 0.0627 the figure prints;
+* the diagonal between continental arc and island arc, straight on the
+  log axes from the PM dot to the lower right corner (5, 0.01): fitted
+  along its length the slope is −0.4936 against the −0.4930 those two
+  points give, residuals under a pixel, and it crosses Nb/Zr 0.04 at
+  Th/Nb 0.301 where the line through the two points does.
+
+The right-hand brackets name the source for every setting: enriched
+above 0.0627, slightly enriched (the transition) down to 0.04, depleted
+below; arc samples carry it in their classification. The 0.04–0.0627
+band of the array has no name on the figure and is classified as the
+transition. Li et al. (2025, Section 4) use the diagram on basaltic and
+rhyolitic rocks alike, so like theirs it is offered for every
+composition, volcanic and plutonic.
+
+`tests/test_godang2024.py` pins the printed ratios, ties the PM dot and
+the diagonal to the primitive mantle and the corner, and classifies the
+case studies Li et al. plot on it.
 
 ## The Petrography view — the IUGS modal diagrams (6)
 
