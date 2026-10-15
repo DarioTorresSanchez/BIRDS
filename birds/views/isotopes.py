@@ -70,6 +70,7 @@ from ..isotope_fields import (
 )
 from .annotation_controller import AnnotationController, nearest_sample
 from .plot_canvas import PlotCanvas
+from .deferral import defer_while_hidden
 
 
 # ---------------------------------------------------------------------------
@@ -773,6 +774,8 @@ class IsotopesView(QWidget):
 
     # ------------------------------------------------------------------ plot
     def update_plot(self) -> None:
+        if defer_while_hidden(self):
+            return      # drawn when its page is shown
         df = self._active_df()
         if df is None or df.empty:
             self._empty("Load a dataset (Data → Import) to plot isotope diagrams.")

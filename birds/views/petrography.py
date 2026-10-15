@@ -43,6 +43,7 @@ from ..diagrams.templates.base import AxisStyle, PlotOptions
 from .annotation_controller import AnnotationController
 from .plot_canvas import PlotCanvas
 from .widgets import AxisGroup, GroupingGroup, LegendGroup
+from .deferral import defer_while_hidden
 
 
 # Catalogue of petrographic diagrams shown in the selector.
@@ -224,6 +225,8 @@ class PetrographyView(QWidget):
         return self.data.df
 
     def update_plot(self) -> None:
+        if defer_while_hidden(self):
+            return      # drawn when its page is shown
         if not self._diagram_key:
             return
         diagram = get_diagram(self._diagram_key)

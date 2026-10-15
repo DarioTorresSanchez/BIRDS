@@ -816,10 +816,23 @@ SECTIONS = [
             "minutes. If it closes before you save, the next start "
             "offers to recover it — unless it was started by "
             "double-clicking a session, which is then the one opened.",
+            "Opening a session draws only the page it was saved on; "
+            "the other views are brought up to date the first time "
+            "you open them, so a session with many views opens in "
+            "well under a second.",
         ]},
     ]),
 
     ("14. Troubleshooting", [
+        {"type": "h2", "text": "B.I.R.D.S closed on its own"},
+        {"type": "p", "text":
+         "Reopen it: the work of the last five minutes is offered back. "
+         "Then send the file ~/.birds/crash.log (in Finder, Go → Go to "
+         "Folder… and type ~/.birds). Every Python error, every Qt "
+         "warning and, for a crash inside Qt itself, the Python stack "
+         "it happened under are written there. macOS keeps its own "
+         "report as well, in Console → Crash Reports, under BIRDS."},
+
         {"type": "h2", "text": "“ModuleNotFoundError: No module named 'PySide6'”"},
         {"type": "p", "text":
          "The libraries are not installed yet. Run `pip install -r "

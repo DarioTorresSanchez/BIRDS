@@ -6,7 +6,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QSignalBlocker, Qt
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -47,6 +47,7 @@ from .widgets import (
     LegendGroup,
     ReservoirGroup,
 )
+from .deferral import defer_while_hidden
 
 
 # ---------------------------------------------------------------------------
@@ -490,6 +491,8 @@ class SpiderView(QWidget):
         self.update_plot()
 
     def update_plot(self) -> None:
+        if defer_while_hidden(self):
+            return      # drawn when its page is shown
         ctrl = self._controls.get(self._mode)
         if ctrl is not None and ctrl.majors_box is not None:
             ctrl.majors_box.sync(self.data)
@@ -923,12 +926,15 @@ class SpiderView(QWidget):
         # Multi-element selection restore
         if ctrl.elements_list is not None and "selected_elements" in state:
             wanted = set(state["selected_elements"])
+            # One redraw follows the restore, not one per element.
+            blocker = QSignalBlocker(ctrl.elements_list)
             for i in range(ctrl.elements_list.count()):
                 item = ctrl.elements_list.item(i)
                 item.setCheckState(
                     Qt.CheckState.Checked if item.text() in wanted
                     else Qt.CheckState.Unchecked
                 )
+            blocker.unblock()
 
     # Canonical mode keys used by ``set_mode`` and as dict keys here.
     _MODES = ("ree", "multielement")

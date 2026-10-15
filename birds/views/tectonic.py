@@ -32,6 +32,7 @@ from .widgets import (
     GroupingGroup,
     LegendGroup,
 )
+from .deferral import defer_while_hidden
 
 
 class TectonicView(QWidget):
@@ -245,6 +246,8 @@ class TectonicView(QWidget):
         self.update_plot()
 
     def update_plot(self) -> None:
+        if defer_while_hidden(self):
+            return      # drawn when its page is shown
         self.majors_box.sync(self.data)
         if not self._diagram_key:
             return

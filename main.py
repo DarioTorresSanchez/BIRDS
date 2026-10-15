@@ -82,6 +82,38 @@ def _install_qt_message_handler() -> None:
     qInstallMessageHandler(_handler)
 
 
+#: Kept open for the life of the process: faulthandler writes to it from
+#: inside a signal handler, where nothing can be opened.
+_FAULT_FILE = None
+
+
+def _install_faulthandler() -> None:
+    """Have a native crash -- a segfault or a trap inside Qt, which no
+    Python hook sees -- leave the Python stack it happened under in
+    crash.log."""
+    global _FAULT_FILE
+    import faulthandler
+    import signal
+    _ensure_crash_dir()
+    try:
+        _FAULT_FILE = _CRASH_LOG.open("a", encoding="utf-8")
+    except OSError:
+        return
+    stamp = _dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    _FAULT_FILE.write(f"\n[{stamp}] SESSION START (native crashes below "
+                      f"until the next start)\n")
+    _FAULT_FILE.flush()
+    faulthandler.enable(file=_FAULT_FILE, all_threads=True)
+    # A trap is how the two cursor crashes ended; enable() does not
+    # cover it.
+    if hasattr(signal, "SIGTRAP"):
+        try:
+            faulthandler.register(signal.SIGTRAP, file=_FAULT_FILE,
+                                  all_threads=True, chain=True)
+        except (RuntimeError, ValueError):
+            pass
+
+
 def main() -> int:
     # A packaged app checks itself with: BIRDS --self-test
     if "--self-test" in sys.argv:
@@ -92,6 +124,7 @@ def main() -> int:
 
     _install_excepthook()
     _install_qt_message_handler()
+    _install_faulthandler()
 
     # BirdsApplication opens the .birds files the system hands over: a
     # double-clicked session, or one named on the command line.

@@ -92,6 +92,12 @@ class TestBdlMaskAlignment:
 
 
 class TestSampleTally:
+    @pytest.fixture(autouse=True)
+    def _on_screen(self, window):
+        """The tally belongs to the page on screen; a page behind
+        another holds its redraws until it is shown."""
+        window.stack.setCurrentWidget(window.classification)
+
     def test_all_groups_hidden_reports_zero(self, window, full_df,
                                             plot_style):
         """get_groups drops hidden groups, which used to read as 'no grouping'."""

@@ -30,6 +30,7 @@ from ..diagrams.templates.base import AxisStyle, LegendStyle, PlotOptions
 from .annotation_controller import AnnotationController, nearest_sample
 from .plot_canvas import PlotCanvas
 from .widgets import AdjustedMajorsBox
+from .deferral import defer_while_hidden
 
 
 _FONT_CHOICES = ["DejaVu Sans", "Arial", "Helvetica", "Times New Roman",
@@ -275,6 +276,8 @@ class ClassificationView(QWidget):
         self.update_plot()
 
     def update_plot(self) -> None:
+        if defer_while_hidden(self):
+            return      # drawn when its page is shown
         self.majors_box.sync(self.data)
         # Every path that leaves the canvas without points must also drop
         # the tally, otherwise it keeps advertising the previous render.

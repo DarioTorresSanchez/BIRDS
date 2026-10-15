@@ -227,6 +227,13 @@ def window(qapp):
     return w
 
 
+def _show(window, view):
+    """Bring *view* on screen, as its menu entry does: a page behind
+    another holds its redraws until it is shown."""
+    window.stack.setCurrentWidget(view)
+    return view
+
+
 def _preprocess(window, mode="anhydrous", iron="middlemost"):
     from birds.dialogs.preprocess_dialog import PreprocessDialog
     dialog = PreprocessDialog(window.data, window)
@@ -249,7 +256,7 @@ def test_applying_the_dialog_adds_twins_and_turns_the_switch_on(window):
 def test_the_classification_follows_the_switch(window):
     from birds.diagrams.registry import get_diagram
     _preprocess(window)
-    view = window.classification
+    view = _show(window, window.classification)
     view.set_family("volcanic")
     view.update_plot()
     tas = get_diagram(view._diagram_key)
@@ -264,16 +271,16 @@ def test_the_classification_follows_the_switch(window):
 
 def test_one_switch_for_every_view(window):
     _preprocess(window)
-    window.classification.update_plot()           # shows the shared state
+    _show(window, window.classification).update_plot()  # the shared state
     window.classification.majors_box.check.setChecked(False)
     assert not window.data.use_adjusted
     for view in (window.tectonic, window.classification):
-        view.update_plot()
+        _show(window, view).update_plot()
         assert not view.majors_box.check.isChecked()
     window.statistics.refresh()
     assert not window.statistics.majors_box.check.isChecked()
     window.tectonic.majors_box.check.setChecked(True)
-    window.classification.update_plot()
+    _show(window, window.classification).update_plot()
     assert window.classification.majors_box.check.isChecked()
 
 
@@ -287,7 +294,7 @@ def test_without_twins_the_switch_is_off_and_says_how_to_get_them(window):
 
 def test_the_panel_says_how_the_values_were_adjusted(window):
     _preprocess(window, "anhydrous", "middlemost")
-    view = window.tectonic
+    view = _show(window, window.tectonic)
     view.update_plot()
     assert "Middlemost (1989)" in view.majors_box.status.text()
     assert "anhydrous" in view.majors_box.status.text()
@@ -375,7 +382,7 @@ def test_the_bivariate_lists_each_twin_beside_its_oxide(window):
 
 def test_the_bivariate_plots_mg_number(window):
     _preprocess(window)
-    view = window.bivariate
+    view = _show(window, window.bivariate)
     view._individual.x_combo.setCurrentText("SiO2_adj")
     view._individual.y_combo.setCurrentText("Mg#_adj")
     view.update_plot()
@@ -421,7 +428,7 @@ def test_the_tectonic_diagram_follows_the_switch(window):
     """Pearce (2008) TiO2/Yb reads TiO2: adjusted, or as analysed."""
     from birds.diagrams.registry import get_diagram
     _preprocess(window)
-    view = window.tectonic
+    view = _show(window, window.tectonic)
     view.show_diagram("pearce2008_tiyb_nbyb", "volcanic", "Mafic")
     view.update_plot()
     diagram = get_diagram("pearce2008_tiyb_nbyb")

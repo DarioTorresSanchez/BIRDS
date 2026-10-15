@@ -112,6 +112,9 @@ class BirdsMainWindow(QMainWindow):
             self.stack.addWidget(view)
         self.stack.setCurrentWidget(self.welcome)
         self.setCentralWidget(self.stack)
+        # A page hidden behind another holds its redraws (see
+        # views/deferral.py); draw it once, when it comes on screen.
+        self.stack.currentChanged.connect(self._on_page_shown)
 
         # ---- cross-view brushing --------------------------------------------
         # Alt/Cmd+click a point in any wired view to select that sample
@@ -130,8 +133,14 @@ class BirdsMainWindow(QMainWindow):
         # so the restore() calls don't immediately re-mark the freshly
         # loaded session as modified.
         self._loading: bool = False
-        # QSettings for "Recent sessions" — keyed by org / app.
-        self._qs = QSettings("BIRDS", "BIRDS")
+        # QSettings for "Recent sessions" — keyed by org / app.  The
+        # format is the default one, which is the platform's own (the
+        # same file as always) unless set otherwise: the test suite
+        # points it at a sandbox, where QSettings("BIRDS", "BIRDS") --
+        # always native, and on macOS always the real preferences --
+        # pushed pytest's temporary sessions into the user's list.
+        self._qs = QSettings(QSettings.defaultFormat(),
+                             QSettings.Scope.UserScope, "BIRDS", "BIRDS")
 
         # ---- chrome ---------------------------------------------------------
         self._build_menu_bar()
@@ -185,6 +194,11 @@ class BirdsMainWindow(QMainWindow):
         self.home_action.setStatusTip("Return to the welcome screen (Ctrl+H)")
         self.home_action.triggered.connect(self.go_home)
         toolbar.addAction(self.home_action)
+
+    def _on_page_shown(self, index: int) -> None:
+        """Draw a page whose redraws were held while it was hidden."""
+        from .views.deferral import draw_if_pending
+        draw_if_pending(self.stack.widget(index))
 
     def go_home(self) -> None:
         """Switch back to the welcome screen."""
@@ -1191,8 +1205,16 @@ class BirdsMainWindow(QMainWindow):
         ``setCurrentText``, ``setChecked`` and ``setCurrentIndex`` calls
         triggered by :meth:`view.restore` doesn't immediately re-mark
         the session as dirty.
+
+        Every view is restored hidden, behind the welcome page, so the
+        redraws the restore sets off are held; the page the session was
+        saved on (or, failing that, the one showing before) is drawn
+        once at the end.
         """
         self._loading = True
+        page_before = self.stack.currentWidget()
+        page_after = None
+        self.stack.setCurrentWidget(self.welcome)
         try:
             # Data — main bulk sheet plus the two independent extras.
             main_df = state.data.get("main")
@@ -1272,13 +1294,12 @@ class BirdsMainWindow(QMainWindow):
                 except (TypeError, ValueError):
                     pass
             active = state.ui.get("active_view")
-            if active and active in self._VIEW_ATTRS:
-                try:
-                    self.stack.setCurrentWidget(getattr(self, active))
-                except Exception:
-                    pass
+            page_after = (getattr(self, active, None)
+                          if active in self._VIEW_ATTRS else None)
         finally:
             self._loading = False
+        self.stack.setCurrentWidget(page_after if page_after is not None
+                                    else page_before)
 
         # Rebuild Grouping checkboxes for the freshly-loaded plot_style.
         self._wire_grouping_groups()

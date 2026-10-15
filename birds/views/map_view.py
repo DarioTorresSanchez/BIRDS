@@ -84,6 +84,7 @@ from .spatial_plots import (
     surface_layers,
     write_kriged_grids,
 )
+from .deferral import defer_while_hidden
 
 
 # Coordinate-format keys used internally and in the format dropdown.
@@ -888,6 +889,8 @@ class MapView(QWidget):
         return self.model_combo.currentData() or "spherical"
 
     def update_plot(self) -> None:
+        if defer_while_hidden(self):
+            return      # drawn when its page is shown
         fig = self.canvas.figure
         display = self._display()
         is_map = display in _MAP_DISPLAYS

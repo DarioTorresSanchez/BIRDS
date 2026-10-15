@@ -606,6 +606,31 @@ including what is still unverified.
 
 #### Interface
 
+- **B.I.R.D.S could close on its own during a redraw.** Twice on
+  2026-10-14 (once the installed app, once another PySide6 app run from
+  source): macOS 26 with Qt 6.11 crashed inside CGImageCreate as Qt
+  built a cursor from a bitmap. Matplotlib puts up its wait cursor for
+  any redraw a second after the last, and on macOS that cursor is a
+  bitmap. Plot canvases now ask only for cursors the system draws
+  itself, and never for the wait cursor. A crash inside Qt also leaves
+  its Python stack in `~/.birds/crash.log` now, where only Python errors
+  and Qt warnings went before.
+- **Opening a session was slow, and every selection redrew every
+  view.** Each view redrew whenever anything touched it, on screen or
+  not: restoring a session redrew them all, the Spider view 29 times
+  (once per element ticked back on), and an Alt-click selection or a new
+  plot style redrew all six diagram views. A page behind another now
+  only notes that it is out of date and is drawn once when shown; a
+  session opens behind the welcome page and draws only the page it was
+  saved on. A real session (25 groups) went from 3.4 s to 0.5 s to
+  open, a selection from 0.4 s to 0.02 s.
+- **The test suite wrote into the user's own settings.** Its sessions
+  went into File → Recent sessions — eight entries kept, so real ones
+  were pushed out — and a test line into the real crash log. Changing
+  HOME was not enough on macOS, where native settings always reach the
+  real preferences; the window now opens its settings in the default
+  format, still the native one for the app, which the suite points at a
+  sandbox.
 - **Identify sample in Bivariate could name a hidden sample.** It
   searched every row, so a click near where a switched-off group's
   sample would sit labelled that invisible sample. It now searches

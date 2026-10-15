@@ -8,9 +8,34 @@ assignment rather than a fixture.
 
 from __future__ import annotations
 
+import atexit
 import os
+import shutil
+import tempfile
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+# The suite must leave the user's own B.I.R.D.S alone.  The tests open
+# and save sessions, and the app keeps its recent-sessions list in
+# QSettings and its auto-saves, crash log and style presets under
+# ~/.birds -- so a run used to push pytest's temporary sessions into the
+# user's File → Recent sessions, evicting real ones, and write to the
+# real crash log.  Both now point at a throwaway directory.  Matplotlib
+# reads its config and font cache from the real home first, so the font
+# cache is not rebuilt on every run.
+import matplotlib  # noqa: E402
+
+matplotlib.get_configdir()
+matplotlib.get_cachedir()
+_SANDBOX = tempfile.mkdtemp(prefix="birds-tests-")
+os.environ["HOME"] = _SANDBOX
+atexit.register(shutil.rmtree, _SANDBOX, ignore_errors=True)
+
+from PySide6.QtCore import QSettings  # noqa: E402
+
+QSettings.setDefaultFormat(QSettings.Format.IniFormat)
+QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope,
+                  _SANDBOX)
 
 import numpy as np
 import pandas as pd

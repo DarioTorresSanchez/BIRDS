@@ -51,6 +51,7 @@ from .widgets import (
     RegressionGroup as _RegressionGroup,
     ReservoirGroup as _ReservoirGroup,
 )
+from .deferral import defer_while_hidden
 
 
 # ---------------------------------------------------------------------------
@@ -797,6 +798,8 @@ class BivariateView(QWidget):
                            if p == (x_col, y_col)])
 
     def update_plot(self) -> None:
+        if defer_while_hidden(self):
+            return      # drawn when its page is shown
         if self.data.df is None or self.data.df.empty:
             self._empty_canvas(
                 "Load a dataset via Data → Import to start plotting."
