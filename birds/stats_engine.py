@@ -18,7 +18,9 @@ from scipy import stats as _scipy_stats
 
 from .normalizations import (
     MULTIELEMENT_NORMS,
+    OXIDE_TO_ELEMENT_PPM,
     REE_CHONDRITES,
+    TIO2_WT_TO_TI_PPM,
     get_normaliser as _get_normaliser,
 )
 
@@ -54,6 +56,23 @@ def _resolve_column(df: pd.DataFrame, candidates: Iterable[str]) -> Optional[str
         actual = lookup.get(name.lower())
         if actual is not None:
             return actual
+    return None
+
+
+def _element_ppm(df: pd.DataFrame, symbol: str) -> Optional[pd.Series]:
+    """*symbol* in ppm: its own column, or for a major element reported
+    only as an oxide, the oxide converted -- Ti from TiO2 × 5993.4, as
+    the discrimination diagrams and the spider diagrams convert it.
+    Without this a dataset carrying TiO2 but no Ti column had no Ti/Y,
+    Ti/V or Ti/Ti*, though every diagram plotted its Ti."""
+    col = _resolve_column(df, [symbol])
+    if col is not None:
+        return pd.to_numeric(df[col], errors="coerce")
+    if symbol in OXIDE_TO_ELEMENT_PPM:
+        oxide, factor = OXIDE_TO_ELEMENT_PPM[symbol]
+        oxide_col = _resolve_column(df, [oxide])
+        if oxide_col is not None:
+            return pd.to_numeric(df[oxide_col], errors="coerce") * factor
     return None
 
 
@@ -374,6 +393,10 @@ def compute_anomalies_extended(
     normalised summary ratios (La/Yb)_N, (La/Sm)_N, (Gd/Yb)_N and
     (Sm/Yb)_N.
 
+    Ti is the Ti column, or TiO2 × 5993.4 when there is none -- so pass
+    the majors the diagrams read (``DataManager.majors_df``) for Ti/Ti*
+    to follow the adjusted-majors switch.
+
     ``normaliser_name`` can be the name of any REE chondrite reference
     registered in :mod:`birds.normalizations`. Defaults to Sun &
     McDonough (1989).
@@ -433,11 +456,11 @@ def compute_anomalies_extended(
     # pattern, so they use Sun & McDonough (1989) primitive mantle
     # rather than the chondrite normaliser picked above.
     def normed_pm(symbol):
-        col = _resolve_column(df, [symbol])
-        if col is None or symbol not in _PRIMITIVE_MANTLE:
+        values = _element_ppm(df, symbol)
+        if values is None or symbol not in _PRIMITIVE_MANTLE:
             return None
         with np.errstate(invalid="ignore", divide="ignore"):
-            return pd.to_numeric(df[col], errors="coerce") / _PRIMITIVE_MANTLE[symbol]
+            return values / _PRIMITIVE_MANTLE[symbol]
 
     nb_pm = normed_pm("Nb"); ta_pm = normed_pm("Ta"); la_pm = normed_pm("La")
     ti_pm = normed_pm("Ti"); eu_pm = normed_pm("Eu"); gd_pm = normed_pm("Gd")
@@ -600,16 +623,16 @@ RATIO_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
 
 
 def compute_ratios(df: pd.DataFrame) -> pd.DataFrame:
-    """Per-sample trace-element ratios commonly used in petrogenesis."""
+    """Per-sample trace-element ratios commonly used in petrogenesis.
+
+    Ti is the Ti column, or TiO2 × 5993.4 when there is none."""
     out = pd.DataFrame(index=df.index)
     for name, num, den in RATIO_DEFINITIONS:
-        nc = _resolve_column(df, [num])
-        dc = _resolve_column(df, [den])
-        if nc is None or dc is None:
+        numerator = _element_ppm(df, num)
+        denominator = _element_ppm(df, den)
+        if numerator is None or denominator is None:
             continue
         with np.errstate(divide="ignore", invalid="ignore"):
-            numerator = pd.to_numeric(df[nc], errors="coerce")
-            denominator = pd.to_numeric(df[dc], errors="coerce")
             ratio = numerator / denominator.where(denominator != 0, np.nan)
         out[name] = ratio.round(4)
     # Magnesium number — the differentiation index of every mafic study.
@@ -741,6 +764,69 @@ def compute_alteration_indices(df: pd.DataFrame) -> pd.DataFrame:
         out["AI_Ishikawa"] = ai.round(2)
 
     return out
+
+
+# ---------------------------------------------------------------------------
+# What each per-sample index is, for tooltips
+# ---------------------------------------------------------------------------
+
+#: The anomalies of :func:`compute_anomalies_extended`, as computed.
+#: The chondrite of the REE ones is the one picked; the multi-element
+#: ones use the primitive mantle or CI chondrite named.
+ANOMALY_DESCRIPTIONS: Mapping[str, str] = {
+    "Eu/Eu*": "Eu_N / √(Sm_N · Gd_N), chondrite-normalised "
+              "(Taylor & McLennan 1985). < 1: plagioclase removed.",
+    "Ce/Ce*": "Ce_N / √(La_N · Pr_N), chondrite-normalised. Departs "
+              "from 1 where Ce⁴⁺ was mobilised (oxidation, seawater).",
+    "Pr/Pr*": "Pr_N / √(Ce_N · Nd_N), chondrite-normalised.",
+    "Gd/Gd*": "Gd_N / √(Sm_N · Tb_N), chondrite-normalised.",
+    "Dy/Dy*": "Dy_N / √(Tb_N · Ho_N), chondrite-normalised; sensitive "
+              "to MREE depletion and garnet.",
+    "Y/Y*": "Y_N / √(Dy_N · Ho_N), chondrite-normalised.",
+    "Y/Ho": "Y / Ho, ppm/ppm (chondritic ≈ 28).",
+    "Ta/Ta*": "Ta_PM / √(Nb_PM · La_PM), primitive mantle "
+              "(McDonough & Sun 1995).",
+    "Nb/Nb*": "Nb_PM / √(Th_PM · La_PM), primitive mantle (Pearce "
+              "2008). < 1: the Nb trough of arc magmas.",
+    "Ti/Ti*": "Ti_PM / √(Eu_PM · Gd_PM), primitive mantle; Ti from "
+              "TiO2 × 5993.4 when there is no Ti column. < 1: Fe-Ti "
+              "oxide or titanite removed.",
+    "Nb/Nb*_V(PM)": "2 · Nb_PM / (Ba_PM + La_PM), primitive mantle "
+                    "(Verma 2015).",
+    "Ta/Ta*_V(PM)": "2 · Ta_PM / (Ba_PM + La_PM), primitive mantle "
+                    "(Verma 2015).",
+    "Nb/Nb*_V(CN)": "2 · Nb_CN / (Ba_CN + La_CN), CI chondrite "
+                    "(Verma 2015).",
+    "Ta/Ta*_V(CN)": "2 · Ta_CN / (Ba_CN + La_CN), CI chondrite "
+                    "(Verma 2015).",
+    "(La/Yb)N": "La_N / Yb_N, chondrite-normalised: slope of the REE "
+                "pattern.",
+    "(La/Sm)N": "La_N / Sm_N, chondrite-normalised: LREE slope.",
+    "(Gd/Yb)N": "Gd_N / Yb_N, chondrite-normalised: MREE/HREE, garnet.",
+    "(Sm/Yb)N": "Sm_N / Yb_N, chondrite-normalised: MREE/HREE, garnet.",
+}
+
+#: The alteration indices of :func:`compute_alteration_indices`.
+ALTERATION_DESCRIPTIONS: Mapping[str, str] = {
+    "CIA": "Chemical Index of Alteration, 100·Al2O3/(Al2O3+CaO*+Na2O+"
+           "K2O) molar, CaO* corrected for apatite (Nesbitt & Young "
+           "1982). Fresh basalt ≈ 30-45, granite ≈ 45-55.",
+    "AI_Ishikawa": "Alteration index, 100·(K2O+MgO)/(K2O+MgO+Na2O+CaO) "
+                   "wt % (Ishikawa et al. 1976). > 60: hydrothermal "
+                   "alteration.",
+}
+
+
+def ratio_description(name: str) -> Optional[str]:
+    """What the ratio *name* of :data:`RATIO_DEFINITIONS` is."""
+    for ratio, num, den in RATIO_DEFINITIONS:
+        if ratio == name:
+            text = f"{num} / {den}, ppm/ppm."
+            if "Ti" in (num, den):
+                text += (f" Ti from TiO2 × {TIO2_WT_TO_TI_PPM:g} when "
+                         "there is no Ti column.")
+            return text
+    return None
 
 
 # ---------------------------------------------------------------------------

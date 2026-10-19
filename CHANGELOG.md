@@ -18,6 +18,18 @@ including what is still unverified.
 
 ### Added
 
+- **Mg#, ratios and anomalies per sample in the data table.** The Data
+  sheet of *Data → View data table…* now ends with green calculated
+  columns: the Mg# (Mg#, Mg#_FeOt, Mg#_adj), the 19 trace-element
+  ratios, CIA and AI_Ishikawa, and the REE and multi-element anomalies,
+  shaded pink or blue as in Statistics. They come from the same
+  functions as the Statistics view's per-sample tables, against the
+  same chondrite (one choice for both), so the numbers agree; they are
+  read-only, worked out afresh whenever a value changes and never
+  written into the data, and a column of the user's own with the same
+  name is shown as theirs. *Export table…* saves the sheet with them as
+  Excel or CSV. Each row is now headed by its sample name, so a row
+  stays recognisable out among the calculated columns.
 - **Nb/Zr vs Th/Nb — Godang, Saputro & Li (2024).** The diagram Li et
   al. (2025) reproduce as their Figure 5: Nb/Zr sorts the mantle source
   (enriched above the primitive mantle's 0.0627, slightly enriched to
@@ -606,6 +618,14 @@ including what is still unverified.
 
 #### Interface
 
+- **Ti/Y, Ti/V and Ti/Ti* were missing for most datasets.** Statistics
+  read Ti only from a Ti column, so a dataset reporting TiO2 — almost
+  every one — had none of the three, though every diagram converts its
+  TiO2. Ti is now the Ti column or TiO2 × 5993.4, the diagrams'
+  constant, and Ti/Ti* reads the majors the adjusted-majors switch
+  selects, as Ti/Y and Ti/V already did.
+- **The data table sorted numbers as text.** Clicking a header put 10
+  and 100 before 9. Numbers now sort as numbers, blank cells last.
 - **B.I.R.D.S could close on its own during a redraw.** Twice on
   2026-10-14 (once the installed app, once another PySide6 app run from
   source): macOS 26 with Qt 6.11 crashed inside CGImageCreate as Qt

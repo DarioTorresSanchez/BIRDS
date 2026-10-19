@@ -70,18 +70,12 @@ def _anomaly_color(name: str, value: float) -> Optional[QColor]:
       * REE / Nb / Ta / Ti anomalies (``X/X*``): >1.05 positive, <0.95 negative
       * Y/Ho ratio (chondritic ≈ 28): >32 positive, <24 negative
     """
-    if pd.isna(value):
-        return None
-    if name.endswith("*"):
-        if value > 1.05:
-            return POSITIVE_COLOR
-        if value < 0.95:
-            return NEGATIVE_COLOR
-    elif name == "Y/Ho":
-        if value > 32:
-            return POSITIVE_COLOR
-        if value < 24:
-            return NEGATIVE_COLOR
+    from ..per_sample import anomaly_sign
+    sign = anomaly_sign(name, value)
+    if sign > 0:
+        return POSITIVE_COLOR
+    if sign < 0:
+        return NEGATIVE_COLOR
     return None
 
 
@@ -500,6 +494,15 @@ class StatisticsView(QWidget):
         """The dataset as the column-summarising tables read it: with
         the Mg# variants added as columns, reported like any oxide."""
         return with_derived(self.data.df)
+
+    def anomaly_frame(self, normaliser_name: Optional[str] = None
+                      ) -> pd.DataFrame:
+        """REE and multi-element anomalies, per sample, against the
+        chondrite picked.  Read from the majors the switch selects, so
+        Ti/Ti* takes its TiO2 where Ti/Y and Ti/V do (the REE are the
+        same either way)."""
+        return compute_anomalies_extended(self.data.majors_df(),
+                                          normaliser_name)
 
     def ratio_frame(self) -> pd.DataFrame:
         """Trace ratios, Mg# and alteration indices, per sample.
@@ -1468,7 +1471,7 @@ class StatisticsView(QWidget):
         self._by_group = compute_descriptive_by_group(
             stats_df, getattr(self.plot_style, "group_columns", []) or []
         )
-        self._anomalies = compute_anomalies_extended(df, norm_name)
+        self._anomalies = self.anomaly_frame(norm_name)
         self._ratios = self.ratio_frame()
 
         self._fill_table(self.descriptive_table, self._descriptive)

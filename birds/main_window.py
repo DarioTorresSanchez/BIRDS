@@ -174,6 +174,31 @@ class BirdsMainWindow(QMainWindow):
         # triggers the local view's update_plot().
         self._wire_grouping_groups()
 
+        # ---- one anomaly reference --------------------------------------
+        # The data table's per-sample anomalies and the Statistics view's
+        # are normalised to the same chondrite: picking it in either
+        # place picks it in both, so the two never show different values.
+        self._link_anomaly_references()
+
+    def _link_anomaly_references(self) -> None:
+        """Keep the two chondrite pickers on the same entry.  The other
+        one is set quietly: both pages recompute whenever they are
+        opened, and recomputing Statistics behind the table took most
+        of a second for each pick."""
+        table = self.data_table.anomaly_combo
+        stats = self.statistics.norm_combo
+
+        def follow(source, target):
+            def sync(*_args):
+                idx = target.findData(source.currentData())
+                if idx >= 0 and idx != target.currentIndex():
+                    target.blockSignals(True)
+                    target.setCurrentIndex(idx)
+                    target.blockSignals(False)
+            source.currentIndexChanged.connect(sync)
+        follow(table, stats)
+        follow(stats, table)
+
     # ----------------------------------------------------------------- toolbar
     def _build_toolbar(self) -> None:
         toolbar = QToolBar("Navigation")

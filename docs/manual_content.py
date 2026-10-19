@@ -310,6 +310,34 @@ SECTIONS = [
          "The bivariate view has no switch: it lists the analysed and "
          "the adjusted columns side by side, so each axis shows which "
          "one it is by its name (section 8)."},
+        {"type": "h2", "text": "6.6  The data table"},
+        {"type": "p", "text":
+         "Data → View data table… (Ctrl+T) shows the Data, Isotopes and "
+         "Petrography sheets as loaded, for checking and correcting in "
+         "place: edit a cell, add or remove rows and columns, undo and "
+         "redo. Each row is headed by its sample name, and a click on a "
+         "column header sorts by it — numbers in numeric order, blank "
+         "cells last."},
+        {"type": "p", "text":
+         "The Data sheet ends with green calculated columns, per "
+         "sample: the Mg# (Mg#, Mg#_FeOt and, once the majors are "
+         "adjusted, Mg#_adj), the trace-element ratios, the alteration "
+         "indices CIA and AI_Ishikawa, and the REE and multi-element "
+         "anomalies, pink where positive and blue where negative. They "
+         "are the values the Statistics view shows (section 11), "
+         "against the chondrite picked under Anomaly reference — one "
+         "choice for both places. Hover over a header for what each one "
+         "is."},
+        {"type": "bullet", "items": [
+            "They are read-only and never saved into your data: they "
+            "are worked out again whenever a value changes, so they "
+            "always follow the table.",
+            "A column of your own with the same name — a Mg# you "
+            "computed yourself — is shown as yours instead.",
+            "Untick Calculated columns to hide them.",
+            "Export table… saves the sheet, with the calculated columns, "
+            "as Excel or CSV: every row, in file order.",
+        ]},
     ]),
 
     ("7. Classification diagrams", [
@@ -572,11 +600,16 @@ SECTIONS = [
             "with the Mg# at the foot of the major elements and each "
             "adjusted oxide beside the analysed one.",
             "Anomalies & ratios — Eu/Eu*, Ce/Ce*, Pr/Pr*, Gd/Gd*, "
-            "Y/Y*, Y/Ho (raw), and the normalised (La/Yb)_N, "
-            "(La/Sm)_N, (Gd/Yb)_N, (Sm/Yb)_N per sample. Positive "
-            "anomalies are highlighted in pink, negative in light blue.",
-            "Trace-element ratios — 15 commonly used ratios per sample "
-            "(La/Yb, Zr/Y, Th/Yb, Nb/Y, Ti/V, Ba/Nb, Rb/Sr, …).",
+            "Dy/Dy*, Y/Y*, Y/Ho (raw), the primitive-mantle Ta/Ta*, "
+            "Nb/Nb* and Ti/Ti*, Verma's Nb/Nb* and Ta/Ta*, and the "
+            "normalised (La/Yb)_N, (La/Sm)_N, (Gd/Yb)_N, (Sm/Yb)_N per "
+            "sample. Positive anomalies are highlighted in pink, "
+            "negative in light blue.",
+            "Trace-element ratios — 19 commonly used ratios per sample "
+            "(La/Yb, Zr/Y, Th/Yb, Nb/Y, Ti/Y, Ti/V, Ba/Nb, Rb/Sr, …), "
+            "with the Mg# and the alteration indices. Ti is the Ti "
+            "column, or TiO2 × 5993.4 when there is none, as the "
+            "diagrams take it.",
             "Correlation matrix — Pearson r heatmap, poolable, "
             "facetable per group or shown for one group alone, with "
             "cell annotations if the matrix fits on screen.",
@@ -587,7 +620,8 @@ SECTIONS = [
         {"type": "p", "text":
          "Mg#, Mg#_FeOt and, once the majors are adjusted, Mg#_adj are "
          "summarised like any oxide in the Descriptive, By group and "
-         "Paper tables, and listed per sample with the trace ratios; "
+         "Paper tables, and listed per sample with the trace ratios — "
+         "and, beside the data, in the data table (section 6.6); "
          "the saved report carries them in the same places. The "
          "Major elements panel under the toolbar decides whether the "
          "ratios and the tectonic parameters read adjusted or analysed "

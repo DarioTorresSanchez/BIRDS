@@ -15,12 +15,20 @@ working dataset without one is a trap.
 
 Below-detection cells (see :mod:`birds.detection_limits`) are tinted
 amber and show the substitution in their tooltip.
+
+The Data sheet ends with calculated columns -- Mg#, trace ratios,
+alteration indices and anomalies, sample by sample (see
+:mod:`birds.per_sample`).  They are tinted green, read-only, worked out
+afresh from the data whenever it changes and never written into it; the
+anomalies are shaded as in the Statistics view.  *Export table…* writes
+the sheet with them.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+from pathlib import Path
+from typing import Callable, Optional
 
 import numpy as np
 import pandas as pd
@@ -32,9 +40,11 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import QBrush, QColor, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QDialog,
     QDialogButtonBox,
+    QFileDialog,
     QFormLayout,
     QHBoxLayout,
     QLabel,
@@ -48,6 +58,15 @@ from PySide6.QtWidgets import (
 
 _BDL_BG = QColor("#FFF3D6")          # soft amber for <LD cells
 _BDL_FG = QColor("#8a6d1a")
+_CALC_BG = QColor("#E8F3EC")         # calculated columns: pale green
+_CALC_FG = QColor("#1f4d36")
+_ANOMALY_POS = QColor(244, 191, 191)  # as the Statistics view shades them
+_ANOMALY_NEG = QColor(191, 215, 244)
+
+#: The role the sort reads: numbers as numbers, so a column sorts
+#: 9, 10, 100 rather than "10", "100", "9" as the displayed text did.
+#: Blank cells are None and sort last.
+SORT_ROLE = Qt.ItemDataRole.UserRole + 1
 
 _UNDO_DEPTH = 40                     # snapshots kept per session
 
@@ -150,6 +169,10 @@ class DataFrameModel(QAbstractTableModel):
         self._bdl: Optional[pd.DataFrame] = None
         self._dirty_cb = None            # main-window mark_dirty hook
         self._before_change_cb = None    # view's undo-snapshot hook
+        # Calculated columns shown after the sheet's own (read-only).
+        self._calculator: Optional[Callable[[], pd.DataFrame]] = None
+        self._describe: Optional[Callable[[str], str]] = None
+        self._calc: Optional[pd.DataFrame] = None
 
     # ------------------------------------------------------------- setup
     def set_frame(self, df: Optional[pd.DataFrame],
@@ -157,7 +180,67 @@ class DataFrameModel(QAbstractTableModel):
         self.beginResetModel()
         self._df = df
         self._bdl = bdl_mask
+        self._calc = self._calculate()
         self.endResetModel()
+
+    def set_calculator(self, calculator: Optional[Callable[[], pd.DataFrame]],
+                       describe: Optional[Callable[[str], str]] = None
+                       ) -> None:
+        """Show *calculator*'s columns after the sheet's own -- None for
+        none.  It is called again whenever the sheet changes; *describe*
+        names what a calculated column is, for its tooltip."""
+        self._calculator = calculator
+        self._describe = describe
+
+    def _calculate(self) -> Optional[pd.DataFrame]:
+        if self._calculator is None or self._df is None or self._df.empty:
+            return None
+        try:
+            calc = self._calculator()
+        except Exception:                                  # noqa: BLE001
+            return None
+        if calc is None or calc.empty:
+            return None
+        calc = calc.reindex(self._df.index)
+        return calc[[c for c in calc.columns if c not in self._df.columns]]
+
+    def _refresh_calculated(self) -> None:
+        """Recompute after a cell edit; the column set is kept unless it
+        changes (a ratio gaining its first value), which needs a reset."""
+        calc = self._calculate()
+        old = [] if self._calc is None else list(self._calc.columns)
+        new = [] if calc is None else list(calc.columns)
+        if old != new:
+            self.beginResetModel()
+            self._calc = calc
+            self.endResetModel()
+            return
+        self._calc = calc
+        if calc is not None and len(self._df):
+            n = self.source_column_count()
+            self.dataChanged.emit(self.index(0, n),
+                                  self.index(len(self._df) - 1,
+                                             n + len(new) - 1))
+
+    def source_column_count(self) -> int:
+        """Columns of the sheet itself, before the calculated ones."""
+        return 0 if self._df is None else len(self._df.columns)
+
+    def is_calculated(self, column: int) -> bool:
+        return column >= self.source_column_count()
+
+    @property
+    def calculated(self) -> Optional[pd.DataFrame]:
+        return self._calc
+
+    def export_frame(self) -> Optional[pd.DataFrame]:
+        """The sheet with its calculated columns, as a file should hold
+        it: every row, in file order."""
+        if self._df is None:
+            return None
+        if self._calc is None:
+            return self._df.copy()
+        return pd.concat([self._df, self._calc], axis=1)
 
     def set_dirty_callback(self, cb) -> None:
         self._dirty_cb = cb
@@ -175,14 +258,52 @@ class DataFrameModel(QAbstractTableModel):
         return 0 if (self._df is None or parent.isValid()) else len(self._df)
 
     def columnCount(self, parent=QModelIndex()) -> int:         # noqa: N802
-        return 0 if (self._df is None or parent.isValid()) else len(self._df.columns)
+        if self._df is None or parent.isValid():
+            return 0
+        extra = 0 if self._calc is None else len(self._calc.columns)
+        return len(self._df.columns) + extra
+
+    def _calc_name(self, column: int) -> str:
+        return str(self._calc.columns[column - self.source_column_count()])
 
     def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):  # noqa: N802
-        if role != Qt.ItemDataRole.DisplayRole or self._df is None:
+        if self._df is None:
             return None
-        if orientation == Qt.Orientation.Horizontal:
+        horizontal = orientation == Qt.Orientation.Horizontal
+        if horizontal and self.is_calculated(section):
+            name = self._calc_name(section)
+            if role == Qt.ItemDataRole.DisplayRole:
+                return name
+            if role == Qt.ItemDataRole.ToolTipRole:
+                return self._calc_tooltip(name)
+            if role == Qt.ItemDataRole.ForegroundRole:
+                return QBrush(_CALC_FG)
+            return None
+        if role != Qt.ItemDataRole.DisplayRole:
+            return None
+        if horizontal:
             return str(self._df.columns[section])
-        return str(self._df.index[section])
+        return self._row_label(section)
+
+    def _name_column(self) -> Optional[str]:
+        from .brushing import NAME_COLUMNS
+        return next((c for c in NAME_COLUMNS if c in self._df.columns), None)
+
+    def _row_label(self, row: int) -> str:
+        """The sample's name heads its row, so a row stays recognisable
+        however far right the table is scrolled -- out among the
+        calculated columns, say; the row number where it has none."""
+        col = self._name_column()
+        if col is not None:
+            value = self._df.iloc[row][col]
+            if not pd.isna(value) and str(value).strip():
+                return str(value)
+        return str(self._df.index[row])
+
+    def _calc_tooltip(self, name: str) -> str:
+        what = self._describe(name) if self._describe else name
+        return (f"{name}: {what}\n\nCalculated from the data — "
+                "read-only, recomputed whenever the data change.")
 
     def _is_bdl(self, row: int, col: int) -> bool:
         if self._bdl is None:
@@ -199,6 +320,15 @@ class DataFrameModel(QAbstractTableModel):
         if not index.isValid() or self._df is None:
             return None
         r, c = index.row(), index.column()
+        if self.is_calculated(c):
+            return self._calc_data(r, c, role)
+        if role == SORT_ROLE:
+            v = self._df.iloc[r, c]
+            if pd.isna(v):
+                return None
+            if pd.api.types.is_numeric_dtype(self._df.dtypes.iloc[c]):
+                return float(v)
+            return str(v)
         if role in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole):
             v = self._df.iloc[r, c]
             if pd.isna(v):
@@ -216,14 +346,37 @@ class DataFrameModel(QAbstractTableModel):
                     "(see the Detection-limits policy in the Import dialog).")
         return None
 
+    def _calc_data(self, r: int, c: int, role):
+        from ..per_sample import anomaly_sign
+        name = self._calc_name(c)
+        v = self._calc.iloc[r, c - self.source_column_count()]
+        missing = v is None or pd.isna(v)
+        if role == Qt.ItemDataRole.DisplayRole:
+            return "" if missing else f"{float(v):g}"
+        if role == SORT_ROLE:
+            return None if missing else float(v)
+        if role == Qt.ItemDataRole.BackgroundRole:
+            sign = 0 if missing else anomaly_sign(name, float(v))
+            return QBrush(_ANOMALY_POS if sign > 0
+                          else _ANOMALY_NEG if sign < 0 else _CALC_BG)
+        if role == Qt.ItemDataRole.ForegroundRole:
+            return QBrush(_CALC_FG)
+        if role == Qt.ItemDataRole.ToolTipRole:
+            return self._calc_tooltip(name)
+        return None
+
     def flags(self, index):
         base = super().flags(index)
+        if index.isValid() and self.is_calculated(index.column()):
+            return base & ~Qt.ItemFlag.ItemIsEditable
         return base | Qt.ItemFlag.ItemIsEditable
 
     def setData(self, index, value, role=Qt.ItemDataRole.EditRole):  # noqa: N802
         if role != Qt.ItemDataRole.EditRole or self._df is None:
             return False
         r, c = index.row(), index.column()
+        if self.is_calculated(c):
+            return False
         col = self._df.columns[c]
         text = str(value).strip()
         current = self._df.iloc[r, c]
@@ -252,6 +405,9 @@ class DataFrameModel(QAbstractTableModel):
             except Exception:
                 pass
         self.dataChanged.emit(index, index)
+        if col == self._name_column():
+            self.headerDataChanged.emit(Qt.Orientation.Vertical, r, r)
+        self._refresh_calculated()
         if self._dirty_cb is not None:
             self._dirty_cb()
         return True
@@ -282,7 +438,9 @@ class DataTableView(QWidget):
             "Inspect and edit the loaded sheets in place.  Edits are "
             "applied to the working dataset immediately — re-render any "
             "diagram (Ctrl+R) to see them.  Amber cells were below the "
-            "detection limit at import."
+            "detection limit at import.  Green columns at the end of the "
+            "Data sheet are calculated per sample — Mg#, trace ratios, "
+            "alteration indices and anomalies — and follow the data."
         )
         subtitle.setWordWrap(True)
         subtitle.setStyleSheet("color: #5b6478;")
@@ -350,7 +508,43 @@ class DataTableView(QWidget):
         self.redo_btn.clicked.connect(self.redo)
         edit_bar.addWidget(self.redo_btn)
         edit_bar.addStretch(1)
+        self.export_btn = QPushButton("Export table…")
+        self.export_btn.setToolTip(
+            "Save this sheet — every row, in file order — as Excel or "
+            "CSV, with the calculated columns when they are shown.")
+        self.export_btn.clicked.connect(self.export_table)
+        edit_bar.addWidget(self.export_btn)
         outer.addLayout(edit_bar)
+
+        # ---- calculated columns (Data sheet) ------------------------
+        from ..per_sample import default_normaliser
+        from ..stats_engine import available_normalisers
+        calc_bar = QHBoxLayout()
+        self.calc_chk = QCheckBox(
+            "Calculated columns: Mg#, trace ratios, alteration indices "
+            "and anomalies")
+        self.calc_chk.setChecked(True)
+        self.calc_chk.setToolTip(
+            "Append, per sample, the values the Statistics view "
+            "summarises.  Read-only and never saved into the data: they "
+            "are recomputed whenever a value changes.")
+        self.calc_chk.toggled.connect(self.refresh_from_data)
+        calc_bar.addWidget(self.calc_chk)
+        calc_bar.addSpacing(12)
+        self.anomaly_label = QLabel("Anomaly reference (chondrite):")
+        calc_bar.addWidget(self.anomaly_label)
+        self.anomaly_combo = QComboBox()
+        for name in available_normalisers():
+            self.anomaly_combo.addItem(name, name)
+        self.anomaly_combo.setCurrentIndex(
+            max(self.anomaly_combo.findData(default_normaliser()), 0))
+        self.anomaly_combo.setToolTip(
+            "The chondrite the REE anomalies and (La/Yb)N-type ratios "
+            "are normalised to — the same choice as in Statistics.")
+        self.anomaly_combo.currentIndexChanged.connect(self.refresh_from_data)
+        calc_bar.addWidget(self.anomaly_combo)
+        calc_bar.addStretch(1)
+        outer.addLayout(calc_bar)
 
         QShortcut(QKeySequence.StandardKey.Undo, self, self.undo)
         QShortcut(QKeySequence.StandardKey.Redo, self, self.redo)
@@ -358,6 +552,7 @@ class DataTableView(QWidget):
         self.model = DataFrameModel(self)
         self.proxy = QSortFilterProxyModel(self)
         self.proxy.setSourceModel(self.model)
+        self.proxy.setSortRole(SORT_ROLE)
         self.proxy.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.proxy.setFilterKeyColumn(-1)          # match ANY column
 
@@ -389,12 +584,57 @@ class DataTableView(QWidget):
         self.model.set_dirty_callback(cb)
         self.model.set_before_change_callback(self._snapshot)
 
-    def refresh_from_data(self) -> None:
-        """Re-bind the current sheet from the DataManager."""
+    def refresh_from_data(self, *_args) -> None:
+        """Re-bind the current sheet from the DataManager, its
+        calculated columns worked out afresh."""
         key = self.sheet_combo.currentData() or "main"
+        on_data = key == "main"
+        for widget in (self.calc_chk, self.anomaly_label, self.anomaly_combo):
+            widget.setEnabled(on_data)
+        if on_data and self.calc_chk.isChecked():
+            from .. import per_sample
+            normaliser = self.anomaly_combo.currentData()
+            self.model.set_calculator(
+                lambda: per_sample.calculated_columns(self.data, normaliser),
+                lambda name: per_sample.describe(name, normaliser))
+        else:
+            self.model.set_calculator(None)
         df, mask = self._frame_for(key)
         self.model.set_frame(df, mask)
         self._update_status()
+
+    def export_table(self) -> None:
+        """Save the sheet, with its calculated columns, as xlsx or csv."""
+        frame = self.model.export_frame()
+        if frame is None or frame.empty:
+            QMessageBox.information(
+                self, "Export table",
+                "This sheet is empty — import a dataset first.")
+            return
+        key = self._sheet_key()
+        path, chosen = QFileDialog.getSaveFileName(
+            self, "Export table", f"BIRDS_{key}_table.xlsx",
+            "Excel workbook (*.xlsx);;CSV (*.csv)")
+        if not path:
+            return
+        path = Path(path)
+        if path.suffix.lower() not in (".xlsx", ".csv"):
+            path = path.with_suffix(".csv" if "CSV" in chosen else ".xlsx")
+        try:
+            if path.suffix.lower() == ".csv":
+                frame.to_csv(path, index=False)
+            else:
+                frame.to_excel(path, index=False, sheet_name=key[:31])
+        except Exception as exc:                           # noqa: BLE001
+            QMessageBox.critical(self, "Export table",
+                                 f"Could not save the table:\n{exc}")
+            return
+        n_calc = (0 if self.model.calculated is None
+                  else len(self.model.calculated.columns))
+        extra = f", {n_calc} of them calculated" if n_calc else ""
+        self.status_label.setText(
+            f"Exported {len(frame)} rows and {len(frame.columns)} columns"
+            f"{extra} to {path.name}.")
 
     # ---------------------------------------------------------------- undo
     _SHEET_ATTR = {
@@ -563,9 +803,16 @@ class DataTableView(QWidget):
         df, _ = self._frame_for(key)
         if df is None or df.empty:
             return
-        cols = [df.columns[c] for c in self._selected_source_columns()
-                if c < len(df.columns)]
+        selected = self._selected_source_columns()
+        cols = [df.columns[c] for c in selected if c < len(df.columns)]
         if not cols:
+            if selected:
+                QMessageBox.information(
+                    self, "Delete columns",
+                    "The green columns are calculated from the data and "
+                    "cannot be deleted; untick “Calculated columns” to "
+                    "hide them.")
+                return
             QMessageBox.information(
                 self, "Delete columns",
                 "Select at least one cell in the columns you want to "
@@ -640,6 +887,9 @@ class DataTableView(QWidget):
             n_bdl = int(mask.to_numpy().sum())
         parts = [f"{shown} of {total} rows shown",
                  f"{len(df.columns)} columns"]
+        calc = self.model.calculated
+        if calc is not None and len(calc.columns):
+            parts.append(f"{len(calc.columns)} calculated (green)")
         if n_bdl:
             parts.append(f"{n_bdl} below-detection cells (amber)")
         self.status_label.setText("  ·  ".join(parts))
