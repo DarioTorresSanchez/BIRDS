@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 
 from ..detection_limits import POLICIES, POLICY_LABELS, scan_and_convert
 from ..io_utils import list_excel_sheets, read_tabular
+from ..views.background import Cancelled, reading_label, run_in_background
 
 
 # Heuristic to detect the most likely "bulk", "isotope" and "petrography"
@@ -207,7 +208,10 @@ class ImportDialog(QDialog):
         else:
             self.excel_box.setVisible(False)
             try:
-                raw = read_tabular(self._path)
+                raw = self._read(read_tabular, self._path)
+            except Cancelled:
+                self._forget_file()
+                return
             except Exception as exc:  # noqa: BLE001
                 QMessageBox.critical(self, "Read error", str(exc))
                 self._df = None
@@ -219,11 +223,29 @@ class ImportDialog(QDialog):
             self._petro_df = None
             self._apply_bdl_and_preview(raw, None, None)
 
+    def _read(self, fn, *args, **kwargs):
+        """Read off the window's thread: a file kept online only in
+        Google Drive / iCloud downloads inside the read, and the window
+        froze until it had."""
+        return run_in_background(self, "Import data",
+                                 reading_label(self._path), fn, *args,
+                                 **kwargs)
+
+    def _forget_file(self) -> None:
+        """The user stopped waiting for the file: back to no file."""
+        self._path = None
+        self.path_edit.clear()
+        self._df = None
+        self.ok_button.setEnabled(False)
+
     def _load_excel(self) -> None:
         if self._path is None:
             return
         try:
-            sheets = list_excel_sheets(self._path)
+            sheets = self._read(list_excel_sheets, self._path)
+        except Cancelled:
+            self._forget_file()
+            return
         except Exception as exc:  # noqa: BLE001
             QMessageBox.critical(self, "Read error", str(exc))
             return
@@ -274,7 +296,7 @@ class ImportDialog(QDialog):
         cached = self._sheet_cache.get(sheet)
         if cached is not None:
             return cached
-        df = read_tabular(self._path, sheet=sheet)
+        df = self._read(read_tabular, self._path, sheet=sheet)
         self._sheet_cache[sheet] = df
         return df
 
@@ -295,6 +317,9 @@ class ImportDialog(QDialog):
             return
         try:
             joined = self._read_sheet_cached(bulk_sheet)
+        except Cancelled:
+            self._forget_file()
+            return
         except Exception as exc:  # noqa: BLE001
             QMessageBox.critical(self, "Read error", str(exc))
             self._df = None
@@ -319,6 +344,8 @@ class ImportDialog(QDialog):
                 continue
             try:
                 extra = self._read_sheet_cached(sheet_name)
+            except Cancelled:
+                continue
             except Exception as exc:                       # noqa: BLE001
                 QMessageBox.warning(
                     self, f"{label} sheet",

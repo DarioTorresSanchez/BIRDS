@@ -858,6 +858,19 @@ SECTIONS = [
     ]),
 
     ("14. Troubleshooting", [
+        {"type": "h2", "text": "Opening a session or a dataset takes long"},
+        {"type": "p", "text":
+         "Google Drive, iCloud Drive, Dropbox and OneDrive can keep a "
+         "file in the cloud only until something opens it; it then has "
+         "to download first, which can take from a second to many "
+         "minutes when the connection or the sync is slow. B.I.R.D.S "
+         "reads the file in the background and shows “Downloading … "
+         "from cloud storage” with a Cancel button: the window stays "
+         "as it was, and Cancel leaves it untouched. To have your "
+         "sessions open at once, keep the folder that holds them on "
+         "the Mac: in Finder, right-click the folder → Make available "
+         "offline (Google Drive) or Keep Downloaded (iCloud)."},
+
         {"type": "h2", "text": "B.I.R.D.S closed on its own"},
         {"type": "p", "text":
          "Reopen it: the work of the last five minutes is offered back. "

@@ -618,6 +618,17 @@ including what is still unverified.
 
 #### Interface
 
+- **Opening a session from Google Drive froze the window.** Drive (as
+  iCloud, Dropbox, OneDrive) keeps files online only until something
+  opens them, and opening one waits inside the read while it downloads
+  — on the window's thread, so nothing was drawn and no click was
+  answered until it had: eleven minutes, measured, for a 68 kB session
+  of the user's. Sessions, datasets and style presets are now read on a
+  worker thread; a read that takes more than a moment brings up a
+  dialog saying what is awaited (“Downloading … from cloud storage”
+  when the file is a cloud placeholder) with Cancel, which leaves
+  everything as it was. Once the sessions were local every one of the
+  user's six opened in under 1.5 s and every view in under 0.8 s.
 - **Ti/Y, Ti/V and Ti/Ti* were missing for most datasets.** Statistics
   read Ti only from a Ti column, so a dataset reporting TiO2 — almost
   every one — had none of the three, though every diagram converts its

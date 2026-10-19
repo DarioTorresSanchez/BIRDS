@@ -704,8 +704,13 @@ class BirdsMainWindow(QMainWindow):
             f"B.I.R.D.S style (*{STYLE_EXT});;All files (*)")
         if not path_str:
             return
+        from .views.background import Cancelled, reading_label, run_in_background
         try:
-            preset, name = load_preset(path_str)
+            preset, name = run_in_background(
+                self, "Load style preset", reading_label(path_str),
+                load_preset, path_str)
+        except Cancelled:
+            return
         except StylePresetError as exc:
             QMessageBox.critical(self, "Load style preset", str(exc))
             return
@@ -1398,8 +1403,17 @@ class BirdsMainWindow(QMainWindow):
         self.activateWindow()
 
     def _load_session_path(self, path: Path) -> None:
+        # Read off the window's thread: a session kept online only in
+        # Google Drive / iCloud downloads inside the read, and froze the
+        # whole window for as long as that took.
+        from .views.background import Cancelled, reading_label, run_in_background
         try:
-            state = load_session(path)
+            state = run_in_background(self, "Open session",
+                                      reading_label(path), load_session, path)
+        except Cancelled:
+            self.statusBar().showMessage(
+                f"Stopped waiting for {path.name}; nothing was changed.")
+            return
         except SessionError as exc:
             QMessageBox.critical(self, "Open session", str(exc))
             return
