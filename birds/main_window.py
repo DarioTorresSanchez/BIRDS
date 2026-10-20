@@ -550,6 +550,8 @@ class BirdsMainWindow(QMainWindow):
         self.stack.setCurrentWidget(self.spider)
         self.spider.plot_style = self.style
         self.spider.set_mode(mode)
+        # A mode opened for the first time has just built its controls.
+        self._wire_dirty_signals()
 
     # ---- Tectonic menu ------------------------------------------------------
     def _build_tectonic_menu(self, bar: QMenuBar) -> None:
@@ -1349,6 +1351,8 @@ class BirdsMainWindow(QMainWindow):
 
         # Rebuild Grouping checkboxes for the freshly-loaded plot_style.
         self._wire_grouping_groups()
+        # Restoring can build controls (the Spider's other mode).
+        self._wire_dirty_signals()
         self.setWindowModified(False)
         self._refresh_window_title()
 
@@ -1540,39 +1544,48 @@ class BirdsMainWindow(QMainWindow):
                             pass  # already gone — fine.
                     gg.visibility_changed.connect(slot)
                     gg._visibility_slot = slot
+        # The rebuilt group checkboxes are new widgets: track them too.
+        if hasattr(self, "_qs"):
+            self._wire_dirty_signals()
 
     def _wire_dirty_signals(self) -> None:
         """Walk every view's widget tree and connect state-changing
-        signals to :meth:`mark_dirty`.  Idempotent at the widget level —
-        Qt happily dedups identical connections."""
+        signals to :meth:`mark_dirty`.
+
+        Idempotent: each widget is wired once (Qt does not merge
+        repeated connections), so it can run again whenever a view makes
+        new controls -- the Spider's multi-element panel is built the
+        first time it is opened, and its changes used to leave the
+        session unmarked, so closing did not offer to save them."""
         from PySide6.QtWidgets import (
             QCheckBox, QComboBox, QDoubleSpinBox, QLineEdit,
             QListWidget, QRadioButton, QSpinBox, QTreeWidget,
         )
 
+        def wire(widgets, signal_name):
+            for widget in widgets:
+                if getattr(widget, "_dirty_wired", False):
+                    continue
+                getattr(widget, signal_name).connect(self.mark_dirty)
+                widget._dirty_wired = True
+
         for name in self._VIEW_ATTRS:
             view = getattr(self, name, None)
             if view is None:
                 continue
-
-            for combo in view.findChildren(QComboBox):
-                combo.currentIndexChanged.connect(self.mark_dirty)
-                if combo.isEditable():
+            combos = view.findChildren(QComboBox)
+            wire(combos, "currentIndexChanged")
+            for combo in combos:
+                if combo.isEditable() and not getattr(combo, "_dirty_text", False):
                     combo.editTextChanged.connect(self.mark_dirty)
-            for edit in view.findChildren(QLineEdit):
-                edit.textChanged.connect(self.mark_dirty)
-            for spin in view.findChildren(QSpinBox):
-                spin.valueChanged.connect(self.mark_dirty)
-            for dspin in view.findChildren(QDoubleSpinBox):
-                dspin.valueChanged.connect(self.mark_dirty)
-            for chk in view.findChildren(QCheckBox):
-                chk.toggled.connect(self.mark_dirty)
-            for rad in view.findChildren(QRadioButton):
-                rad.toggled.connect(self.mark_dirty)
-            for lw in view.findChildren(QListWidget):
-                lw.itemSelectionChanged.connect(self.mark_dirty)
-            for tw in view.findChildren(QTreeWidget):
-                tw.itemChanged.connect(self.mark_dirty)
+                    combo._dirty_text = True
+            wire(view.findChildren(QLineEdit), "textChanged")
+            wire(view.findChildren(QSpinBox), "valueChanged")
+            wire(view.findChildren(QDoubleSpinBox), "valueChanged")
+            wire(view.findChildren(QCheckBox), "toggled")
+            wire(view.findChildren(QRadioButton), "toggled")
+            wire(view.findChildren(QListWidget), "itemSelectionChanged")
+            wire(view.findChildren(QTreeWidget), "itemChanged")
 
     def _refresh_window_title(self) -> None:
         base = "B.I.R.D.S — Broad Igneous Rocks · Diagrams & Statistics"

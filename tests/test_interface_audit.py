@@ -272,3 +272,28 @@ def test_real_degrees_get_no_utm_hint(window):
     samples, message = window.map._collect()
     assert message is None and samples
     assert window.map._utm_hint() == ""
+
+
+# ---------------------------------------------------------------------------
+# Controls made later still mark the session modified
+# ---------------------------------------------------------------------------
+
+def test_the_spiders_second_mode_marks_the_session_modified(window):
+    """Its panel is built the first time it opens -- after the window
+    wired its tracking -- so its changes went unrecorded and closing did
+    not offer to save them."""
+    for mode in ("ree", "multielement"):
+        window._open_spider(mode)
+        window.setWindowModified(False)
+        chk = window.spider._controls[mode].connect_chk
+        chk.setChecked(not chk.isChecked())
+        assert window.isWindowModified(), mode
+
+
+def test_tracking_is_wired_once_however_often_it_runs(window):
+    from PySide6.QtCore import SIGNAL
+    chk = window.tectonic.axis_grp.log_x
+    before = chk.receivers(SIGNAL("toggled(bool)"))
+    for _ in range(3):
+        window._wire_dirty_signals()
+    assert chk.receivers(SIGNAL("toggled(bool)")) == before

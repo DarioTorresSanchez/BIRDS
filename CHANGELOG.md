@@ -664,6 +664,11 @@ including what is still unverified.
   below with room kept for it.
 - **"Anomalies & ratios" showed as "Anomalies  ratios"** — Qt took the
   & for a keyboard shortcut.
+- **Changes in the Spider's Multi-elements panel were not recorded as
+  unsaved.** The panel is built the first time it opens, after the
+  window had wired its tracking, so closing did not offer to save them;
+  the same held for group checkboxes rebuilt by Edit plot. The tracking
+  now runs again for new controls, wiring each widget once.
 - **Opening a session from Google Drive froze the window.** Drive (as
   iCloud, Dropbox, OneDrive) keeps files online only until something
   opens them, and opening one waits inside the read while it downloads
