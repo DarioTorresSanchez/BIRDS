@@ -18,6 +18,31 @@ including what is still unverified.
 
 ### Added
 
+- **The map recognises UTM numbers in degree columns.** Several of the
+  user's sessions keep easting and northing in Latitude / Longitude;
+  the map said only that nothing could be parsed. It now names the
+  values, says they look like UTM and where to pick that format.
+- **Isotopes → Isotopes vs SiO₂** is in the menu; it was reachable only
+  from the picker inside the view.
+
+### Changed
+
+- **Every panel control redraws at once.** Log scales, the legend,
+  fonts and axis titles, the regression line, the isotope reservoirs and
+  reference lines, the map's options — about 110 controls in eight
+  views — took effect only on *Update plot*, while the diagram and
+  normaliser pickers redrew straight away; the difference read as
+  controls that did not respond. A text field applies on Enter or when
+  left, and a burst of changes is drawn once. Update plot stays.
+- **Bivariate opens on SiO₂ against MgO**, and its variable lists leave
+  out columns with no value and put the sample's context (No.,
+  coordinates, elevation, age) after its chemistry. It opened on the
+  first two numeric columns — in the data template "No." against an
+  empty "Sample_Label", a blank plot.
+- **Statistics shows numbers to six significant figures**
+  (57.482333333333344 was printed whole) and leaves out columns with no
+  value, which filled the Descriptive table with rows of count 0.
+  Exported files keep the full precision.
 - **Mg#, ratios and anomalies per sample in the data table.** The Data
   sheet of *Data → View data table…* now ends with green calculated
   columns: the Mg# (Mg#, Mg#_FeOt, Mg#_adj), the 19 trace-element
@@ -618,6 +643,27 @@ including what is still unverified.
 
 #### Interface
 
+- **An empty Rock_Type column hid every sample from Classification and
+  Tectonic.** Blank cells are kept on both the volcanic and the plutonic
+  family, but the filter knew a blank only as the text "nan", which
+  pandas 3 no longer writes: an unfilled Rock_Type column — four of the
+  user's six sessions — dropped every sample, and every classification
+  and tectonic diagram drew nothing, with "N filtered" under it. Found by
+  driving the whole interface over the user's sessions.
+- **Annotations followed the view, not the diagram.** Classification,
+  Tectonic, Petrography and Isotopes kept one list for all their
+  diagrams, so an arrow drawn on TAS reappeared, at TAS's coordinates,
+  on AFM and the rest. Each diagram now keeps its own; a session from
+  before puts its list on the diagram it was saved on.
+- **Two restored settings were lost on the next save** — the
+  correlation matrix's group and the map's variogram group — when the
+  session was saved again before the view had filled their lists.
+- **The legend of the multi-panel diagrams hung below the figure,** over
+  the last axis titles and cut off at the canvas edge. It now sits in
+  the grid's spare cell (Verma's five panels leave the sixth free), or
+  below with room kept for it.
+- **"Anomalies & ratios" showed as "Anomalies  ratios"** — Qt took the
+  & for a keyboard shortcut.
 - **Opening a session from Google Drive froze the window.** Drive (as
   iCloud, Dropbox, OneDrive) keeps files online only until something
   opens them, and opening one waits inside the read while it downloads

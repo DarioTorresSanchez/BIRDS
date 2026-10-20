@@ -227,6 +227,8 @@ class PetrographyView(QWidget):
     def update_plot(self) -> None:
         if defer_while_hidden(self):
             return      # drawn when its page is shown
+        # Annotations belong to the diagram they were drawn on.
+        self.annotation_ctl.set_context(self._diagram_key)
         if not self._diagram_key:
             return
         diagram = get_diagram(self._diagram_key)
@@ -314,4 +316,5 @@ class PetrographyView(QWidget):
         ws.restore_axis_group(self.axis_grp, state.get("axis"))
         ws.restore_legend_group(self.legend_grp, state.get("legend"))
         ws.restore_grouping_group(self.grouping_grp, state.get("grouping"))
-        self.annotation_ctl.restore(state.get("annotations"))
+        self.annotation_ctl.restore(state.get("annotations"),
+                                    legacy_context=state.get("diagram_key", ""))

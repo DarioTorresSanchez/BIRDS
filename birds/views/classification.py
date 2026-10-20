@@ -278,6 +278,8 @@ class ClassificationView(QWidget):
     def update_plot(self) -> None:
         if defer_while_hidden(self):
             return      # drawn when its page is shown
+        # Annotations belong to the diagram they were drawn on.
+        self.annotation_ctl.set_context(self._diagram_key)
         self.majors_box.sync(self.data)
         # Every path that leaves the canvas without points must also drop
         # the tally, otherwise it keeps advertising the previous render.
@@ -511,4 +513,5 @@ class ClassificationView(QWidget):
         ws.restore_spin(self.legend_font_size, state.get("legend_font_size"))
         ws.restore_check(self.facet_chk, state.get("facet"))
         ws.restore_check(self.rock_type_filter_chk, state.get("rock_filter"))
-        self.annotation_ctl.restore(state.get("annotations"))
+        self.annotation_ctl.restore(state.get("annotations"),
+                                    legacy_context=state.get("diagram_key", ""))

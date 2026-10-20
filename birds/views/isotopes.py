@@ -776,6 +776,8 @@ class IsotopesView(QWidget):
     def update_plot(self) -> None:
         if defer_while_hidden(self):
             return      # drawn when its page is shown
+        # Annotations belong to the diagram they were drawn on.
+        self.annotation_ctl.set_context(self.diagram_combo.currentData())
         df = self._active_df()
         if df is None or df.empty:
             self._empty("Load a dataset (Data → Import) to plot isotope diagrams.")
@@ -1342,4 +1344,5 @@ class IsotopesView(QWidget):
         ws.restore_check(self.eps_axes_chk, state.get("eps_axes"))
         ws.restore_check(self.legend_chk, state.get("legend"))
         ws.restore_check(self.sio2_ref_chk, state.get("sio2_reference"))
-        self.annotation_ctl.restore(state.get("annotations"))
+        self.annotation_ctl.restore(state.get("annotations"),
+                                    legacy_context=self.diagram_combo.currentData())

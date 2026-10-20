@@ -248,6 +248,8 @@ class TectonicView(QWidget):
     def update_plot(self) -> None:
         if defer_while_hidden(self):
             return      # drawn when its page is shown
+        # Annotations belong to the diagram they were drawn on.
+        self.annotation_ctl.set_context(self._diagram_key)
         self.majors_box.sync(self.data)
         if not self._diagram_key:
             return
@@ -544,4 +546,5 @@ class TectonicView(QWidget):
         ws.restore_grouping_group(self.grouping_grp, state.get("grouping"))
         ws.restore_check(self.composition_filter_chk, state.get("comp_filter"))
         ws.restore_check(self.rock_type_filter_chk, state.get("rock_filter"))
-        self.annotation_ctl.restore(state.get("annotations"))
+        self.annotation_ctl.restore(state.get("annotations"),
+                                    legacy_context=state.get("diagram_key", ""))

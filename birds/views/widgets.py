@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import SIGNAL, Qt, QTimer, Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QAbstractItemView,
+    QAbstractSpinBox,
     QCheckBox,
     QColorDialog,
     QComboBox,
@@ -34,6 +35,60 @@ ANN_MODE_LINE   = "line"
 ANN_MODE_ARROW  = "arrow"
 ANN_MODE_TEXT   = "text"
 ANN_MODE_SAMPLE = "sample"
+
+
+#: The change signal of each kind of control :func:`make_live` follows.
+_LIVE_SIGNALS = (
+    (QCheckBox, "toggled", "toggled(bool)"),
+    (QComboBox, "currentIndexChanged", "currentIndexChanged(int)"),
+    (QSpinBox, "valueChanged", "valueChanged(int)"),
+    (QDoubleSpinBox, "valueChanged", "valueChanged(double)"),
+    (QLineEdit, "editingFinished", "editingFinished()"),
+    (QGroupBox, "toggled", "toggled(bool)"),
+)
+
+#: How long a burst of changes -- a spin box held down, a radio pair
+#: swapping -- is gathered into one redraw.
+LIVE_DELAY_MS = 150
+
+
+def make_live(container, redraw, *, delay_ms: int = LIVE_DELAY_MS) -> int:
+    """Redraw as soon as a control under *container* changes.
+
+    Most panel controls -- log scale, legend, fonts, axis titles, the
+    regression line, the isotope reservoirs, the map's options -- used to
+    take effect only on *Update plot*, while the diagram and normaliser
+    pickers redrew at once; the difference read as controls that did not
+    respond.  Every control not already wired to something gets a
+    connection to one debounced *redraw*.  Call it before the main
+    window wires its "modified" tracking, so a connection there is not
+    mistaken for a live one; mark a control that must not redraw with
+    ``setProperty("liveExempt", True)``.  Returns how many were wired.
+    """
+    timer = QTimer(container)
+    timer.setSingleShot(True)
+    timer.setInterval(delay_ms)
+    timer.timeout.connect(redraw)
+
+    def kick(*_args) -> None:
+        timer.start()
+
+    wired = 0
+    for kind, name, signature in _LIVE_SIGNALS:
+        for widget in container.findChildren(kind):
+            if widget.property("liveExempt") or getattr(widget, "_live", False):
+                continue
+            if kind is QGroupBox and not widget.isCheckable():
+                continue
+            if kind is QLineEdit and isinstance(
+                    widget.parentWidget(), (QAbstractSpinBox, QComboBox)):
+                continue                  # a spin box's or combo's own edit
+            if widget.receivers(SIGNAL(signature)) > 0:
+                continue                  # already redraws, or does its job
+            getattr(widget, name).connect(kick)
+            widget._live = True
+            wired += 1
+    return wired
 
 
 FONT_CHOICES = (

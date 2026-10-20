@@ -59,6 +59,30 @@ POSITIVE_COLOR = QColor(244, 191, 191)   # soft red
 NEGATIVE_COLOR = QColor(191, 215, 244)   # soft blue
 
 
+def _tab_title(title: str) -> str:
+    """A tab caption as written: Qt reads a single & as a shortcut
+    marker and hid it -- "Anomalies & ratios" showed "Anomalies  ratios"."""
+    return title.replace("&", "&&")
+
+
+def display_value(value) -> str:
+    """A table cell as shown: whole numbers without ".0", others to six
+    significant figures -- 57.482333333333344 was printed whole.  Only
+    the display: exported files keep the full precision."""
+    if value is None or (not isinstance(value, str) and pd.isna(value)):
+        return ""
+    if isinstance(value, (bool, np.bool_)):
+        return str(value)
+    if isinstance(value, (int, np.integer)):
+        return str(int(value))
+    if isinstance(value, (float, np.floating)):
+        v = float(value)
+        if v.is_integer() and abs(v) < 1e15:
+            return str(int(v))
+        return f"{v:.6g}"
+    return f"{value}"
+
+
 def _hex(c: QColor) -> str:
     return c.name()
 
@@ -322,7 +346,7 @@ class StatisticsView(QWidget):
     # --------------------------------------------------------- tab titles
     def _add_tab(self, name: str, page: QWidget, title: str) -> None:
         self._tab_pages[name] = page
-        self.tabs.addTab(page, title)
+        self.tabs.addTab(page, _tab_title(title))
 
     def _set_tab_text(self, name: str, title: str) -> None:
         """Retitle a tab by name, so reordering can never mis-target it."""
@@ -331,7 +355,7 @@ class StatisticsView(QWidget):
             return
         index = self.tabs.indexOf(page)
         if index >= 0:
-            self.tabs.setTabText(index, title)
+            self.tabs.setTabText(index, _tab_title(title))
 
     # ----------------------------------------------------------- tab builders
     def _build_paper_tab(self) -> QWidget:
@@ -492,8 +516,14 @@ class StatisticsView(QWidget):
 
     def _stats_frame(self) -> Optional[pd.DataFrame]:
         """The dataset as the column-summarising tables read it: with
-        the Mg# variants added as columns, reported like any oxide."""
-        return with_derived(self.data.df)
+        the Mg# variants added as columns, reported like any oxide, and
+        without the columns that hold no value at all -- the template's
+        Elevation, Age, Sample_Label… left unfilled used to fill the
+        Descriptive table with rows of count 0."""
+        df = with_derived(self.data.df)
+        if df is None:
+            return None
+        return df.dropna(axis=1, how="all")
 
     def anomaly_frame(self, normaliser_name: Optional[str] = None
                       ) -> pd.DataFrame:
@@ -1558,7 +1588,7 @@ class StatisticsView(QWidget):
         for r in range(len(frame.index)):
             for c in range(len(frame.columns)):
                 value = frame.iloc[r, c]
-                text = "" if pd.isna(value) else f"{value}"
+                text = display_value(value)
                 item = QTableWidgetItem(text)
                 is_identity = cols[c] in identity
                 item.setTextAlignment(
@@ -1657,7 +1687,9 @@ class StatisticsView(QWidget):
         combo = getattr(self, "corr_group_combo", None)
         if combo is None:
             return
-        previous = combo.currentData()
+        previous = (getattr(self, "_pending_corr_subset", None)
+                    or combo.currentData())
+        self._pending_corr_subset = None
         combo.blockSignals(True)
         combo.clear()
         combo.addItem("All samples (pooled)", self._CORR_ALL)
@@ -1812,9 +1844,13 @@ class StatisticsView(QWidget):
             # How the user chose to split each view by their grouping.
             "anomalies_split": self._is_checked("anomalies_split_chk"),
             "tectonic_split": self._is_checked("tect_split_chk"),
+            # The combo is only filled when the view refreshes: saved
+            # before then, the restored choice is still pending.
             "correlation_subset": (
-                self.corr_group_combo.currentData()
-                if hasattr(self, "corr_group_combo") else None),
+                (self.corr_group_combo.currentData()
+                 if getattr(self, "corr_group_combo", None) is not None
+                 and self.corr_group_combo.count() else None)
+                or getattr(self, "_pending_corr_subset", None)),
             "plots_split": self._split_mode(),
         }
         # Tectonic discriminators if the user has ticked some
@@ -1852,6 +1888,9 @@ class StatisticsView(QWidget):
                 widget.blockSignals(True)
                 widget.setChecked(bool(state[key]))
                 widget.blockSignals(False)
+        # The correlation subset names a group the combo lists only once
+        # the view has refreshed: keep it until then.
+        self._pending_corr_subset = state.get("correlation_subset")
         for attribute, key in (("corr_group_combo", "correlation_subset"),
                                ("_plots_split_combo", "plots_split")):
             combo = getattr(self, attribute, None)

@@ -212,7 +212,7 @@ SECTIONS = [
             "Frost and others, volcanic and plutonic.",
             "Bivariate diagrams — single and paired Harker-style plots.",
             "Spider diagrams — REE and multi-element patterns.",
-            "Tectonic diagrams — 34 discrimination diagrams.",
+            "Tectonic diagrams — 36 discrimination diagrams.",
             "Isotopes — Sr–Nd and Pb–Pb diagrams, and any isotope ratio, "
             "δ value or ε against SiO2.",
             "Statistics and Anomalies — descriptive statistics, REE "
@@ -224,6 +224,14 @@ SECTIONS = [
          "A persistent toolbar above the plotting area shows a “← Home” "
          "button that always returns you to the welcome screen, no "
          "matter which window you are in."},
+        {"type": "p", "text":
+         "Every control in the left-hand panel redraws the diagram as "
+         "soon as you change it — log scales, the legend, fonts and axis "
+         "titles, the regression line, the isotope reservoirs, the map's "
+         "options. A text field applies when you press Enter or leave it, "
+         "and a burst of changes, such as holding a spin box, is drawn "
+         "once. Update plot (Ctrl+R or F5) is still there to redraw the "
+         "view on screen at any time."},
     ]),
 
     ("6. Loading your data", [
@@ -466,7 +474,10 @@ SECTIONS = [
          "the same panel. Right-click removes the nearest annotation, "
          "and samples of a group switched off cannot be identified. "
          "Alt / Cmd + click selects a sample here as in every other "
-         "view, and in Paired it is ringed on every panel."},
+         "view, and in Paired it is ringed on every panel. Likewise, in "
+         "the views that show many diagrams — Classification, Tectonic, "
+         "Petrography and Isotopes — each diagram keeps its own "
+         "annotations: an arrow drawn on TAS stays on TAS."},
     ]),
 
     ("9. Spider diagrams", [

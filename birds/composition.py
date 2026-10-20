@@ -206,8 +206,13 @@ def filter_by_rock_type(df: pd.DataFrame, family: Optional[str]
         return df, info
     info["source"] = col
 
+    # A blank cell is missing in the column itself, not only the text
+    # "nan": pandas 3 keeps NaN as NaN through astype(str), where pandas
+    # 2 wrote "nan" -- so an all-blank Rock_Type column, as a template
+    # left unfilled arrives, used to drop every sample on both families.
     values = df[col].astype(str).str.strip().str.lower()
-    blank_mask = values.isin(("", "nan", "none"))
+    blank_mask = df[col].isna() | values.isna() | values.isin(("", "nan",
+                                                               "none"))
     target_set = VOLCANIC_VALUES if family == "volcanic" else PLUTONIC_VALUES
     match_mask = values.isin(target_set)
     keep_mask = match_mask | blank_mask

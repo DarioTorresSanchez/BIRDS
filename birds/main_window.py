@@ -92,6 +92,15 @@ class BirdsMainWindow(QMainWindow):
         self.isotopes = IsotopesView(self.data, self.style)
         self.norm = NormView(self.data, self.style)
         self.petrography = PetrographyView(self.data, self.style)
+        # Every panel control redraws its diagram as soon as it changes
+        # (see views/widgets.make_live) -- wired here, before the
+        # "modified" tracking, which make_live must not take for a
+        # control already live.
+        from .views.widgets import make_live
+        for view in (self.classification, self.bivariate, self.spider,
+                     self.tectonic, self.map, self.isotopes,
+                     self.petrography):
+            make_live(view, view.update_plot)
         self.data_table = DataTableView(self.data)
         self.data_table.set_dirty_callback(self.mark_dirty)
 
@@ -320,6 +329,13 @@ class BirdsMainWindow(QMainWindow):
         )
         act_pb208.triggered.connect(lambda: self._open_isotopes("pb_208"))
         menu.addAction(act_pb208)
+
+        act_sio2 = QAction("Isotopes vs SiO₂  (any ratio, δ or ε)…", self)
+        act_sio2.setStatusTip(
+            "An isotope ratio, δ value or ε — εNd, εSr and the initial "
+            "ratios included — against silica.")
+        act_sio2.triggered.connect(lambda: self._open_isotopes("vs_sio2"))
+        menu.addAction(act_sio2)
 
     def _open_isotopes(self, key: str) -> None:
         self.stack.setCurrentWidget(self.isotopes)

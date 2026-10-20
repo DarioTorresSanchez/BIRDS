@@ -390,6 +390,9 @@ class SpiderView(QWidget):
             # colour / linestyle / linewidth / marker on a checked
             # reservoir's inline row.
             ctrl.reservoirs_grp.styles_changed.connect(self.update_plot)
+            # Controls made after the window wired the rest: live too.
+            from .widgets import make_live
+            make_live(ctrl, self.update_plot)
             # Annotation toolkit — own controller per mode.  We don't
             # call .bind_canvas here; dispatch_click does the routing
             # so canvas-level events are exclusive to the active mode.

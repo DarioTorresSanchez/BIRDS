@@ -779,12 +779,19 @@ class MultiPanelDiagram(Diagram):
                 )
             axes.append(ax)
 
-        # Single shared legend, placed below the grid
-        self._apply_shared_legend(figure, axes, options)
+        # Single shared legend: in the grid's spare cell when there is
+        # one (Verma's five panels leave the sixth free), else below the
+        # grid with room kept for it -- it used to hang below the figure,
+        # over the last x labels and cut off at the canvas edge.
+        spare = None
+        if rows * cols > n:
+            spare = figure.add_subplot(rows, cols, n + 1)
+            spare.axis("off")
+        reserve = self._apply_shared_legend(figure, axes, options, spare)
         if self.title:
             figure.suptitle(self.title, fontsize=self.suptitle_fontsize,
                             fontweight="bold")
-        figure.tight_layout()
+        figure.tight_layout(rect=(0, reserve, 1, 1))
 
     # -------------------------------------------------- to override per diagram
     def _compute_xy_for_panel(self, panel: PanelSpec, df: pd.DataFrame
@@ -915,9 +922,12 @@ class MultiPanelDiagram(Diagram):
         if panel.x_range or panel.y_range:
             Diagram._mark_offframe(ax)
 
-    def _apply_shared_legend(self, figure, axes, options: PlotOptions) -> None:
+    def _apply_shared_legend(self, figure, axes, options: PlotOptions,
+                             spare=None) -> float:
+        """Draw the legend; return the fraction of the figure's height
+        to keep free at the bottom for it (0 when it sits in *spare*)."""
         if not options.legend.visible:
-            return
+            return 0.0
         handles, labels = [], []
         seen = set()
         for ax in axes:
@@ -928,8 +938,15 @@ class MultiPanelDiagram(Diagram):
                 handles.append(handle)
                 labels.append(label)
         if not handles:
-            return
-        figure.legend(handles, labels, loc="lower center",
-                      ncol=min(len(labels), 6),
+            return 0.0
+        if spare is not None:
+            spare.legend(handles, labels, loc="center",
+                         ncol=1 if len(labels) <= 10 else 2,
+                         fontsize=options.legend.font_size, frameon=True)
+            return 0.0
+        ncol = min(len(labels), 6)
+        legend_rows = -(-len(labels) // ncol)
+        figure.legend(handles, labels, loc="lower center", ncol=ncol,
                       fontsize=options.legend.font_size,
-                      bbox_to_anchor=(0.5, -0.02))
+                      bbox_to_anchor=(0.5, 0.0))
+        return min(0.3, 0.02 + 0.04 * legend_rows)

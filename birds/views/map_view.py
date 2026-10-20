@@ -987,6 +987,33 @@ class MapView(QWidget):
     # ------------------------------------------------------------------
     # Pieces of update_plot
     # ------------------------------------------------------------------
+    def _utm_hint(self) -> str:
+        """When decimal degrees fail on columns that hold UTM numbers --
+        several of the user's sessions keep easting and northing in
+        Latitude / Longitude -- say so, and how to read them."""
+        if (self.format_combo.currentData() or _FMT_DECIMAL) != _FMT_DECIMAL:
+            return ""
+        df = self.data.df
+        cols = [self.lat_combo.currentData(), self.lon_combo.currentData()]
+        if df is None or not all(c in df.columns for c in cols):
+            return ""
+        values = [pd.to_numeric(df[c], errors="coerce").dropna() for c in cols]
+        if any(v.empty for v in values):
+            return ""
+        medians = [float(v.abs().median()) for v in values]
+        if max(medians) <= 180:
+            return ""
+        east = next((m for m in medians if 100_000 <= m <= 900_000), None)
+        north = next((m for m in medians
+                      if 0 <= m <= 10_000_000 and m != east), None)
+        if east is None or north is None:
+            return ""
+        return (f"“{cols[0]}” and “{cols[1]}” hold values like "
+                f"{medians[0]:,.0f} and {medians[1]:,.0f}: those are not "
+                "degrees.\nThey look like UTM easting and northing — pick "
+                "UTM under Coordinates → Format, with the columns and the "
+                "zone they belong to.")
+
     def _collect(self):
         """``(samples, None)``, or ``(None, message)`` when there is nothing
         to draw.
@@ -1004,6 +1031,9 @@ class MapView(QWidget):
         if err is not None:
             return None, err
         if lat_all is None or lat_all.dropna().empty:
+            hint = self._utm_hint()
+            if hint:
+                return None, hint
             return None, ("No samples could be parsed in the selected "
                           "format.\nCheck the column choices and that "
                           "values are valid.")
@@ -1693,7 +1723,10 @@ class MapView(QWidget):
             "model": self._model_kind(),
             "overrides": {label: list(p)
                           for label, p in self._overrides.items()},
-            "param_group": self.param_group_combo.currentText(),
+            # Listed only once kriging has run: until then the restored
+            # group is pending, and must be saved as such.
+            "param_group": (self.param_group_combo.currentText()
+                            or self._pending_param_group),
             "lags": ws.spin_state(self.lags_spin),
             "max_lag_km": ws.spin_state(self.max_lag_spin),
             "cells": ws.spin_state(self.cells_spin),

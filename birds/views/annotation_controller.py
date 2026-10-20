@@ -64,7 +64,12 @@ class AnnotationController:
         self.view = view
         self.sample_resolver = sample_resolver
         self.redraw_method = redraw_method
-        self.annotations: list = []
+        # Annotations sit in a diagram's data coordinates, so they belong
+        # to that diagram: one list per context (the diagram's key), the
+        # current one shown.  A view with a single diagram never sets a
+        # context and keeps one list, as before.
+        self._by_context: dict = {"": []}
+        self._context = ""
         #: False while the view shows axes the annotations do not belong
         #: to -- a map view's variogram, say -- so a click there neither
         #: adds nor deletes anything.
@@ -90,14 +95,51 @@ class AnnotationController:
         plot path."""
         _ann.draw_all(ax, self.annotations)
 
+    @property
+    def annotations(self) -> list:
+        """The annotations of the current context (diagram)."""
+        return self._by_context.setdefault(self._context, [])
+
+    @annotations.setter
+    def annotations(self, value) -> None:
+        self._by_context[self._context] = list(value)
+
+    def set_context(self, key) -> None:
+        """Show the annotations of diagram *key*.  A view with many
+        diagrams calls this whenever the diagram changes; an arrow drawn
+        on TAS used to reappear, at TAS's coordinates, on every other
+        diagram of the view."""
+        key = key or ""
+        if key == self._context:
+            return
+        self._context = key
+        self._pending = None
+        self.group.refresh(self.annotations)
+
     # ------------------------------------------------------------------
     # Session persistence
     # ------------------------------------------------------------------
-    def serialize(self) -> list:
-        return _ann.serialize(self.annotations)
+    def serialize(self):
+        """A list, for a view with one diagram (as sessions always had
+        it); ``{"by_diagram": {key: list}}`` once there are several."""
+        stored = {key: _ann.serialize(items)
+                  for key, items in self._by_context.items() if items}
+        if set(stored) <= {""}:
+            return stored.get("", [])
+        return {"by_diagram": stored}
 
-    def restore(self, data) -> None:
-        self.annotations = _ann.deserialize(data)
+    def restore(self, data, legacy_context=None) -> None:
+        """Bring back :meth:`serialize`'s output.  A plain list -- a
+        session from before annotations were kept per diagram -- goes to
+        *legacy_context*, the diagram the session was saved on."""
+        self._by_context = {}
+        if isinstance(data, dict) and "by_diagram" in data:
+            for key, items in (data.get("by_diagram") or {}).items():
+                self._by_context[str(key)] = _ann.deserialize(items)
+        else:
+            target = (self._context if legacy_context is None
+                      else (legacy_context or ""))
+            self._by_context[target] = _ann.deserialize(data)
         self.group.refresh(self.annotations)
 
     # ------------------------------------------------------------------

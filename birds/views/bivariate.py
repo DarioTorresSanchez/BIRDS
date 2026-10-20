@@ -148,6 +148,26 @@ class _IndividualControls(QWidget):
         layout.addStretch(1)
 
 
+#: Numeric columns that describe the sample rather than its chemistry
+#: (the data template's context): offered after the analyses.
+_CONTEXT_COLUMNS = ("No.", "Latitude", "Longitude", "Elevation", "Age")
+
+
+def _default_axes(cols: list) -> tuple:
+    """The axes a fresh Individual plot opens on: SiO2 against MgO when
+    the data have them -- a Harker plot -- else the first two
+    variables.  It used to be the first two numeric columns, which in
+    the data template are "No." and an empty "Sample_Label"."""
+    if not cols:
+        return "", ""
+    x = next((c for c in ("SiO2", "SiO2_adj") if c in cols), cols[0])
+    y = next((c for c in ("MgO", "MgO_adj", "TiO2", "Al2O3", "FeOt",
+                          "Fe2O3", "CaO") if c in cols and c != x), None)
+    if y is None:
+        y = next((c for c in cols if c != x), x)
+    return x, y
+
+
 # ---------------------------------------------------------------------------
 # Paired mode
 # ---------------------------------------------------------------------------
@@ -187,6 +207,7 @@ class _PairedControls(QWidget):
         self.x_list.setMaximumHeight(140)
         v_layout.addWidget(self.x_list, stretch=1)
         self.x_expr_edit = QLineEdit()
+        self.x_expr_edit.setProperty("liveExempt", True)   # added via + Add
         self.x_expr_edit.setPlaceholderText("Custom expression — e.g. La/Yb")
         self.x_expr_add = QPushButton("+ Add")
         self.x_expr_add.setMaximumWidth(70)
@@ -209,6 +230,7 @@ class _PairedControls(QWidget):
         self.y_list.setMaximumHeight(140)
         v_layout.addWidget(self.y_list, stretch=1)
         self.y_expr_edit = QLineEdit()
+        self.y_expr_edit.setProperty("liveExempt", True)
         self.y_expr_edit.setPlaceholderText("Custom expression — e.g. (La+Ce)/2")
         self.y_expr_add = QPushButton("+ Add")
         self.y_expr_add.setMaximumWidth(70)
@@ -461,7 +483,15 @@ class BivariateView(QWidget):
         df = self.data.df
         if df is None or df.empty:
             return []
-        out = interleave_twins(df.select_dtypes(include="number").columns)
+        # A column with no value cannot be plotted -- the template's
+        # Sample_Label, Elevation… left blank used to head the lists and
+        # make the default axes -- and the sample's context goes after
+        # its chemistry, so the oxides lead.
+        numeric = [c for c in df.select_dtypes(include="number").columns
+                   if df[c].notna().any()]
+        numeric = ([c for c in numeric if c not in _CONTEXT_COLUMNS]
+                   + [c for c in numeric if c in _CONTEXT_COLUMNS])
+        out = interleave_twins(numeric)
         derived = _derived_available(df)
         if derived:
             anchor = next((a for a in (adjusted_name("MgO"), "MgO")
@@ -504,12 +534,9 @@ class BivariateView(QWidget):
                     combo.setItemData(i, hint[0],
                                       Qt.ItemDataRole.ForegroundRole)
                     combo.setItemData(i, hint[1], Qt.ItemDataRole.ToolTipRole)
-        if prev_x:
-            self._individual.x_combo.setCurrentText(prev_x)
-        if prev_y:
-            self._individual.y_combo.setCurrentText(prev_y)
-        elif len(cols) >= 2:
-            self._individual.y_combo.setCurrentIndex(1)
+        default_x, default_y = _default_axes(cols)
+        self._individual.x_combo.setCurrentText(prev_x or default_x)
+        self._individual.y_combo.setCurrentText(prev_y or default_y)
         self._individual.x_combo.blockSignals(False)
         self._individual.y_combo.blockSignals(False)
 
