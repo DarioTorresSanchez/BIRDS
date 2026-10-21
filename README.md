@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-3385%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-3468%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -183,7 +183,7 @@ Average (Bau et al. 2018), Upper Continental Crust (Rudnick & Gao 2014).
 
 **Multi-element (9)** — Primitive Mantle (McDonough & Sun 1995; Palme &
 O'Neill 2014), CI Chondrite (McDonough & Sun 1995), N-MORB and E-MORB
-(Sun & McDonough 1989), N-MORB mean (Arevalo & McDonough 2010), Upper and
+(Sun & McDonough 1989), Global MORB log-normal mean (Arevalo & McDonough 2010), Upper and
 Bulk Continental Crust (Rudnick & Gao 2014), NASC (Gromet et al. 1984).
 
 **Ni-Cu-PGE metals (5)** — Primitive Mantle (McDonough & Sun 1995),

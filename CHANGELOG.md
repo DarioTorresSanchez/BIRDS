@@ -298,6 +298,20 @@ including what is still unverified.
 
 #### Diagrams measured or recomputed against their sources
 
+- **Vermeesch (2006a) Na–Nb–Sr and Ti–V–Sm, read from the paper's
+  vector figures.** They were the last two diagrams drawn by eye: a
+  QDA's boundaries are conics that need the class covariances, which the
+  paper does not print. It does draw them, as Bézier curves in the PDF
+  (Figures 45b and 46b), and those are what the templates now carry,
+  with the triangles the paper's way up — 25 Nb, Na/100, Sr and Ti/50,
+  50 Sm, V; both used to put Na/100 or 50 Sm at the top. Three checks
+  tie them to the paper independently of the drawing: Figures 45a and
+  46a draw the same boundaries in log-ratio space, and mapped back with
+  ln they lie on ours (median 0.34 % and 0.23 % of the triangle's side;
+  log₁₀ would put them 4.6 % and 6.1 % off); Na–Nb–Sr classifies all 61
+  of the paper's test samples as its test table does; Ti–V–Sm 82 of 85,
+  and the other three sit on the drawn line, 0.05–0.31 % of the side
+  from it. Both classify each sample as IAB, MORB or OIB.
 - **Frost's grid, against Frost et al. (2001) and Frost & Frost
   (2008).** Panel (d) now has the frame of their Figure 11, FSSI −1.2
   to 0.6 and AI −0.10 to 0.16, instead of ±2.5 by ±1, where every rock
@@ -541,6 +555,17 @@ including what is still unverified.
 
 #### Numerical core
 
+- **Spider-diagram normalisers, against Rollinson & Pease (2021).**
+  The REE chondrites, shale composites and multi-element normalisers
+  credit Tables 4.7–4.9; all 366 values those tables print were
+  compared. Six were not the book's: PAAS Tm 0.4516 (0.451), Palme &
+  O'Neill primitive-mantle Cs 0.0188 (0.0180, one digit from the CI's
+  0.1880), NASC Ti 4707 (4705), and Rudnick & Gao's upper crust Rb 82,
+  K 23200 and Ti 3840 (84, 23244, 3836). The NASC carried Pb 17 and
+  Y 21, the upper crust's values one column over, where Gromet et al.
+  have none, and lacked their Ta 1.12. "N-MORB mean (Arevalo &
+  McDonough 2010)" is the table's global log-normal MORB mean and is
+  renamed; sessions saved under the old name reopen on it.
 - **The diagrams drawn from the norm drew nothing.** Barker's An–Ab–Or,
   the haplogranite Ab–Or–Q and Frost's AI–FSSI panel looked for columns
   named An, Ab, Or, Q, while the CIPW norm writes `norm_An`, `norm_Ab`,
@@ -855,13 +880,17 @@ including what is still unverified.
   the type to be fixed first, with SINCLAS or IgRoCS; fed a basalt, the
   intermediate-magma set answers arc at better than even odds with no
   warning.
-- **3 diagrams still have boundaries drawn by eye, and all three are
-  blocked on sources rather than pending** — the two quadratic
-  Vermeesch ternaries, which being QDA need per-class covariance
-  matrices the paper does not publish, and `defant_drummond_YbLaYb`,
-  which needs a source that has not been identified since the paper it
-  cites does not contain that diagram. Nothing is left that a
+- **1 diagram still has boundaries drawn by eye, blocked on its source
+  rather than pending** — `defant_drummond_YbLaYb`: the paper it cites
+  does not contain that diagram, and Drummond & Defant (1990, JGR) or
+  Martin (1986) is needed to draw it. Nothing is left that a
   measurement could fix.
+- **Some normalisers are not yet checked against a source.** This copy
+  of Rollinson & Pease (2021) is cut off at the right of Tables 4.7 and
+  4.9, so Boynton (1984), Taylor & McLennan (1985) and Rudnick & Gao's
+  bulk crust are unconfirmed; E-MORB (Sun & McDonough 1989) is not in
+  the table, and Table 4.9 lists no P.
+  `tests/test_normalisers_rollinson.py` keeps the list.
 - **The La/10–Y/15–Nb/8 diagram misplaces reference MORB and OIB.** Not
   a fault in the code: Verma (2010) puts OIB + MORB at 29–62 %
   correctly classified, and Sun & McDonough's N-MORB duly falls in the

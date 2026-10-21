@@ -7,6 +7,17 @@
 All concentrations are in ppm (μg g⁻¹). Major elements K, Ti and P are
 already converted from wt.% oxide to ppm element so that they sit on the
 same scale as the trace data.
+
+Every value was checked against those three tables on 2026-10-21 -- 366
+of them, each read where the book prints it (``tests/data/
+rollinson_pease_2021_tables.json``).  Checking found six that were not
+the book's: PAAS Tm, Palme & O'Neill Cs, NASC Ti, and the upper crust's
+Rb, K and Ti; a NASC that carried the upper crust's Pb and Y, which
+Gromet et al. did not determine, and lacked the Ta they did; and
+Arevalo & McDonough's global log-normal mean filed as an N-MORB.  What
+the book's copy cannot confirm -- its Tables 4.7 and 4.9 are cut off at
+the right, and Table 4.9 has no P -- is listed in
+``tests/test_normalisers_rollinson.py``.
 """
 
 from __future__ import annotations
@@ -107,7 +118,7 @@ REE_SHALES: Dict[str, Mapping[str, float]] = {
     "PAAS (Pourmand et al. 2012)": {
         "La": 44.56, "Ce": 88.25, "Pr": 10.15, "Nd": 37.32, "Sm": 6.884,
         "Eu": 1.215, "Gd": 6.043, "Tb": 0.8914, "Dy": 5.325, "Ho": 1.053,
-        "Er": 3.075, "Tm": 0.4516, "Yb": 3.012, "Lu": 0.4386, "Y": 27.31,
+        "Er": 3.075, "Tm": 0.451, "Yb": 3.012, "Lu": 0.4386, "Y": 27.31,
     },
     "MUQ (Kamber et al. 2005)": {
         "La": 32.51, "Ce": 71.09, "Pr": 8.46, "Nd": 32.91, "Sm": 6.88,
@@ -147,7 +158,8 @@ MULTIELEMENT_NORMS: Dict[str, Mapping[str, float]] = {
         "Er": 0.4380, "Tm": 0.0680, "Yb": 0.4410, "Lu": 0.0675,
     },
     "Primitive Mantle (Palme & O'Neill 2014)": {
-        "Cs": 0.01880, "Rb": 0.605, "Ba": 6.85, "Th": 0.0849, "U": 0.0229,
+        # Cs was 0.0188, one digit from the CI chondrite's 0.1880.
+        "Cs": 0.0180, "Rb": 0.605, "Ba": 6.85, "Th": 0.0849, "U": 0.0229,
         "Nb": 0.595, "Ta": 0.0430, "K": 260, "La": 0.6832, "Ce": 1.7529,
         "Pb": 0.185, "Pr": 0.2657, "Sr": 22.0, "Nd": 1.3410, "Zr": 10.30,
         "Hf": 0.3014, "Sm": 0.4347, "Eu": 0.1665, "Ti": 1265, "Gd": 0.5855,
@@ -178,7 +190,9 @@ MULTIELEMENT_NORMS: Dict[str, Mapping[str, float]] = {
         "Gd": 2.97, "Tb": 0.53, "Dy": 3.55, "Ho": 0.79, "Y": 22,
         "Er": 2.31, "Tm": 0.356, "Yb": 2.37, "Lu": 0.354,
     },
-    "N-MORB mean (Arevalo & McDonough 2010)": {
+    # Table 4.9's "Global LN-mean": the log-normal mean of all MORB, not
+    # an N-MORB average.  It used to be listed as "N-MORB mean".
+    "Global MORB, log-normal mean (Arevalo & McDonough 2010)": {
         "Cs": 0.019, "Rb": 1.500, "Ba": 16.60, "Th": 0.219, "U": 0.080,
         "Nb": 3.44, "Ta": 0.224, "K": 1620, "La": 3.77, "Ce": 11.5,
         "Pb": 0.57, "Pr": 1.910, "Sr": 130, "Nd": 9.80, "Zr": 90.1,
@@ -186,11 +200,12 @@ MULTIELEMENT_NORMS: Dict[str, Mapping[str, float]] = {
         "Tb": 0.78, "Dy": 5.110, "Ho": 1.110, "Y": 30, "Er": 3.15,
         "Tm": 0.48, "Yb": 3.00, "Lu": 0.45,
     },
+    # Rb, K and Ti were 82, 23200 and 3840.
     "Upper Continental Crust (Rudnick & Gao 2014)": {
-        "Cs": 4.9, "Rb": 82, "Ba": 628, "Th": 10.5, "U": 2.7,
-        "Nb": 12, "Ta": 0.9, "K": 23200, "La": 31, "Ce": 63,
+        "Cs": 4.9, "Rb": 84, "Ba": 628, "Th": 10.5, "U": 2.7,
+        "Nb": 12, "Ta": 0.9, "K": 23244, "La": 31, "Ce": 63,
         "Pb": 17, "Pr": 7.1, "Sr": 320, "P": 655, "Nd": 27,
-        "Zr": 193, "Hf": 5.3, "Sm": 4.7, "Eu": 1.0, "Ti": 3840,
+        "Zr": 193, "Hf": 5.3, "Sm": 4.7, "Eu": 1.0, "Ti": 3836,
         "Gd": 4.0, "Tb": 0.7, "Dy": 3.9, "Ho": 0.83, "Y": 21,
         "Er": 2.3, "Tm": 0.30, "Yb": 2.0, "Lu": 0.31,
     },
@@ -202,11 +217,14 @@ MULTIELEMENT_NORMS: Dict[str, Mapping[str, float]] = {
         "Gd": 3.7, "Tb": 0.6, "Dy": 3.6, "Ho": 0.77, "Y": 19,
         "Er": 2.1, "Tm": 0.28, "Yb": 1.9, "Lu": 0.30,
     },
+    # Table 4.9 marks Nb, Pb, Pr, Gd, Dy, Ho, Y, Er and Tm "not
+    # determined".  This entry used to carry Pb 17 and Y 21 -- the upper
+    # crust's, one column over -- and lacked Ta; Ti was 4707.
     "NASC (Gromet et al. 1984)": {
         "Cs": 5.16, "Rb": 125, "Ba": 636, "Th": 12.3, "U": 2.66,
-        "K": 31545, "La": 31.1, "Ce": 66.7, "Pb": 17.0,
+        "Ta": 1.12, "K": 31545, "La": 31.1, "Ce": 66.7,
         "Sr": 142, "Nd": 27.4, "Zr": 200, "Hf": 6.30,
-        "Sm": 5.59, "Eu": 1.18, "Ti": 4707, "Tb": 0.85, "Y": 21.0,
+        "Sm": 5.59, "Eu": 1.18, "Ti": 4705, "Tb": 0.85,
         "Yb": 3.06, "Lu": 0.456,
     },
 }
@@ -316,6 +334,8 @@ RENAMED_NORMALISERS: Dict[str, str] = {
         "CI Chondrite (Fischer-Gödde et al. 2010)",
     "Primitive Mantle (Barnes & Maier 1999)":
         "Primitive Mantle, metals (McDonough & Sun 1995)",
+    "N-MORB mean (Arevalo & McDonough 2010)":
+        "Global MORB, log-normal mean (Arevalo & McDonough 2010)",
 }
 
 
