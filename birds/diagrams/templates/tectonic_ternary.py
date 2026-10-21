@@ -6,7 +6,6 @@ from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from matplotlib.patches import Polygon
 
 from ...normalizations import TIO2_WT_TO_TI_PPM
 from .base import (
@@ -22,50 +21,6 @@ from .base import (
 # ---------------------------------------------------------------------------
 # Common ternary helper
 # ---------------------------------------------------------------------------
-
-def _draw_ternary_fields(ax, fields: dict, *, linewidth: float = 0.9,
-                          fontsize: float = 8,
-                          label_overrides: Optional[dict] = None) -> None:
-    """Draw labelled polygonal fields specified in ternary (A, B, C) %.
-
-    ``label_overrides`` lets a caller pin a specific field's label at a
-    chosen ternary position instead of the polygon centroid — useful for
-    long, thin or trapezoidal fields whose visual middle does not match
-    their mathematical centroid.  Keys are field names; values are
-    ``(a, b, c)`` tuples in the same convention as the polygon vertices.
-    """
-    overrides = label_overrides or {}
-    for name, abc in fields.items():
-        a, b, c = zip(*abc)
-        x, y = ternary_to_xy(pd.Series(a), pd.Series(b), pd.Series(c))
-        poly = Polygon(list(zip(x, y)), closed=True, fill=False,
-                       edgecolor="#444", linewidth=linewidth, alpha=0.85,
-                       zorder=2)
-        ax.add_patch(poly)
-        if name in overrides:
-            oa, ob, oc = overrides[name]
-            ox, oy = ternary_to_xy(pd.Series([oa]), pd.Series([ob]),
-                                    pd.Series([oc]))
-            cx, cy = float(ox.iloc[0]), float(oy.iloc[0])
-        else:
-            cx = float(np.mean(x))
-            cy = float(np.mean(y))
-        ax.text(cx, cy, name, ha="center", va="center",
-                fontsize=fontsize, color="#333", alpha=0.9, zorder=3)
-
-
-# ---------------------------------------------------------------------------
-# Wood (1980) Th – Hf/3 – Ta — refined by Vermeesch (2006a)
-# ---------------------------------------------------------------------------
-
-_WOOD_FIELDS = {
-    # Approximate field boundaries in (Th, Hf/3, Ta) percent
-    "N-MORB":        [(15, 65, 20), (5, 80, 15), (5, 90, 5), (15, 80, 5)],
-    "E-MORB & WP\ntholeiites": [(15, 80, 5), (35, 60, 5), (35, 45, 20), (15, 65, 20)],
-    "Within-plate\nalkaline":  [(35, 60, 5), (60, 35, 5), (60, 25, 15), (35, 45, 20)],
-    "Volcanic arc\nbasalts":   [(60, 35, 5), (95, 0, 5), (75, 0, 25), (60, 25, 15)],
-}
-
 
 # ---------------------------------------------------------------------------
 # Cabanis & Lecolle (1989) La/10 – Y/15 – Nb/8
@@ -215,19 +170,212 @@ def _ti_ppm(df: pd.DataFrame) -> Optional[pd.Series]:
     return pd.to_numeric(df[ox], errors="coerce") * TIO2_WT_TO_TI_PPM
 
 
-_VRMS_NA_NB_SR = {
-    "IAB":  [(5, 5, 90), (15, 5, 80), (20, 15, 65), (10, 15, 75)],
-    "MORB": [(15, 35, 50), (25, 30, 45), (30, 45, 25), (20, 50, 30)],
-    "OIB":  [(35, 40, 25), (45, 35, 20), (50, 25, 25), (40, 25, 35)],
+# ---------------------------------------------------------------------------
+# Vermeesch (2006a) — the two QDA ternaries
+# ---------------------------------------------------------------------------
+#
+# A quadratic discriminant analysis gives each class its own covariance,
+# so its decision boundaries are conics in log-ratio space, and without
+# the class covariances -- which the paper does not print -- they cannot
+# be computed.  They can be read, though: Figures 34 and 35 draw them as
+# vector Bezier curves.  Each control point below was taken from the
+# PDF's own paths and turned into ternary fractions, which loses
+# nothing, since a Bezier curve keeps its shape through the affine map
+# from the page to the triangle.  These replace fields that had been
+# sketched as quadrilaterals, with the triangle turned the wrong way up.
+#
+# Checked three ways (tests/test_vermeesch_qda_ternaries.py):
+#
+# * the same boundaries as Figures 45a and 46a draw them in log-ratio
+#   space, mapped back with the natural logarithm, lie on these to a
+#   median 0.3 % of the triangle's side -- base ten misses by 5-24 %,
+#   so "log" in the paper is ln here too;
+# * the test samples plotted in Figures 45b and 46b, classified by these
+#   fields, give the paper's own test table (its Table 5): all 61 for
+#   Na-Nb-Sr, and 82 of 85 for Ti-V-Sm, whose other three lie on the
+#   drawn line, 0.05-0.31 % of the triangle's side from it -- about
+#   the width of the stroke;
+# * the apices are the paper's: 25 Nb and Ti/50 at the top.
+#
+# Each segment is a cubic Bezier, ``(top, left, right)`` fractions.
+
+#: Figure 34.  MORB is a closed loop; OIB a lobe that leaves it and
+#: returns to it; every other composition is IAB, on either side.
+_QDA_NA_NB_SR = {
+    "apices": ("25 Nb", "Na/100", "Sr"),
+    "oib_lobe": (
+        ((0.3772, 0.2694, 0.3534), (0.3594, 0.2522, 0.3884),
+         (0.3425, 0.2254, 0.4321), (0.3385, 0.2020, 0.4595)),
+        ((0.3385, 0.2020, 0.4595), (0.3297, 0.1496, 0.5208),
+         (0.5008, 0.0596, 0.4396), (0.5497, 0.0520, 0.3983)),
+        ((0.5497, 0.0520, 0.3983), (0.6212, 0.0410, 0.3378),
+         (0.8174, 0.0129, 0.1697), (0.8174, 0.0257, 0.1569)),
+        ((0.8174, 0.0257, 0.1569), (0.8174, 0.0457, 0.1369),
+         (0.7848, 0.0664, 0.1488), (0.7527, 0.0939, 0.1534)),
+    ),
+    "morb": (
+        ((0.7623, 0.0910, 0.1467), (0.8292, 0.0605, 0.1103),
+         (0.9032, 0.0247, 0.0722), (0.9077, 0.0340, 0.0583)),
+        ((0.9077, 0.0340, 0.0583), (0.9108, 0.0405, 0.0487),
+         (0.8098, 0.1158, 0.0744), (0.7623, 0.1532, 0.0845)),
+        ((0.7623, 0.1532, 0.0845), (0.7371, 0.1731, 0.0899),
+         (0.5706, 0.2987, 0.1307), (0.3844, 0.4680, 0.1476)),
+        ((0.3844, 0.4680, 0.1476), (0.2192, 0.6182, 0.1626),
+         (0.0402, 0.8215, 0.1383), (0.0234, 0.8173, 0.1593)),
+        ((0.0234, 0.8173, 0.1593), (0.0030, 0.8123, 0.1847),
+         (0.0160, 0.7444, 0.2395), (0.0341, 0.6911, 0.2748)),
+        ((0.0341, 0.6911, 0.2748), (0.0736, 0.5744, 0.3520),
+         (0.1058, 0.4817, 0.4125), (0.2077, 0.3939, 0.3983)),
+        ((0.2077, 0.3939, 0.3983), (0.2905, 0.3227, 0.3868),
+         (0.3642, 0.2747, 0.3611), (0.4093, 0.2533, 0.3374)),
+        ((0.4093, 0.2533, 0.3374), (0.4711, 0.2239, 0.3050),
+         (0.7163, 0.1120, 0.1717), (0.7623, 0.0910, 0.1467)),
+    ),
+    "labels": (("IAB", (0.311, 0.615, 0.074)), ("MORB", (0.254, 0.475, 0.272)),
+               ("OIB", (0.512, 0.140, 0.348)), ("IAB", (0.139, 0.228, 0.633))),
+}
+
+#: Figure 35.  OIB is a dome against the 50 Sm - Ti/50 edge; MORB a
+#: small lens under its right end; below them, IAB.
+_QDA_TI_V_SM = {
+    "apices": ("Ti/50", "50 Sm", "V"),
+    "oib": (
+        ((0.3322, 0.6665, 0.0013), (0.5022, 0.4637, 0.0341),
+         (0.6030, 0.3829, 0.0140), (0.6051, 0.2656, 0.1293)),
+        ((0.6051, 0.2656, 0.1293), (0.6065, 0.1854, 0.2081),
+         (0.3869, 0.1262, 0.4869), (0.3509, 0.1479, 0.5013)),
+        ((0.3509, 0.1479, 0.5013), (0.3328, 0.1587, 0.5085),
+         (0.3100, 0.2093, 0.4807), (0.3192, 0.2275, 0.4533)),
+        ((0.3192, 0.2275, 0.4533), (0.3290, 0.2471, 0.4239),
+         (0.3606, 0.2823, 0.3571), (0.3363, 0.3406, 0.3230)),
+        ((0.3363, 0.3406, 0.3230), (0.3240, 0.3702, 0.3058),
+         (0.3040, 0.3731, 0.3230), (0.2796, 0.4109, 0.3095)),
+        ((0.2796, 0.4109, 0.3095), (0.2578, 0.4447, 0.2975),
+         (0.2366, 0.6928, 0.0706), (0.0747, 0.9237, 0.0016)),
+    ),
+    "morb_lower": (
+        ((0.2791, 0.4106, 0.3103), (0.2444, 0.3340, 0.4217),
+         (0.1871, 0.2076, 0.6054), (0.2245, 0.1903, 0.5852)),
+        ((0.2245, 0.1903, 0.5852), (0.2531, 0.1771, 0.5698),
+         (0.2588, 0.1790, 0.5622), (0.3160, 0.2004, 0.4836)),
+    ),
+    "labels": (("OIB", (0.431, 0.383, 0.186)), ("MORB", (0.281, 0.292, 0.426)),
+               ("IAB", (0.109, 0.454, 0.437))),
 }
 
 
-class Vermeesch2006NaNbSr(TernaryDiagram):
+def _bezier_fractions(segments, n: int = 48) -> np.ndarray:
+    """Sample cubic Bezier segments given as ternary fractions."""
+    t = np.linspace(0.0, 1.0, n)[:, None]
+    parts = []
+    for p0, p1, p2, p3 in segments:
+        p0, p1, p2, p3 = (np.asarray(p, float) for p in (p0, p1, p2, p3))
+        parts.append(((1 - t) ** 3) * p0 + 3 * ((1 - t) ** 2) * t * p1
+                     + 3 * (1 - t) * t * t * p2 + t ** 3 * p3)
+    return np.vstack(parts)
+
+
+def _nearest(points: np.ndarray, target) -> int:
+    return int(np.argmin(((points - np.asarray(target, float)) ** 2).sum(1)))
+
+
+def qda_fields(spec: dict) -> dict:
+    """The fields of a QDA ternary as closed outlines of ``(top, left,
+    right)`` fractions: MORB and OIB; IAB is everywhere else."""
+    if "oib_lobe" in spec:
+        morb = _bezier_fractions(spec["morb"])
+        lobe = _bezier_fractions(spec["oib_lobe"])
+        # The lobe leaves the MORB loop and comes back to it: close it
+        # along the stretch of loop between its two ends.
+        i, j = sorted((_nearest(morb, lobe[-1]), _nearest(morb, lobe[0])))
+        arc = morb[i:j + 1]
+        if np.linalg.norm(arc[0] - lobe[-1]) > np.linalg.norm(arc[-1] - lobe[-1]):
+            arc = arc[::-1]
+        return {"MORB": morb, "OIB": np.vstack([lobe, arc])}
+    dome = _bezier_fractions(spec["oib"])
+    lower = _bezier_fractions(spec["morb_lower"])
+    # The dome starts and ends on the 50 Sm - Ti/50 edge: it closes
+    # along it.  The lens is its lower curve and the stretch of the dome
+    # above it.
+    i, j = _nearest(dome, lower[-1]), _nearest(dome, lower[0])
+    lens = np.vstack([lower, dome[min(i, j):max(i, j) + 1]])
+    return {"MORB": lens, "OIB": np.vstack([dome, dome[:1]])}
+
+
+def _fraction_xy(fractions: np.ndarray):
+    x, y = ternary_to_xy(pd.Series(fractions[:, 0]),
+                         pd.Series(fractions[:, 1]),
+                         pd.Series(fractions[:, 2]))
+    return np.column_stack([x.to_numpy(), y.to_numpy()])
+
+
+def qda_field(spec: dict, top, left, right) -> pd.Series:
+    """The field -- IAB, MORB or OIB -- each composition falls in; ""
+    where a value is missing."""
+    from matplotlib.path import Path as _Path
+    top, left, right = (pd.Series(v, dtype=float).reset_index(drop=True)
+                        for v in (top, left, right))
+    x, y = ternary_to_xy(top, left, right)
+    points = np.column_stack([x.to_numpy(), y.to_numpy()])
+    fields = {name: _Path(_fraction_xy(outline))
+              for name, outline in qda_fields(spec).items()}
+    out = []
+    for p in points:
+        if not np.all(np.isfinite(p)):
+            out.append("")
+        elif fields["MORB"].contains_point(p):
+            out.append("MORB")
+        elif fields["OIB"].contains_point(p):
+            out.append("OIB")
+        else:
+            out.append("IAB")
+    return pd.Series(out, dtype=object)
+
+
+def _draw_qda_fields(ax, spec) -> None:
+    for outline in qda_fields(spec).values():
+        xy = _fraction_xy(outline)
+        ax.plot(xy[:, 0], xy[:, 1], color="#444", linewidth=0.9,
+                alpha=0.9, zorder=2)
+    for name, (a, b, c) in spec["labels"]:
+        (x, y), = _fraction_xy(np.array([[a, b, c]]))
+        ax.text(x, y, name, ha="center", va="center", fontsize=8,
+                color="#333", alpha=0.9, zorder=3)
+
+
+class _VermeeschQDATernary(TernaryDiagram):
+    """Shared plumbing for the two QDA ternaries."""
+
+    spec: dict = {}
+
+    def classify_frame(self, df: pd.DataFrame) -> pd.Series:
+        """The QDA field of every sample; "" without the elements."""
+        abc = self._abc(df)
+        if abc is None:
+            return pd.Series("", index=df.index, dtype=object)
+        out = qda_field(self.spec, *abc)
+        out.index = df.index
+        return out
+
+    def plot(self, figure, df, plot_style, options: PlotOptions):
+        figure.clear()
+        ax = figure.add_subplot(111)
+        draw_ternary_frame(ax, self.spec["apices"], options.x_axis)
+        _draw_qda_fields(ax, self.spec)
+        self._scatter_samples(ax, df, plot_style)
+        self._apply_legend(ax, options)
+        figure.tight_layout()
+
+
+class Vermeesch2006NaNbSr(_VermeeschQDATernary):
     key = "vermeesch_NaNbSr"
-    title = "Na − 25 Nb − Sr — Vermeesch (2006a)"
-    citation = ("Vermeesch (2006a). Mafic discrimination using Na (wt% × "
-                "100), 25 × Nb (ppm) and Sr (ppm). Best for OIB and IAB; "
-                "MORB intermediate.")
+    title = "Na/100 − 25 Nb − Sr — Vermeesch (2006a)"
+    citation = ("Vermeesch (2006a) Figure 34: the best quadratic "
+                "discriminant ternary, Na (ppm)/100, 25 × Nb and Sr (ppm). "
+                "Its boundaries are read from the paper's vector figure; "
+                "they reproduce the paper's test classification. Na is "
+                "mobile: trust it only on fresh basalt.")
+    spec = _QDA_NA_NB_SR
 
     def _abc(self, df):
         na_ox = resolve_column(df, ["Na2O"])
@@ -236,18 +384,9 @@ class Vermeesch2006NaNbSr(TernaryDiagram):
         if not (na_ox and nb and sr):
             return None
         na = pd.to_numeric(df[na_ox], errors="coerce") * 0.7419 * 1e4 / 100.0
-        return (na,
-                25.0 * pd.to_numeric(df[nb], errors="coerce"),
+        return (25.0 * pd.to_numeric(df[nb], errors="coerce"),
+                na,
                 pd.to_numeric(df[sr], errors="coerce"))
-
-    def plot(self, figure, df, plot_style, options: PlotOptions):
-        figure.clear()
-        ax = figure.add_subplot(111)
-        draw_ternary_frame(ax, ("Na/100", "25 Nb", "Sr"), options.x_axis)
-        _draw_ternary_fields(ax, _VRMS_NA_NB_SR)
-        self._scatter_samples(ax, df, plot_style)
-        self._apply_legend(ax, options)
-        figure.tight_layout()
 
 
 # ---------------------------------------------------------------------------
@@ -468,22 +607,15 @@ class Vermeesch2006VTiSc(_VermeeschLDATernary):
                 5.0 * pd.to_numeric(df[sc], errors="coerce"))
 
 
-_VRMS_SM_TI_V = {
-    "IAB":  [(10, 10, 80), (25, 15, 60), (20, 25, 55), (10, 20, 70)],
-    "MORB": [(20, 30, 50), (35, 35, 30), (40, 25, 35), (25, 25, 50)],
-    "OIB":  [(45, 35, 20), (55, 30, 15), (50, 20, 30), (35, 25, 40)],
-}
-
-
-# Still a hand-drawn envelope: Figure 46 is a QDA, whose boundaries
-# are conics in log-ratio space rather than the straight rays of
-# Table 6, so it has no anchor points to rebuild it from.
-class Vermeesch2006SmTiV(TernaryDiagram):
+class Vermeesch2006SmTiV(_VermeeschQDATernary):
     key = "vermeesch_SmTiV"
-    title = "50 Sm − Ti/50 − V — Vermeesch (2006a)"
-    citation = ("Vermeesch (2006a). 50 × Sm, Ti ppm / 50 and V ppm. "
-                "Last of the 5 refined ternaries, useful when Sr / "
-                "Lu data are missing.")
+    title = "Ti/50 − 50 Sm − V — Vermeesch (2006a)"
+    citation = ("Vermeesch (2006a) Figure 35: the best quadratic "
+                "discriminant ternary from immobile elements, Ti (ppm)/50, "
+                "50 × Sm and V (ppm). Its boundaries are read from the "
+                "paper's vector figure; they reproduce its test "
+                "classification. Useful when Sr or Lu are missing.")
+    spec = _QDA_TI_V_SM
 
     def _abc(self, df):
         sm = resolve_column(df, ["Sm"])
@@ -491,18 +623,9 @@ class Vermeesch2006SmTiV(TernaryDiagram):
         ti = _ti_ppm(df)
         if not (sm and v) or ti is None:
             return None
-        return (50.0 * pd.to_numeric(df[sm], errors="coerce"),
-                ti / 50.0,
+        return (ti / 50.0,
+                50.0 * pd.to_numeric(df[sm], errors="coerce"),
                 pd.to_numeric(df[v], errors="coerce"))
-
-    def plot(self, figure, df, plot_style, options: PlotOptions):
-        figure.clear()
-        ax = figure.add_subplot(111)
-        draw_ternary_frame(ax, ("50 Sm", "Ti/50", "V"), options.x_axis)
-        _draw_ternary_fields(ax, _VRMS_SM_TI_V)
-        self._scatter_samples(ax, df, plot_style)
-        self._apply_legend(ax, options)
-        figure.tight_layout()
 
 
 #: Vermeesch (2006a) Table 6 and Figure 41b, the LDA that replaces the

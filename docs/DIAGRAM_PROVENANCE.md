@@ -35,10 +35,10 @@ view*.
 | Equation or table, compared with the published numbers | 9 | *Equation or table* |
 | TAS, volcanic and plutonic, vertex by vertex | 2 | *Retracted findings*, *Middlemost (1994)* |
 | Rule, with the arithmetic under it checked | 1 | *Maniar & Piccoli (1989)* |
-| Drawn envelope, now measured, computed or read from printed coordinates | 19 | *Drawn envelope* to *Harris, Pearce & Tindle (1986)* |
+| Drawn envelope, now measured, computed or read from printed coordinates | 21 | *Drawn envelope* to *Vermeesch (2006a) — the two QDA ternaries* |
 | A plane computed from printed equations, with no fields to check | 1 | *Yang et al. (2019)* |
 | **Known wrong — fix first** | **0** | |
-| Still drawn by eye, blocked on sources | 3 | *Still drawn by eye* |
+| Still drawn by eye, blocked on sources | 1 | *Still drawn by eye* |
 | **Total** | **50** | |
 
 One curve inside the checked set is not verified: the Irvine & Baragar
@@ -389,11 +389,12 @@ faded to say so.
 `Ti` was converted from TiO₂ with 5995 ppm per wt.% in four places;
 the mass ratio gives 5993.4. Now a named constant, shared.
 
-## Drawn envelope — 19 done, 3 blocked
+## Drawn envelope — 21 done, 1 blocked
 
 Twelve are in the three subsections below; Saccani, Defant & Drummond,
-Pearce & Gale, Cabanis & Lecolle and Harris have a section each after
-them; the three still drawn by eye are listed last.
+Pearce & Gale, Cabanis & Lecolle, Harris and the two Vermeesch QDA
+ternaries have a section each after them; the one still drawn by eye is
+listed last.
 
 ### Done (3)
 
@@ -963,23 +964,73 @@ which the citation passes on.
 arithmetic rather than by label, the five segments, their shared
 vertices, the two separate branches, and the catalogue text.
 
-## Still drawn by eye (3) — all blocked, none pending
+## Vermeesch (2006a) — the two QDA ternaries, read from the vector figure
 
-Nothing is left that a measurement could fix. The three below are
-blocked on sources, not on effort.
+`VermeeschGCubed2006.pdf`, Figures 34 and 35 (with 45 and 46). Keys
+`vermeesch_NaNbSr` and `vermeesch_SmTiV`. Checked 2026-10-21.
+
+These were listed as blocked: a QDA gives each class its own
+covariance, so the boundaries are conics in log-ratio space, and the
+paper prints neither the covariances nor Table 6 anchor points for
+them, as it does for the three LDA ternaries. They cannot be computed.
+They can be **read**, though: Figures 34 and 35 are vector drawings,
+and their decision boundaries are Bezier paths in the PDF — 12
+segments for Na–Nb–Sr, 8 for Ti–V–Sm. Each control point was taken from
+the path and turned into ternary fractions through the figure's own
+triangle. A Bezier curve keeps its shape through that affine map, so
+nothing is approximated beyond what the paper drew.
+
+What was there before was wrong twice over: four quadrilaterals per
+diagram typed in ternary percent, and the triangle the wrong way up —
+Na/100 and 50 Sm at the top where the paper has **25 Nb and Ti/50**.
+The real fields look nothing like quadrilaterals: on Na–Nb–Sr MORB is a
+long closed loop from near the 25 Nb apex to the base and OIB a lobe
+against its right side, with IAB on either side; on Ti–V–Sm OIB is a
+dome against the 50 Sm – Ti/50 edge and MORB a small lens under its
+right end, with IAB below.
+
+Three checks, each against something the extraction did not use:
+
+* **The log-ratio figures.** Figures 45a and 46a draw the same
+  boundaries in log-ratio space, axes ln(left/top) and ln(right/top),
+  calibrated on their own tick marks. Mapped back to the triangle with
+  the **natural** logarithm they lie on the Figure 34/35 curves to a
+  median 0.34 % and 0.23 % of the triangle's side (90th percentile
+  under 1 %); with base ten they miss by 5–24 %. So "log" is ln here,
+  as for the LDA ternaries, and the two drawings agree.
+* **The paper's test samples.** Figures 45b and 46b plot the 61 and 85
+  test samples with their true class, and the paper's table of test
+  results says how its QDA classed each. Classified by the extracted
+  fields, **Na–Nb–Sr gives the table exactly** — 21 IAB right; 7 of 12
+  MORB right, 5 taken for IAB; 28 OIB right. **Ti–V–Sm gives 82 of
+  85**; the other three, one in each row, lie on the drawn line, 0.05 %,
+  0.19 % and 0.31 % of the side from it, about the stroke's width. The
+  misclassified samples the paper counts — MORB taken for OIB, 1–9 %
+  inside the OIB field — come out misclassified here too. The
+  boundaries in Figures 45b/46b are the same drawing as 34/35, to the
+  hundredth of a percent.
+* **The orientation**, apex by apex, against the figures.
+
+`tests/test_vermeesch_qda_ternaries.py` pins all three, with the test
+samples' positions and the log-ratio curves read from the PDF in
+`tests/data/vermeesch2006_qda_figures.json`; it also checks that every
+part of the boundary the log-ratio figures can see lies on their curve,
+and that each segment starts where the last ended. Swapping two digits
+of any one control-point coordinate — 216 such typos — fails it every
+time.
+
+## Still drawn by eye (1) — blocked, none pending
+
+Nothing is left that a measurement could fix. The one below is blocked
+on a source, not on effort.
 
 | Diagram | Source on disk | Why |
 | --- | --- | --- |
 | `defant_drummond_YbLaYb` | **not on disk** | the paper it cites does not contain that figure; see above |
-| `vermeesch_NaNbSr`, `vermeesch_SmTiV` | `VermeeschGCubed2006.pdf` | QDA, and the paper publishes no covariance matrices |
 
-The two Vermeesch ones are blocked for a reason no further reading will
-clear: they are **QDA**, so their boundaries are conics in log-ratio
-space rather than rays from a triple point, and reproducing them needs
-the per-class covariance matrices. The paper publishes neither those nor
-anchor points for them in Table 6, the way it does for the three LDA
-ternaries. They stay drawn by eye unless the data behind the paper can
-be obtained.
+The figure is in Drummond & Defant (1990, *J. Geophys. Res.* 95(B13),
+21503–21521), after Martin (1986, *Geology* 14, 753–756); with either
+paper the fields can be measured as the others were.
 
 ## Maniar & Piccoli (1989) — the rules were right, one label was not
 
