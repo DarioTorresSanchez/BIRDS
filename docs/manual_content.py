@@ -30,7 +30,7 @@ SECTIONS = [
          "(REE chondrites and shales, multi-element references and "
          "Ni-Cu-PGE metal references), a discrimination module with 39 "
          "tectonic diagrams, and a statistics dashboard with REE-anomaly "
-         "indices, a correlation-matrix heat-map and 238 tectonic "
+         "indices, a correlation-matrix heat-map and 253 tectonic "
          "discrimination parameters. A map view plots every sample at "
          "its longitude and latitude and kriges any numeric column "
          "across them, with the uncertainty of the result, and exports "
@@ -631,7 +631,7 @@ SECTIONS = [
             "Correlation matrix — Pearson r heatmap, poolable, "
             "facetable per group or shown for one group alone, with "
             "cell annotations if the matrix fits on screen.",
-            "Tectonic discrimination — 238 parameters, ticked from a "
+            "Tectonic discrimination — 253 parameters, ticked from a "
             "tree and computed per sample. See below.",
             "Plots — the figures that go with the tables.",
         ]},
@@ -651,13 +651,14 @@ SECTIONS = [
          "reported as numbers. Tick what you want in the tree on the "
          "left; the count in the tab title follows your selection."},
         {"type": "bullet", "items": [
-            "For seven of the eleven Verma coefficient sets the "
+            "For eight of the eleven Verma coefficient sets the "
             "posterior probability of each tectonic setting is given "
             "as well as the discriminant score, following Verma & "
-            "Agrawal (2011). Verma et al. (2012) publishes neither "
-            "group centroids nor group means, and the three earlier "
-            "basic-rock sets (2004, 2006, 2008) classify by their "
-            "drawn boundaries alone, so those four report scores.",
+            "Agrawal (2011). For Verma & Agrawal (2011) and Verma et "
+            "al. (2012), whose papers do not print their centroids, "
+            "they come from the authors' own Statistica sheet. The "
+            "three earlier basic-rock sets (2004, 2006, 2008) classify "
+            "by their drawn boundaries alone and report scores.",
             "33.3 % is the by-chance level for a three-group panel. A "
             "sample sitting near it is inconclusive, and seeing the "
             "number says so where a field name would not.",

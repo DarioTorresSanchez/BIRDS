@@ -112,10 +112,10 @@ def test_the_sheet_settles_the_sign_of_nb_in_eq_16():
 # Centroids
 # ---------------------------------------------------------------------------
 
-def _centroid_gap(table):
+def _centroid_gap(table, centroids=None):
     worst = 0.0
     for panel, cents in SHEET["centroids"][table].items():
-        ours = VP.CENTROIDS[table][panel]
+        ours = (centroids or VP.CENTROIDS[table])[panel]
         for group, (x, y) in zip(VP.PANEL_GROUPS[panel], cents):
             ox, oy = ours[group]
             worst = max(worst, abs(ox - x), abs(oy - y))
@@ -127,10 +127,17 @@ def test_verma_verma_centroids_are_the_sheets(table):
     assert _centroid_gap(table) < 1e-8
 
 
+@pytest.mark.parametrize("table", ["VA11", "V12_ACID"])
+def test_the_sets_whose_papers_print_none_use_the_sheets(table):
+    """Verma & Agrawal (2011) print theirs in a supplement not to hand,
+    Verma et al. (2012) nowhere."""
+    assert _centroid_gap(table) == 0.0
+
+
 def test_the_derived_verma_agrawal_centroids_are_within_0_015():
-    """Derived from the group means of Table 2, for want of the
-    supplement that prints them."""
-    assert _centroid_gap("VA11") < 0.015
+    """What the program used before the sheet: centroids derived from
+    the group means of Table 2."""
+    assert _centroid_gap("VA11", VP.VA11_DERIVED_CENTROIDS) < 0.015
 
 
 @pytest.mark.parametrize("table", ["V13A_MACID", "V13A_MTACID",

@@ -87,7 +87,7 @@ below, and every one is now corrected and pinned.
 | `verma_verma_2013_major` | none | 10/10 centroids, residual ≤ 0.008 |
 | `verma_verma_2013_imint` | 6 of 80, found against the authors' sheet | 10/10 centroids, residual ≤ 0.042 |
 | `verma_verma_2013_trace` | 2 of 80, found against the authors' sheet | 10/10 centroids, residual ≤ 0.009 |
-| `verma_2012_acid` | 7 of 110 | pinned digit-by-digit (no centroids published) |
+| `verma_2012_acid` | 7 of 110 | pinned digit-by-digit; centroids from the authors' sheet, 5/5 triple points within 0.004 |
 | `verma_2013_acid_macid` | 2 of 98 | centroids match, less the CR column (below) |
 | `verma_2013_acid_mtacid` | 1 of 58 | 10/10 centroids |
 | `verma_2013_acid_tacid` | 1 of 78 | 10/10 centroids |
@@ -115,6 +115,15 @@ of Verma et al. (2013) — and stay as printed. The sheet also settles
 the sign of Nb in eq (16) of Verma et al. (2013): −0.38213, as the
 program uses, not the printed +0.382 (*Known issues* in the
 CHANGELOG).
+
+The sheet also supplies the centroids two papers do not print, and
+the program now uses them: Verma & Agrawal (2011), whose own are in a
+supplement not to hand — the sheet's put the published triple points
+within 0.002, where those derived from the Table 2 means were off by up
+to 0.012 — and Verma et al. (2012), which prints none, so that set now
+gives probabilities too (within 0.004 of every triple point, each
+centroid inside its own field, and the sheet's probabilities matched
+exactly on its 518 samples).
 
 The sheet is not without faults of its own. Its probabilities for
 panels (b)–(e) of Verma & Agrawal (2011) take the third group's

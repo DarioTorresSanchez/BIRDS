@@ -27,6 +27,7 @@ from birds.verma_probability import (
 #: Field geometry per set, for the published triple points.
 FIELDS = {
     "VA11": VC.VA11_FIELDS,
+    "V12_ACID": VC.V12_ACID_FIELDS,
     "VV13_MAJOR": VC.VV13_MAJOR_FIELDS,
     "VV13_IMINT": VC.VV13_IMINT_FIELDS,
     "VV13_TRACE": VC.VV13_TRACE_FIELDS,
@@ -37,10 +38,10 @@ FIELDS = {
 
 #: How far the circumcentre may sit from the published triple point.
 #: Verma & Verma (2013) prints its centroids to ten significant figures,
-#: Verma & Agrawal (2011) has them derived from its Table 2 means, and
-#: the 2013 acid papers print one or two decimals.
+#: Verma & Agrawal (2011) and Verma et al. (2012) have theirs from the
+#: authors' sheet, and the 2013 acid papers print one or two decimals.
 TRIPLE_TOLERANCE = {
-    "VA11": 0.02, "VV13_MAJOR": 0.02, "VV13_IMINT": 0.02,
+    "VA11": 0.005, "V12_ACID": 0.005, "VV13_MAJOR": 0.02, "VV13_IMINT": 0.02,
     "VV13_TRACE": 0.02, "V13A_MACID": 0.10, "V13A_MTACID": 0.06,
     "V13A_TACID": 0.15,
 }
@@ -211,7 +212,8 @@ class TestTheStatisticsTable:
     def test_probabilities_are_offered_for_every_eligible_set(self):
         keys = {d.key for d in DISCRIMINATORS}
         for key, panels in CENTROIDS.items():
-            prefix = {"VA11": "va11", "VV13_MAJOR": "vv13_maj",
+            prefix = {"VA11": "va11", "V12_ACID": "v12_acid",
+                      "VV13_MAJOR": "vv13_maj",
                       "VV13_IMINT": "vv13_imint", "VV13_TRACE": "vv13_tr",
                       "V13A_MACID": "v13a_macid",
                       "V13A_MTACID": "v13a_mtacid",
@@ -221,11 +223,18 @@ class TestTheStatisticsTable:
                     want = f"{prefix}.p.{panel.lower()}.{group.lower()}"
                     assert want in keys, want
 
-    def test_verma_2012_acid_offers_no_probabilities(self):
-        """It publishes neither centroids nor group means."""
-        assert not [d for d in DISCRIMINATORS
-                    if d.key.startswith("v12_acid.p.")]
-        assert [d for d in DISCRIMINATORS if d.key.startswith("v12_acid.")]
+    def test_verma_2012_acid_offers_probabilities_from_the_sheet(self):
+        """The paper prints no centroids; the authors' sheet has them."""
+        assert len([d for d in DISCRIMINATORS
+                    if d.key.startswith("v12_acid.p.")]) == 15
+
+    def test_the_basic_sets_of_2004_to_2008_offer_scores_only(self):
+        """None of the three papers has centroids anywhere."""
+        for prefix in ("a04", "v06", "a08"):
+            mine = [d for d in DISCRIMINATORS
+                    if d.key.startswith(f"{prefix}.")]
+            assert len(mine) == 10
+            assert not [d for d in mine if ".p." in d.key]
 
     def test_each_panel_column_reports_its_own_group(self):
         """Guards a late-binding slip.

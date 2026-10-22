@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-3630%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-3658%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -454,7 +454,7 @@ What the suite covers, and why those things and not others:
 | **Sessions** | `.birds` and `.birdstyle` round-trips, including the detection limits that make the policy changeable after a reload |
 | **Published coordinates** | Vertices and boundary points pinned against the figures and tables they were measured from, so a calibrated diagram cannot drift back |
 | **Which normaliser, which axis** | A diagram can carry the right boundary and still be wrong if it normalises against the wrong reference or plots the pair the other way up. Saccani's three are pinned on all of it — chondrite where the caption says chondrite, Dy on the x-axis where the figure puts Dy, linear where the source is linear — because all three were wrong at once, and so were four rows of the statistics table |
-| **Table against plot** | The same quantity reaches the statistics table and the diagram by two routes, and three faults here have been a correction landing on only one of them. So all 238 rows are paired with the axis plotting the same thing and required to equal it bit for bit, and the TiO₂ → Ti constant — which once had three values in five places — is checked against its own mass ratio |
+| **Table against plot** | The same quantity reaches the statistics table and the diagram by two routes, and three faults here have been a correction landing on only one of them. So all 253 rows are paired with the axis plotting the same thing and required to equal it bit for bit, and the TiO₂ → Ti constant — which once had three values in five places — is checked against its own mass ratio |
 | **Verma centroids** | Every discriminant function evaluated at its paper's own group means has to return that paper's own published centroid — 60 of them. This is what found ten wrong coefficients that a digit-by-digit check had scored 95–100 % |
 | **Verma probabilities** | The triple point of a panel must be the circumcentre of its three group centroids, which is where all three settings come out equally likely. The triple points come from the figure captions and the centroids from elsewhere in the same papers, so neither is checking itself |
 | **Reference materials** | USGS BHVO-2, BCR-2 and AGV-2 through the whole chain: classification, norm, chondrite-normalised pattern, and — for the two whose setting is not in dispute — tectonic discrimination |

@@ -29,12 +29,22 @@ The second is a strong check on the centroids, because the triple point
 is published independently of them: equal distances to three points
 means the triple point is their circumcentre.
 
-Why ``verma_2012_acid`` is absent
+Centroids from the authors' sheet
 ---------------------------------
-Verma S.K., Pandarinath K. & Verma S.P. (2012) prints neither group
-centroids nor group mean log-ratios, so there is nothing to measure the
-distances from.  Its DF values are still reported; only the
-probabilities are missing.  The three 2013 acid sets cover acid rocks.
+Two sets take theirs from the Statistica worksheet in which Verma's
+group computed these diagrams (``MGV_DB_4.sta``), because the papers do
+not print them:
+
+* Verma & Agrawal (2011) put theirs in an electronic supplement that is
+  not to hand.  The program used to derive them from the group means of
+  Table 2; the sheet's put the published triple points within 0.002,
+  where the derived ones were off by up to 0.012.
+* Verma S.K., Pandarinath K. & Verma S.P. (2012) print neither centroids
+  nor group means.  The sheet's put every published triple point
+  within 0.004 and each lies in its own published field.
+
+The 2004, 2006 and 2008 basic-rock sets have no centroids anywhere, and
+report scores and fields only.
 """
 
 from __future__ import annotations
@@ -46,6 +56,7 @@ import numpy as np
 import pandas as pd
 
 from .diagrams.templates.verma_coefficients import (
+    V12_ACID,
     V13A_MACID,
     V13A_MTACID,
     V13A_TACID,
@@ -63,6 +74,11 @@ PANEL_GROUPS: Dict[str, Tuple[str, str, str]] = {
     "IAB_CRB_MORB": ("IAB", "CRB", "MORB"),
     "IAB_OIB_MORB": ("IAB", "OIB", "MORB"),
     "CRB_OIB_MORB": ("CRB", "OIB", "MORB"),
+    # Verma et al. (2012) — acid, CR without OI
+    "IACA_CR_COL": ("IA+CA", "CR", "Col"),
+    "IA_CA_CR": ("IA", "CA", "CR"),
+    "IA_CR_COL": ("IA", "CR", "Col"),
+    "CA_CR_COL": ("CA", "CR", "Col"),
     # Verma & Verma (2013) and Verma et al. (2013) — intermediate and acid
     "IACA_CROI_COL": ("IA+CA", "CR+OI", "Col"),
     "IA_CA_CROI": ("IA", "CA", "CR+OI"),
@@ -169,17 +185,80 @@ V13A_TACID_CENTROIDS = {
 }
 
 # ---------------------------------------------------------------------------
-# Verma & Agrawal (2011) centroids, derived
+# Centroids from the authors' Statistica sheet (MGV_DB_4.sta)
 # ---------------------------------------------------------------------------
-# That paper puts its centroids in Table A4 of an electronic supplement
-# that is not to hand.  It does print, in Table 2, the group mean
-# log-ratios of the training set, and a DF is linear in those, so
-# evaluating it at a group's means gives that group's centroid exactly.
-#
-# The derivation is checked rather than assumed: the triple point of
-# each panel, published in the Figure 1 caption and used nowhere in the
-# derivation, must be the circumcentre of the three centroids it
-# produces.  It is, to 0.01 on every panel.
+# Its MdfG constants, in each panel's group order.  Checked against what
+# the papers do print: the circumcentre of each panel's three falls on
+# its published triple point -- within 0.002 for Verma & Agrawal (2011),
+# 0.004 for Verma et al. (2012) -- and each lies in its own field.
+
+#: Verma & Agrawal (2011), whose own are in a supplement not to hand.
+VA11_CENTROIDS = {
+    "IAB_CRBOIB_MORB": {
+        "IAB": (3.1811, 0.52226),
+        "CRB+OIB": (-1.80906, 0.09548),
+        "MORB": (1.72886, -1.44601),
+    },
+    "IAB_CRB_OIB": {
+        "IAB": (3.43726, -0.06394),
+        "CRB": (-1.35254, 0.70692),
+        "OIB": (-1.73941, -0.76481),
+    },
+    "IAB_CRB_MORB": {
+        "IAB": (2.41306544, 0.464585166),
+        "CRB": (-2.36861391, 0.179370517),
+        "MORB": (0.890298225, -1.33809654),
+    },
+    "IAB_OIB_MORB": {
+        "IAB": (2.6924287, 0.599253932),
+        "OIB": (-3.24439681, 0.17628963),
+        "MORB": (1.30665513, -1.53450743),
+    },
+    "CRB_OIB_MORB": {
+        "CRB": (-0.566446254, 0.817982615),
+        "OIB": (-0.919384937, -0.874756488),
+        "MORB": (3.21361453, -0.16593782),
+    },
+}
+
+#: Verma, Pandarinath & Verma (2012), which prints none.
+V12_ACID_CENTROIDS = {
+    "IACA_CR_COL": {
+        "IA+CA": (1.031605, 0.191096),
+        "CR": (-1.47289, 1.33749),
+        "Col": (-0.82488, -1.42141),
+    },
+    "IA_CA_CR": {
+        "IA": (-1.25273, -0.55069),
+        "CA": (-0.388329, 0.801597),
+        "CR": (2.042011, -0.247561),
+    },
+    "IA_CA_COL": {
+        "IA": (-1.51021, 0.35464),
+        "CA": (-0.234425, -0.619003),
+        "Col": (1.719259, 0.233037),
+    },
+    "IA_CR_COL": {
+        "IA": (2.061511, -0.173425),
+        "CR": (-0.869467, 1.50485),
+        "Col": (-1.36925, -1.01286),
+    },
+    "CA_CR_COL": {
+        "CA": (-0.589027, 1.145966),
+        "CR": (1.612233, -0.078004),
+        "Col": (-0.72481, -1.00119),
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Verma & Agrawal (2011) centroids, derived -- kept as a check
+# ---------------------------------------------------------------------------
+# Before the sheet was to hand these came from Table 2, the group mean
+# log-ratios of the training set: a DF is linear in those, so evaluating
+# it at a group's means gives that group's centroid.  The means are
+# printed to two or three decimals, which puts the derived centroids
+# within 0.015 of the sheet's and their triple points within 0.012 of
+# the published ones; the tests keep both comparisons.
 
 #: Verma & Agrawal (2011) Table 2 — training-set mean log-ratios over
 #: (TiO2)adj, with both terms in ug/g as the paper requires.
@@ -214,12 +293,13 @@ def _va11_centroids() -> Dict[str, Dict[str, Tuple[float, float]]]:
     return out
 
 
-VA11_CENTROIDS = _va11_centroids()
+VA11_DERIVED_CENTROIDS = _va11_centroids()
 
 #: Every set that can report probabilities, keyed as the coefficient
 #: tables are, with the citation used for the statistics category.
 CENTROIDS: Dict[str, Dict[str, Dict[str, Tuple[float, float]]]] = {
     "VA11": VA11_CENTROIDS,
+    "V12_ACID": V12_ACID_CENTROIDS,
     "VV13_MAJOR": VV13_MAJOR_CENTROIDS,
     "VV13_IMINT": VV13_IMINT_CENTROIDS,
     "VV13_TRACE": VV13_TRACE_CENTROIDS,
@@ -231,6 +311,7 @@ CENTROIDS: Dict[str, Dict[str, Dict[str, Tuple[float, float]]]] = {
 #: The coefficient table each centroid set belongs to.
 TABLES = {
     "VA11": VA11,
+    "V12_ACID": V12_ACID,
     "VV13_MAJOR": VV13_MAJOR,
     "VV13_IMINT": VV13_IMINT,
     "VV13_TRACE": VV13_TRACE,

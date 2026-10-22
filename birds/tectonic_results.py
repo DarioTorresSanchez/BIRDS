@@ -403,7 +403,7 @@ _VERMA_SETS = (
     (VV13_TRACE, "Verma & Verma (2013) — intermediate immobile traces",
      "vv13_tr", "VV13_TRACE"),
     (V12_ACID, "Verma et al. (2012) — acid rocks",
-     "v12_acid", None),
+     "v12_acid", "V12_ACID"),
     (V13A_MACID, "Verma et al. (2013) — acid majors",
      "v13a_macid", "V13A_MACID"),
     (V13A_MTACID, "Verma et al. (2013) — acid immobile majors+traces",

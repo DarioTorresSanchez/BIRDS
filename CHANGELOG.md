@@ -18,6 +18,15 @@ including what is still unverified.
 
 ### Added
 
+- **Probabilities for Verma et al. (2012), and the sheet's centroids for
+  Verma & Agrawal (2011).** Neither paper prints its group centroids;
+  the authors' Statistica sheet has them, and each set's put every
+  published triple point within 0.004 and lie in their own fields. The
+  2012 acid set therefore reports the probability of each setting, as
+  the other seven do — the sheet's own values, matched on its 518
+  samples — and Verma & Agrawal (2011) moves from centroids derived
+  from its Table 2 means (triple points off by up to 0.012) to the
+  sheet's (0.002).
 - **The three earlier basic-rock DF sets of Verma's group** — Agrawal,
   Guevara & Verma (2004), on the adjusted major oxides themselves;
   Verma, Guevara & Agrawal (2006), on ten ln(oxide/SiO₂); and Agrawal,
