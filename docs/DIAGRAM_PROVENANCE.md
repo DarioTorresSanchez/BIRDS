@@ -19,8 +19,8 @@ apply. This was the lesson of the Pb NHRL: the drawn line in the source
 figure sits 5–7 px off Hart's published equation, which is the
 redrawing's error, not the equation's.
 
-The catalogue holds **53 unique diagrams**. The menus list 81 entries,
-but all 24 plutonic tectonic-discrimination entries re-use volcanic keys.
+The catalogue holds **54 unique diagrams**. The menus list 85 entries,
+but all 26 plutonic tectonic-discrimination entries re-use volcanic keys.
 The six modal diagrams of the Petrography view are outside these
 counts; they have their own section at the end, *The Petrography
 view*.
@@ -31,7 +31,7 @@ view*.
 
 | Status | Count | Section |
 |---|---|---|
-| Measured from the figure, or checked against the centroids it prints | 15 | *Measured, or checked against printed centroids* |
+| Measured from the figure, or checked against the centroids it prints | 16 | *Measured, or checked against printed centroids* |
 | Equation or table, compared with the published numbers | 9 | *Equation or table* |
 | Verma's group, 2004–2008: functions and caption coordinates, checked against the authors' sheet | 3 | *Verma's group, 2004–2008* |
 | TAS, volcanic and plutonic, vertex by vertex | 2 | *Retracted findings*, *Middlemost (1994)* |
@@ -40,10 +40,11 @@ view*.
 | A plane computed from printed equations, with no fields to check | 1 | *Yang et al. (2019)* |
 | **Known wrong — fix first** | **0** | |
 | Still drawn by eye, blocked on sources | 1 | *Still drawn by eye* |
-| **Total** | **53** | |
+| **Total** | **54** | |
 
-One curve inside the checked set is not verified: the Irvine & Baragar
-(1971) overlay on `afm`, whose coordinates the caption does not print.
+The Irvine & Baragar (1971) overlay on `afm`, the one curve this summary
+used to call unverified, is now Rickwood's (1989) measurement of their
+figure (see *Equation or table*).
 The Butler & Woronow disagreement this summary used to flag is resolved:
 two minus signs the PDF text layer drops (see below).
 
@@ -54,7 +55,7 @@ came from a different bad method and both are easy to repeat.
 
 ---
 
-## Measured, or checked against printed centroids (15)
+## Measured, or checked against printed centroids (16)
 
 **Measured from the published figure**, with the measurement pinned as
 tests and the method recorded in each module's *Provenance* section:
@@ -68,6 +69,8 @@ tests and the method recorded in each module's *Provenance* section:
   *Li et al. (2025)* below
 - `godang2024_nbzr_thnb` — Godang, Saputro & Li (2024) Nb/Zr vs Th/Nb;
   see *Godang et al. (2024)* below
+- `martin_1986_LaYbN` — Martin (1986) (La/Yb)N vs YbN, Archean TTG and
+  post-Archean granitoids; see *Martin (1986)* below
 
 **Coefficients checked against the group centroids each paper prints.**
 These papers publish, per panel, the group centroid in DF1–DF2 space and,
@@ -369,8 +372,16 @@ exactly:
 | `haplogranite` | Table 3.10, the eight water-saturated points |
 | `shervais_1982_TiV` | Ti/V rays are arithmetic, and the arithmetic is right |
 
-`afm` also draws an Irvine & Baragar (1971) overlay whose coordinates
-the caption does not print; that one curve is still unverified.
+`afm` also draws the Irvine & Baragar (1971) and Kuno (1968) dividing
+curves, which the caption does not print. Rickwood (1989, *Lithos* 22,
+Table 3) measured both on the original figures, and the diagram now
+carries his points: its Irvine & Baragar curve had been an
+approximation up to 8 units of F off theirs, and Kuno, cited, was not
+drawn. Rickwood's Table 1 confirms `ib1971` point for point (Irvine &
+Baragar, Kuno 1966, MacDonald 1968), his section 2.2 the `k2o_sio2`
+bands, and his Table 4 six of the eight `jensen` points as printed and
+the other two through misprints of his own that do not sum to 100
+(`tests/test_rickwood_1989.py`).
 `haplogranite` keeps one determination per pressure out of the twelve
 water-saturated rows in Table 3.10 — a curation choice, now documented.
 
@@ -1090,8 +1101,10 @@ on a source, not on effort.
 | `defant_drummond_YbLaYb` | **not on disk** | the paper it cites does not contain that figure; see above |
 
 The figure is in Drummond & Defant (1990, *J. Geophys. Res.* 95(B13),
-21503–21521), after Martin (1986, *Geology* 14, 753–756); with either
-paper the fields can be measured as the others were.
+21503–21521). Martin (1986, *Geology* 14, 753–756) is now on disk and
+drawn as a diagram of its own, `martin_1986_LaYbN`, in (La/Yb)N–YbN with
+his Archean TTG and post-Archean fields; Defant & Drummond's adakite
+fields still need their 1990 paper.
 
 ## Maniar & Piccoli (1989) — the rules were right, one label was not
 
@@ -1326,13 +1339,50 @@ rocks (Section 2.1), a supporting tool only for continental collision
 the primitive mantle or the Th/Yb line it meets, and classifies the
 paper's own case studies by the ratios Section 3 prints.
 
+## Martin (1986) — Archean TTG against post-Archean granitoids
+
+`Martin_1986.pdf` — *Geology* **14**, 753–756, a scan with an OCR text
+layer. Key `martin_1986_LaYbN`. Figure 1 plots (La/Yb)N against YbN,
+linear, Yb_N 0–25 and (La/Yb)N 0–177, with two fields: Archean TTG,
+"(La/Yb)N from 5 to more than 150 ... 0.3 < YbN < 8.5", and post-2.5 Ga
+granitic rocks, "(La/Yb)N ≤ 20 ... 4.5 < YbN < 20".
+
+Both fields were measured on Figure 1 (a 2566 × 3282 scan): the axes on
+their ticks — YbN 0, 10, 20 (45.98 px per unit), (La/Yb)N 0, 50, 100,
+150 (4.57 px per unit) — and each edge fitted to the ink along it, the
+vertices being where neighbouring edges cross. The caption bounds what
+was measured: TTG YbN 0.31–8.47 and (La/Yb)N up to 150; post-Archean
+YbN 4.47–20.0.
+
+Figure 4 draws the fields again, one per panel, and was measured the
+same way as a check. Its post-Archean field (inset A, whose (La/Yb)N
+ticks are unevenly spaced, so it was calibrated tick to tick) agrees
+with Figure 1 within 0.5. Its TTG field (4B) is drawn a little
+narrower — top at 148, steep edge up to 0.33 in YbN to the left — and
+Figure 1, the one that sets the two groups against each other, is the
+one used. `tests/test_martin_1986.py` pins both comparisons.
+
+**Martin does not name his chondrite.** Boynton (1984) is used and the
+citation says so; another chondrite moves YbN by up to a third, which
+for a field defined in YbN is not a detail. The two fields overlap at
+YbN 4.5–8.5, and a sample there is named as either.
+
 ## Godang et al. (2024) — Nb/Zr vs Th/Nb
 
 Godang, Saputro & Li (2024) *Solid Earth Sciences* 9(3) 100199, after
 Saputro et al. (2022) and Sun, Zhang & Huang (2006), as reproduced in
 `Lietal2025.pdf`, Figure 5 (Figure 6 is the same diagram with other
-data). Key `godang2024_nbzr_thnb`. The 2024 paper itself is open access
-but not on disk; the geometry comes from the 2025 reproduction.
+data). Key `godang2024_nbzr_thnb`. The geometry comes from the 2025
+reproduction. The 2024 paper's own Figure 7 (`Godang_etal_2024.pdf`, a
+1895 × 1384 raster), measured afterwards on its own — 650.3 px per
+decade on its lines Th/Nb 0.04, 0.11 and 0.67, the frame then landing
+on 0.0150 and 5.01 — agrees: its Nb/Zr lines sit at 0.0625 and 0.0397,
+each line spans what the template draws and no more, the PM dot is at
+(0.121, 0.064), and the diagonal's slope is −0.4940 against −0.4936 on
+the reproduction, reaching Nb/Zr 0.0100 at Th/Nb 5. The original also
+draws Wei et al.'s (2014) mixing lines A and B and the source boxes
+(PM, WAM, spinel- and garnet-DMM), which are interpretation, not field
+boundaries, and are not drawn.
 
 The figure prints its ratios and they are used as printed: Th/Nb 0.04,
 0.11 and 0.67; Nb/Zr 0.04, 0.0627 (PM) and 0.15; La/Yb 20 inside the

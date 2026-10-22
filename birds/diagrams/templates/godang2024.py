@@ -44,6 +44,15 @@ px per decade); the right edge lands on Th/Nb 4.985:
 * the diagonal is straight on the log axes from the PM dot to the lower
   right corner (5, 0.01): fitted along its length, slope -0.4936 against
   the -0.4931 those two points give, residuals under a pixel.
+
+The paper's own Figure 7 (1895 x 1384 raster), measured afterwards and
+on its own -- 650.3 px per decade on its lines Th/Nb 0.04, 0.11 and
+0.67 -- agrees: Nb/Zr lines at 0.0625 and 0.0397, each line spanning
+what is drawn here and no more, the PM dot at (0.121, 0.064), the
+diagonal's slope -0.4940 and its end at Nb/Zr 0.0100.  It also draws
+Wei et al.'s (2014) mixing lines A and B and boxes for the mantle
+sources, which are interpretation rather than boundaries and are left
+out.
 """
 
 from __future__ import annotations

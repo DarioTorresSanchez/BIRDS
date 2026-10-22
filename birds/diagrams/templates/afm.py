@@ -18,19 +18,29 @@ _AFM_BOUNDARY = [
     (28, 52, 20), (40, 45, 15), (70, 26, 4),
 ]
 
-# Irvine & Baragar (1971) tholeiitic / calc-alkaline dividing curve
-# (approximate, plotted as a dashed reference).
+# Irvine & Baragar (1971, Fig. 2A) and Kuno (1968, Fig. 14) dividing
+# curves, as Rickwood (1989, Table 3) measured them on the published
+# figures.  The Irvine & Baragar curve used to be an approximation that
+# ran up to 8 units of F off theirs -- (40, 42, 18) where their line
+# passes (47.6, 42.4, 10) and (29.6, 52.6, 17.8) -- and Kuno, cited,
+# was not drawn at all.
 _IB_1971 = [
-    (4, 35, 61), (8, 47, 45), (12, 51, 37), (18, 54, 28),
-    (28, 49, 23), (40, 42, 18), (55, 31, 14), (70, 24, 6),
+    (58.8, 36.2, 5), (47.6, 42.4, 10), (29.6, 52.6, 17.8),
+    (25.4, 54.6, 20), (21.4, 54.6, 24), (19.4, 52.8, 27.8),
+    (18.9, 51.1, 30), (16.6, 43.4, 40), (15, 35, 50),
+]
+_KUNO_1968 = [
+    (72, 24, 4), (50, 39.5, 10.5), (34.5, 50, 15.5), (21.5, 57, 21.5),
+    (16.5, 58, 25.5), (12.5, 55.5, 32), (9.5, 50.5, 40),
 ]
 
 
 class AFM(TernaryDiagram):
     key = "afm"
     title = "AFM ternary – Tholeiitic vs Calc-alkaline"
-    citation = ("Irvine & Baragar (1971); Kuno (1968); new boundary curve "
-                "in Rollinson & Pease (2021, Fig. 3.18b). All Fe as FeO$_T$.")
+    citation = ("Irvine & Baragar (1971) and Kuno (1968), as measured by "
+                "Rickwood (1989, Table 3); new boundary curve in Rollinson "
+                "& Pease (2021, Fig. 3.18b). All Fe as FeO$_T$.")
     x_label = ""
     y_label = ""
 
@@ -73,6 +83,8 @@ class AFM(TernaryDiagram):
                                  label="Tholeiitic / Calc-alkaline\n(Rollinson 2021)")),
             (_IB_1971, dict(color="#1f3a93", linewidth=1.0, linestyle="--",
                             label="Irvine & Baragar 1971")),
+            (_KUNO_1968, dict(color="#4d7a3a", linewidth=1.0, linestyle=":",
+                              label="Kuno 1968")),
         ):
             a, b, c = zip(*curve)
             x, y = ternary_to_xy(pd.Series(a), pd.Series(b), pd.Series(c))

@@ -24,6 +24,10 @@ import pandas as pd
 
 from .diagrams.templates.base import resolve_column
 from .normalizations import TIO2_WT_TO_TI_PPM
+from .diagrams.templates.martin1986 import (
+    CHONDRITE as _MARTIN_CHONDRITE,
+    normalised as _martin_normalised,
+)
 from .diagrams.templates.major_df import (
     butler_woronow_df1,
     butler_woronow_df2,
@@ -325,6 +329,13 @@ DISCRIMINATORS: List[Discriminator] = [
     Discriminator("dd.la_yb", "La/Yb",
                   "Defant & Drummond (1990) — adakite vs ADR",
                   lambda df: _ratio(df, "La", "Yb")),
+    # ----- Martin (1986) -------------------------------------------------
+    Discriminator("martin1986.yb_n", f"YbN ({_MARTIN_CHONDRITE})",
+                  "Martin (1986) — Archean TTG vs post-Archean granitoids",
+                  lambda df: _martin_normalised(df)[0]),
+    Discriminator("martin1986.la_yb_n", f"(La/Yb)N ({_MARTIN_CHONDRITE})",
+                  "Martin (1986) — Archean TTG vs post-Archean granitoids",
+                  lambda df: _martin_normalised(df)[1]),
     # ----- Saccani (2015) ----------------------------------------------
     # Figure 5 normalises to N-MORB; Figures 8 and 9 to chondrite.
     Discriminator("saccani.nb_n", "Nb_N (N-MORB)",

@@ -72,6 +72,7 @@ TECTONIC_VOLCANIC: dict[str, list[tuple[str, str]]] = {
     "Intermediate": [
         ("Sr/Y vs Y (adakite) - Defant & Drummond 1990", "defant_drummond_YSrY"),
         ("La/Yb vs Yb (adakite) - Defant & Drummond 1990", "defant_drummond_YbLaYb"),
+        ("(La/Yb)N vs YbN (Archean TTG vs post-Archean) - Martin 1986", "martin_1986_LaYbN"),
         ("Nb/Yb vs Th/Nb - Li et al. 2025 (mafic to felsic)", "li2025_nbyb_thnb"),
         ("Nb/Zr vs Th/Nb - Godang et al. 2024 (mafic to felsic)", "godang2024_nbzr_thnb"),
         ("Majors DF set (5 panels) - Verma & Verma 2013", "verma_verma_2013_major"),
@@ -84,6 +85,7 @@ TECTONIC_VOLCANIC: dict[str, list[tuple[str, str]]] = {
         ("Rb vs (Yb+Ta) - Pearce et al. 1984", "pearce1984_YbTaRb"),
         ("Rb vs (Y+Nb) - Pearce et al. 1984", "pearce1984_YNbRb"),
         ("Rb/30 - Hf - 3Ta (ternary) - Harris et al. 1986", "harris_1986_HfRbTa"),
+        ("(La/Yb)N vs YbN (Archean TTG vs post-Archean) - Martin 1986", "martin_1986_LaYbN"),
         ("Nb/Yb vs Th/Nb - Li et al. 2025 (mafic to felsic)", "li2025_nbyb_thnb"),
         ("Nb/Zr vs Th/Nb - Godang et al. 2024 (mafic to felsic)", "godang2024_nbzr_thnb"),
         ("Majors DF set (5 panels) - Verma et al. 2012", "verma_2012_acid"),
@@ -110,6 +112,7 @@ TECTONIC_PLUTONIC: dict[str, list[tuple[str, str]]] = {
     "Intermediate": [
         ("Nb/Yb vs Th/Nb - Li et al. 2025 (mafic to felsic)", "li2025_nbyb_thnb"),
         ("Nb/Zr vs Th/Nb - Godang et al. 2024 (mafic to felsic)", "godang2024_nbzr_thnb"),
+        ("(La/Yb)N vs YbN (Archean TTG vs post-Archean) - Martin 1986", "martin_1986_LaYbN"),
         ("Majors DF set - Verma & Verma 2013", "verma_verma_2013_major"),
         ("Immobile majors + traces DF set - Verma & Verma 2013", "verma_verma_2013_imint"),
         ("Immobile traces DF set - Verma & Verma 2013", "verma_verma_2013_trace"),
@@ -120,6 +123,7 @@ TECTONIC_PLUTONIC: dict[str, list[tuple[str, str]]] = {
         ("Rb vs (Yb+Ta) - Pearce et al. 1984", "pearce1984_YbTaRb"),
         ("Rb vs (Y+Nb) - Pearce et al. 1984", "pearce1984_YNbRb"),
         ("Rb/30 - Hf - 3Ta (ternary) - Harris et al. 1986", "harris_1986_HfRbTa"),
+        ("(La/Yb)N vs YbN (Archean TTG vs post-Archean) - Martin 1986", "martin_1986_LaYbN"),
         ("Nb/Yb vs Th/Nb - Li et al. 2025 (mafic to felsic)", "li2025_nbyb_thnb"),
         ("Nb/Zr vs Th/Nb - Godang et al. 2024 (mafic to felsic)", "godang2024_nbzr_thnb"),
         ("Majors DF set (5 panels) - Verma et al. 2012", "verma_2012_acid"),

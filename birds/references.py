@@ -71,6 +71,10 @@ REFERENCES: List[Section] = [
          "& A. Poldervaart (Eds.), *Basalts: The Poldervaart treatise on "
          "rocks of basaltic composition* (Vol. 2, pp. 623-688). Wiley.",
          "AFM tholeiitic-calc-alkaline boundary (Kuno line)."),
+        ("Rickwood, P. C. (1989). Boundary lines within petrologic "
+         "diagrams which use oxides of major and minor elements. *Lithos*, "
+         "*22*, 247-263.",
+         "K2O-SiO2 bands; measured TAS, AFM and Jensen boundary lines."),
         ("Jensen, L. S. (1976). *A new cation plot for classifying "
          "sub-alkalic volcanic rocks* (Misc. Pap. No. 66). Ontario "
          "Division of Mines.",
@@ -157,6 +161,10 @@ REFERENCES: List[Section] = [
          "*Nature*, *347*(6294), 662-665. "
          "https://doi.org/10.1038/347662a0",
          "Adakite Y-Sr/Y and Yb-La/Yb."),
+        ("Martin, H. (1986). Effect of steeper Archean geothermal "
+         "gradient on geochemistry of subduction-zone magmas. *Geology*, "
+         "*14*(9), 753-756.",
+         "(La/Yb)N-YbN: Archean TTG against post-Archean granitoids."),
         ("Pearce, J. A., Harris, N. B. W., & Tindle, A. G. (1984). Trace "
          "element discrimination diagrams for the tectonic interpretation "
          "of granitic rocks. *Journal of Petrology*, *25*(4), 956-983. "

@@ -56,6 +56,7 @@ from .templates.tectonic_ternary import (
     Vermeesch2006VTiSc,
     Wood1980ThHfTa,
 )
+from .templates.martin1986 import Martin1986LaYbN
 from .templates.verma_multidim import (
     Agrawal2004,
     Agrawal2008,
@@ -83,7 +84,7 @@ _REGISTRY: Dict[str, object] = {
         Pearce2008ThYbNbYb, Pearce2008TiYbNbYb, PearceGale1977,
         Shervais1982TiV, PearceCann1973ZrTi,
         Saccani2015NbTh, Saccani2015DyYb, Saccani2015CeDyYb,
-        DefantDrummondYSrY, DefantDrummondYbLaYb,
+        DefantDrummondYSrY, DefantDrummondYbLaYb, Martin1986LaYbN,
         Pearce1984YbTa, Pearce1984YNb, Pearce1984YbTaRb, Pearce1984YNbRb,
         Yang2019FCMS, Yang2019FCKANTMS,
         Li2025NbYbThNb, Godang2024NbZrThNb,

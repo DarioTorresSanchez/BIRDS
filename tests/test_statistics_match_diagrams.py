@@ -180,6 +180,8 @@ def test_no_row_disagrees_with_its_own_familys_diagram(rows, axes):
     ("shervais.v", "shervais_1982_TiV:y"),
     ("dd.sr_y", "defant_drummond_YSrY:y"),
     ("dd.la_yb", "defant_drummond_YbLaYb:y"),
+    ("martin1986.yb_n", "martin_1986_LaYbN:x"),
+    ("martin1986.la_yb_n", "martin_1986_LaYbN:y"),
     ("saccani.nb_n", "saccani2015_nb_th:x"),
     ("saccani.th_n", "saccani2015_nb_th:y"),
     ("saccani.dy_n", "saccani2015_dy_yb:x"),

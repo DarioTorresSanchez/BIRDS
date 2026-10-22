@@ -16,8 +16,11 @@ Rb, K and Ti; a NASC that carried the upper crust's Pb and Y, which
 Gromet et al. did not determine, and lacked the Ta they did; and
 Arevalo & McDonough's global log-normal mean filed as an N-MORB.  What
 the book's copy cannot confirm -- its Tables 4.7 and 4.9 are cut off at
-the right, and Table 4.9 has no P -- is listed in
-``tests/test_normalisers_rollinson.py``.
+the right, and Table 4.9 has no P -- was then read in the primary
+sources on 2026-10-22 (``tests/test_normalisers_primary_sources.py``):
+Boynton (1984) and the Sun & McDonough (1989) rows agree; Taylor &
+McLennan's (1985) Y is 2.1, not 2.25, and Sun & McDonough's E-MORB P is
+620, not 1410.  Only Rudnick & Gao's bulk crust remains unread.
 """
 
 from __future__ import annotations
@@ -90,11 +93,13 @@ REE_CHONDRITES: Dict[str, Mapping[str, float]] = {
         "Dy": 0.322, "Ho": 0.0718, "Er": 0.210, "Tm": 0.0324,
         "Yb": 0.209, "Lu": 0.0322,
     },
+    # Appendix 2 of the book (p. 298): Evensen et al.'s CI x 1.5.  Y is
+    # 2.1 there; it was 2.25.
     "Taylor & McLennan (1985) – CI calc. volatile-free": {
         "La": 0.3670, "Ce": 0.9570, "Pr": 0.1370, "Nd": 0.7110,
         "Sm": 0.2310, "Eu": 0.0870, "Gd": 0.3060, "Tb": 0.0580,
         "Dy": 0.3810, "Ho": 0.0851, "Er": 0.2490, "Tm": 0.0356,
-        "Yb": 0.2480, "Lu": 0.0381, "Y": 2.2500,
+        "Yb": 0.2480, "Lu": 0.0381, "Y": 2.1,
     },
     "Wakita et al. (1971) – ordinary chondrites": {
         "La": 0.340, "Ce": 0.910, "Pr": 0.121, "Nd": 0.640,
@@ -182,10 +187,11 @@ MULTIELEMENT_NORMS: Dict[str, Mapping[str, float]] = {
         "Gd": 3.68, "Tb": 0.67, "Dy": 4.55, "Ho": 1.01, "Y": 28,
         "Er": 2.97, "Tm": 0.456, "Yb": 3.05, "Lu": 0.455,
     },
+    # Table 1 of the paper; P was 1410 where it prints 620.
     "E-MORB (Sun & McDonough 1989)": {
         "Cs": 0.063, "Rb": 5.04, "Ba": 57, "Th": 0.60, "U": 0.18,
         "Nb": 8.30, "Ta": 0.47, "K": 2100, "La": 6.30, "Ce": 15.0,
-        "Pb": 0.60, "Pr": 2.05, "Sr": 155, "P": 1410, "Nd": 9.00,
+        "Pb": 0.60, "Pr": 2.05, "Sr": 155, "P": 620, "Nd": 9.00,
         "Zr": 73, "Hf": 2.03, "Sm": 2.60, "Eu": 0.91, "Ti": 6000,
         "Gd": 2.97, "Tb": 0.53, "Dy": 3.55, "Ho": 0.79, "Y": 22,
         "Er": 2.31, "Tm": 0.356, "Yb": 2.37, "Lu": 0.354,

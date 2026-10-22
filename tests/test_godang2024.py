@@ -1,10 +1,14 @@
 """Godang, Saputro & Li (2024) Nb/Zr vs Th/Nb, against Li et al. (2025)
-Figure 5.
+Figure 5 and against the paper's own Figure 7.
 
 The ratios printed on the figure are pinned as printed; the diagonal
 and the PM dot, which were measured, are tied to the McDonough & Sun
 (1995) primitive mantle and the frame corner they run between.  The
 classification is tested on the case studies Li et al. plot on it.
+
+The template was measured on Li et al.'s reproduction; the original,
+Figure 7 of Godang et al. (2024), was measured afterwards and on its
+own, and agrees.
 """
 
 from __future__ import annotations
@@ -47,6 +51,33 @@ def test_the_diagonal_runs_from_pm_to_the_corner():
     assert godang.diagonal_nb_zr(5.0) == pytest.approx(0.01)
     # It crosses Nb/Zr 0.04 where Figure 5 does: measured Th/Nb 0.301.
     assert godang.diagonal_nb_zr(0.301) == pytest.approx(0.04, rel=0.01)
+
+
+#: Godang et al. (2024) Figure 7 (1895 x 1384 raster), calibrated on its
+#: lines Th/Nb 0.04, 0.11 and 0.67 (650.3 px per decade) and its frame,
+#: which then lands on Th/Nb 0.0150 and 5.01.
+FIGURE_7 = {
+    "Nb/Zr 0.0627 line at": 0.0625,
+    "Nb/Zr 0.04 line at": 0.0397,
+    "PM dot": (0.1210, 0.0641),       # centre of its purple, label included
+    "diagonal slope": -0.4940,
+    "diagonal at Th/Nb 5": 0.0100,
+}
+
+
+def test_the_original_figure_7_agrees():
+    """Each line spans what the template draws: Nb/Zr 0.15 only across
+    the array, 0.0627 and 0.04 from Th/Nb 0.04 to the right edge, 0.67
+    from Nb/Zr 0.0627 up -- each inked over that span and not past it."""
+    assert FIGURE_7["Nb/Zr 0.0627 line at"] == pytest.approx(
+        godang.NB_ZR_PM, rel=0.005)
+    assert FIGURE_7["Nb/Zr 0.04 line at"] == pytest.approx(
+        godang.NB_ZR_DEPLETED, rel=0.01)
+    assert FIGURE_7["PM dot"] == pytest.approx(godang.PM_POINT, rel=0.03)
+    (x0, y0), (x1, y1) = godang.DIAGONAL
+    slope = np.log10(y1 / y0) / np.log10(x1 / x0)
+    assert FIGURE_7["diagonal slope"] == pytest.approx(slope, abs=0.002)
+    assert FIGURE_7["diagonal at Th/Nb 5"] == pytest.approx(y1, rel=0.01)
 
 
 @pytest.mark.parametrize("th_nb, nb_zr, extra, setting", [

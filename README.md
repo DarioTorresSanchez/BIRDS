@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-3658%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-3717%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -33,7 +33,7 @@ diagram is *accounted for* rather than silently dropped, below-detection
 values are handled explicitly instead of becoming blanks, and the figure you
 export is sized in millimetres for the journal you are submitting to.
 
-**59 diagram templates · 28 published normalisers · classical CIPW norm ·
+**60 diagram templates · 28 published normalisers · classical CIPW norm ·
 8-tab statistics dashboard**
 
 ---
@@ -128,7 +128,7 @@ structured:
 </details>
 
 <details>
-<summary><b>Tectonic discrimination — mafic (19)</b></summary>
+<summary><b>Tectonic discrimination — mafic (23)</b></summary>
 
 - Th/Yb vs Nb/Yb and Ti/Yb vs Nb/Yb — Pearce 2008
 - Nb<sub>N</sub> vs Th<sub>N</sub>, Dy<sub>N</sub> vs Yb<sub>N</sub> (IAT vs boninite),
@@ -151,9 +151,10 @@ structured:
 </details>
 
 <details>
-<summary><b>Tectonic discrimination — intermediate (5)</b></summary>
+<summary><b>Tectonic discrimination — intermediate (6)</b></summary>
 
 - Y vs Sr/Y and Yb vs La/Yb (adakite) — Defant & Drummond 1990
+- Yb<sub>N</sub> vs (La/Yb)<sub>N</sub>, Archean TTG vs post-Archean granitoids — Martin 1986
 - Majors DF set, 5 panels — Verma & Verma 2013
 - Immobile majors + traces DF set, 5 panels — Verma & Verma 2013
 - Immobile traces DF set, 5 panels — Verma & Verma 2013
@@ -161,14 +162,23 @@ structured:
 </details>
 
 <details>
-<summary><b>Tectonic discrimination — acid (9)</b></summary>
+<summary><b>Tectonic discrimination — acid (10)</b></summary>
 
 - Yb vs Ta, Y vs Nb, (Yb+Ta) vs Rb, (Y+Nb) vs Rb — Pearce et al. 1984
 - Hf–Rb/10–3Ta ternary — Harris et al. 1986
+- Yb<sub>N</sub> vs (La/Yb)<sub>N</sub>, Archean TTG vs post-Archean granitoids — Martin 1986
 - Majors DF set, 5 panels — Verma et al. 2012
 - Majors DF set, 5 panels — Verma et al. 2013
 - Immobile majors + traces DF set, 5 panels — Verma et al. 2013
 - Immobile traces DF set, 5 panels — Verma et al. 2013
+
+</details>
+
+<details>
+<summary><b>Tectonic discrimination — mafic to felsic (2)</b></summary>
+
+- Th/Nb vs Nb/Yb, nine settings — Li, Godang & Saputro 2025
+- Th/Nb vs Nb/Zr — Godang, Saputro & Li 2024
 
 </details>
 
@@ -448,13 +458,13 @@ What the suite covers, and why those things and not others:
 |---|---|
 | **CIPW norm** | Mass balance against the oxide sum, Q/Ne mutual exclusion, no negative minerals, scale invariance, determinism, and that the silica-deficit flag quantifies its own error |
 | **Detection limits** | Every censored form parses, each policy substitutes correctly, an unknown policy raises rather than discarding data, and the policy round-trips losslessly |
-| **Diagrams** | All 59 templates render against ten dataset shapes — normal, NaN-riddled, majors-only, all-NaN, single-row, negative, zeros, 10¹², 10⁻¹² — and their sample tallies stay self-consistent |
+| **Diagrams** | All 60 templates render against ten dataset shapes — normal, NaN-riddled, majors-only, all-NaN, single-row, negative, zeros, 10¹², 10⁻¹² — and their sample tallies stay self-consistent |
 | **Normalisers** | Every reference resolves, all values are positive and finite, REE tables cover the lanthanides, and a name listed in two categories resolves to the richer table |
 | **GUI state** | Each test corresponds to a bug that actually shipped: stale data tables, selections outliving their dataset, tallies that ignored group visibility, misaligned below-detection masks |
 | **Sessions** | `.birds` and `.birdstyle` round-trips, including the detection limits that make the policy changeable after a reload |
 | **Published coordinates** | Vertices and boundary points pinned against the figures and tables they were measured from, so a calibrated diagram cannot drift back |
 | **Which normaliser, which axis** | A diagram can carry the right boundary and still be wrong if it normalises against the wrong reference or plots the pair the other way up. Saccani's three are pinned on all of it — chondrite where the caption says chondrite, Dy on the x-axis where the figure puts Dy, linear where the source is linear — because all three were wrong at once, and so were four rows of the statistics table |
-| **Table against plot** | The same quantity reaches the statistics table and the diagram by two routes, and three faults here have been a correction landing on only one of them. So all 253 rows are paired with the axis plotting the same thing and required to equal it bit for bit, and the TiO₂ → Ti constant — which once had three values in five places — is checked against its own mass ratio |
+| **Table against plot** | The same quantity reaches the statistics table and the diagram by two routes, and three faults here have been a correction landing on only one of them. So all 255 rows are paired with the axis plotting the same thing and required to equal it bit for bit, and the TiO₂ → Ti constant — which once had three values in five places — is checked against its own mass ratio |
 | **Verma centroids** | Every discriminant function evaluated at its paper's own group means has to return that paper's own published centroid — 60 of them. This is what found ten wrong coefficients that a digit-by-digit check had scored 95–100 % |
 | **Verma probabilities** | The triple point of a panel must be the circumcentre of its three group centroids, which is where all three settings come out equally likely. The triple points come from the figure captions and the centroids from elsewhere in the same papers, so neither is checking itself |
 | **Reference materials** | USGS BHVO-2, BCR-2 and AGV-2 through the whole chain: classification, norm, chondrite-normalised pattern, and — for the two whose setting is not in dispute — tectonic discrimination |

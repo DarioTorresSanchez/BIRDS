@@ -18,6 +18,17 @@ including what is still unverified.
 
 ### Added
 
+- **(La/Yb)N vs YbN — Martin (1986).** Archean TTG against post-Archean
+  granitoids, Figure 1 of the paper, under Tectonic → Intermediate and
+  → Acid, volcanic and plutonic, with its two axes in the statistics
+  table. Both fields measured on the scan, each edge fitted to its ink;
+  they keep to the bounds the caption states (YbN 0.3–8.5 and 4.5–20),
+  and Figure 4, which draws them again apart, agrees within 0.5 for the
+  post-Archean field and draws the TTG field a little narrower. Martin
+  does not name his chondrite: Boynton (1984) is used, and the citation
+  says so.
+- **Kuno's (1968) AFM curve**, which the AFM diagram cited and did not
+  draw, from Rickwood's (1989) measurement of the original figure.
 - **Probabilities for Verma et al. (2012), and the sheet's centroids for
   Verma & Agrawal (2011).** Neither paper prints its group centroids;
   the authors' Statistica sheet has them, and each set's put every
@@ -320,6 +331,16 @@ including what is still unverified.
 
 #### Diagrams measured or recomputed against their sources
 
+- **AFM: Irvine & Baragar's curve as they drew it.** The overlay was an
+  approximation running up to 8 units of F off their line; it is now
+  the nine points Rickwood (1989, Table 3) measured on their Figure 2A.
+  Rickwood's tables also confirm the TAS alkaline / subalkaline lines
+  (`ib1971`) point for point, the K₂O–SiO₂ bands, and the Jensen
+  tholeiite / calc-alkaline boundary.
+- **Godang et al. (2024), against the original figure.** Measured on Li
+  et al.'s (2025) reproduction, the diagram now agrees with the paper's
+  own Figure 7 too: the same lines over the same spans, the PM dot, and
+  the diagonal's slope (−0.4940 against −0.4936).
 - **Vermeesch (2006a) Na–Nb–Sr and Ti–V–Sm, read from the paper's
   vector figures.** They were the last two diagrams drawn by eye: a
   QDA's boundaries are conics that need the class covariances, which the
@@ -577,6 +598,20 @@ including what is still unverified.
 
 #### Numerical core
 
+- **Normalisers and reservoirs read in their own papers.** What
+  Rollinson & Pease's cut-off tables could not confirm was read in the
+  primary sources: Boynton (1984) Table 3.3 and the Sun & McDonough
+  (1989) rows agree; Taylor & McLennan's (1985) chondrite Y is 2.1, not
+  2.25 (Appendix 2), and Sun & McDonough's E-MORB P is 620, not 1410
+  (Table 1) — in the normaliser and in the reservoir both. McDonough &
+  Sun's (1995) P, K and Ti agree. Among the reservoirs, Taylor &
+  McLennan's upper crust carried oxides recomputed from its element
+  percentages (SiO₂ 65.89 for the printed 66.0) and a P₂O₅ the table
+  does not have; it now has Table 2.15's oxides, and its bulk crust
+  gains the Pr and Tm of Table 3.5. Rudnick & Gao's upper crust had the
+  Rb, K and Ti the normaliser was corrected from. The Sun & McDonough
+  reservoirs' major elements are not in that paper, and where they come
+  from is not recorded.
 - **Verma's coefficient sets, against the authors' Statistica sheet.**
   The worksheet in which Verma's group computed these diagrams
   (`MGV_DB_4.sta`) defines all 80 functions of the eight sets, most to
@@ -921,15 +956,14 @@ including what is still unverified.
   warning.
 - **1 diagram still has boundaries drawn by eye, blocked on its source
   rather than pending** — `defant_drummond_YbLaYb`: the paper it cites
-  does not contain that diagram, and Drummond & Defant (1990, JGR) or
-  Martin (1986) is needed to draw it. Nothing is left that a
+  does not contain that diagram, and its adakite fields need Drummond &
+  Defant (1990, JGR). Martin's (1986) TTG and post-Archean fields, in
+  (La/Yb)N–YbN, are now a diagram of their own. Nothing is left that a
   measurement could fix.
-- **Some normalisers are not yet checked against a source.** This copy
-  of Rollinson & Pease (2021) is cut off at the right of Tables 4.7 and
-  4.9, so Boynton (1984), Taylor & McLennan (1985) and Rudnick & Gao's
-  bulk crust are unconfirmed; E-MORB (Sun & McDonough 1989) is not in
-  the table, and Table 4.9 lists no P.
-  `tests/test_normalisers_rollinson.py` keeps the list.
+- **One normaliser is not yet checked against a source**: Rudnick &
+  Gao's bulk continental crust, which this copy of Rollinson & Pease
+  (2021) cuts off and which is not on disk. Its P of 655 ppm equals the
+  upper crust's and is the most suspect value.
 - **The La/10–Y/15–Nb/8 diagram misplaces reference MORB and OIB.** Not
   a fault in the code: Verma (2010) puts OIB + MORB at 29–62 %
   correctly classified, and Sun & McDonough's N-MORB duly falls in the

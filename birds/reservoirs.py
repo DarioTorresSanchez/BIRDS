@@ -35,13 +35,16 @@ from typing import Dict, List
 
 RESERVOIRS: Dict[str, Dict[str, float]] = {
     # ── Rudnick & Gao 2003 — Continental Crust ────────────────────────────
+    # Rb, K and Ti were 82, 23200 and 3840, as in the normaliser before
+    # it was checked against Rollinson & Pease (2021) Table 4.9; K and Ti
+    # now follow from the K2O and TiO2 above.
     "UCC (Rudnick & Gao 2003)": {
         "SiO2": 66.60, "TiO2": 0.64, "Al2O3": 15.40, "FeOT": 5.04,
         "MnO": 0.10, "MgO": 2.48, "CaO": 3.59, "Na2O": 3.27, "K2O": 2.80,
         "P2O5": 0.15,
-        "Cs": 4.9, "Rb": 82, "Ba": 628, "Th": 10.5, "U": 2.7, "Nb": 12,
-        "K": 23200, "La": 31, "Ce": 63, "Pb": 17, "Pr": 7.1, "Sr": 320,
-        "Nd": 27, "Zr": 193, "Hf": 5.3, "Sm": 4.7, "Eu": 1.0, "Ti": 3840,
+        "Cs": 4.9, "Rb": 84, "Ba": 628, "Th": 10.5, "U": 2.7, "Nb": 12,
+        "K": 23244, "La": 31, "Ce": 63, "Pb": 17, "Pr": 7.1, "Sr": 320,
+        "Nd": 27, "Zr": 193, "Hf": 5.3, "Sm": 4.7, "Eu": 1.0, "Ti": 3836,
         "Gd": 4.0, "Tb": 0.7, "Dy": 3.9, "Ho": 0.83, "Y": 21, "Er": 2.3,
         "Tm": 0.30, "Yb": 2.0, "Lu": 0.31, "Ta": 0.9,
         "Sc": 14, "V": 97, "Cr": 92, "Co": 17.3, "Ni": 47, "Cu": 28,
@@ -85,10 +88,14 @@ RESERVOIRS: Dict[str, Dict[str, float]] = {
     },
 
     # ── Taylor & McLennan 1985 ──────────────────────────────────────────
+    # Tables 2.15 and 3.5 of the book, read from the page.  The upper
+    # crust's oxides are the ones it prints; they used to be recomputed
+    # from its element percentages (SiO2 65.89 for 66.0, ...), with a
+    # P2O5 of 0.20 the table does not have.  MnO, which it does not
+    # print either, is its Mn (600 and 1400 ppm) as oxide.
     "UCC (Taylor & McLennan 1985)": {
-        "SiO2": 65.89, "TiO2": 0.50, "Al2O3": 15.17, "FeOT": 4.49,
-        "MnO": 0.07, "MgO": 2.20, "CaO": 4.19, "Na2O": 3.89, "K2O": 3.39,
-        "P2O5": 0.20,
+        "SiO2": 66.0, "TiO2": 0.5, "Al2O3": 15.2, "FeOT": 4.5,
+        "MnO": 0.08, "MgO": 2.2, "CaO": 4.2, "Na2O": 3.9, "K2O": 3.4,
         "Rb": 112, "Sr": 350, "Y": 22, "Zr": 190, "Nb": 25, "Cs": 3.7,
         "Ba": 550, "La": 30, "Ce": 64, "Pr": 7.1, "Nd": 26, "Sm": 4.5,
         "Eu": 0.88, "Gd": 3.8, "Tb": 0.64, "Dy": 3.5, "Ho": 0.80,
@@ -100,14 +107,18 @@ RESERVOIRS: Dict[str, Dict[str, float]] = {
         "SiO2": 57.3, "TiO2": 0.9, "Al2O3": 15.9, "FeOT": 9.1,
         "MnO": 0.18, "MgO": 5.3, "CaO": 7.4, "Na2O": 3.1, "K2O": 1.1,
         "Rb": 32, "Sr": 260, "Y": 20, "Zr": 100, "Nb": 11, "Cs": 1,
-        "Ba": 250, "La": 16, "Ce": 33, "Nd": 16, "Sm": 3.5, "Eu": 1.1,
-        "Gd": 3.3, "Tb": 0.6, "Dy": 3.7, "Ho": 0.78, "Er": 2.2,
-        "Yb": 2.2, "Lu": 0.30, "Hf": 3.0, "Ta": 1.0, "Pb": 8.0, "Th": 3.5,
+        "Ba": 250, "La": 16, "Ce": 33, "Pr": 3.9, "Nd": 16, "Sm": 3.5,
+        "Eu": 1.1, "Gd": 3.3, "Tb": 0.6, "Dy": 3.7, "Ho": 0.78, "Er": 2.2,
+        "Tm": 0.32, "Yb": 2.2, "Lu": 0.30, "Hf": 3.0, "Ta": 1.0, "Pb": 8.0, "Th": 3.5,
         "U": 0.91, "Sc": 30, "V": 230, "Cr": 185, "Co": 29, "Ni": 105,
         "Cu": 75, "Zn": 80,
     },
 
     # ── Sun & McDonough 1989 — Oceanic basalts ─────────────────────────
+    # Trace elements: Table 1 of the paper, read from the page on
+    # 2026-10-22 (E-MORB P was 1410 where it prints 620).  The paper
+    # prints no major elements; the oxides below are not from it,
+    # and where they are from is not recorded.
     "N-MORB (Sun & McDonough 1989)": {
         "SiO2": 50.5, "TiO2": 1.50, "Al2O3": 15.00, "FeOT": 10.4,
         "MnO": 0.19, "MgO": 7.70, "CaO": 11.40, "Na2O": 2.70, "K2O": 0.16,
@@ -125,7 +136,7 @@ RESERVOIRS: Dict[str, Dict[str, float]] = {
         "P2O5": 0.18,
         "Cs": 0.063, "Rb": 5.04, "Ba": 57, "Th": 0.60, "U": 0.18,
         "Nb": 8.30, "K": 2100, "La": 6.30, "Ce": 15.0, "Pb": 0.60,
-        "Pr": 2.05, "Sr": 155, "P": 1410, "Nd": 9.00, "Zr": 73,
+        "Pr": 2.05, "Sr": 155, "P": 620, "Nd": 9.00, "Zr": 73,
         "Hf": 2.03, "Sm": 2.60, "Eu": 0.91, "Ti": 6000, "Gd": 2.97,
         "Tb": 0.53, "Dy": 3.55, "Ho": 0.79, "Y": 22, "Er": 2.31,
         "Tm": 0.356, "Yb": 2.37, "Lu": 0.354, "Ta": 0.47,

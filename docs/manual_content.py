@@ -25,12 +25,12 @@ SECTIONS = [
         {"type": "p", "text":
          "B.I.R.D.S (Broad Igneous Rocks — Diagrams & Statistics) is a desktop "
          "application for plotting and analysing whole-rock geochemical "
-         "data of igneous rocks. It bundles 59 plotting templates, a "
+         "data of igneous rocks. It bundles 60 plotting templates, a "
          "spider-diagram engine with 28 published normalisers "
          "(REE chondrites and shales, multi-element references and "
-         "Ni-Cu-PGE metal references), a discrimination module with 39 "
+         "Ni-Cu-PGE metal references), a discrimination module with 40 "
          "tectonic diagrams, and a statistics dashboard with REE-anomaly "
-         "indices, a correlation-matrix heat-map and 253 tectonic "
+         "indices, a correlation-matrix heat-map and 255 tectonic "
          "discrimination parameters. A map view plots every sample at "
          "its longitude and latitude and kriges any numeric column "
          "across them, with the uncertainty of the result, and exports "
@@ -212,7 +212,7 @@ SECTIONS = [
             "Frost and others, volcanic and plutonic.",
             "Bivariate diagrams — single and paired Harker-style plots.",
             "Spider diagrams — REE and multi-element patterns.",
-            "Tectonic diagrams — 39 discrimination diagrams.",
+            "Tectonic diagrams — 40 discrimination diagrams.",
             "Isotopes — Sr–Nd and Pb–Pb diagrams, and any isotope ratio, "
             "δ value or ε against SiO2.",
             "Statistics and Anomalies — descriptive statistics, REE "
@@ -522,7 +522,7 @@ SECTIONS = [
         {"type": "p", "text":
          "Open Tectonic diagrams → Volcanic or → Plutonic. Inside the "
          "window, choose the composition (Mafic, Intermediate or Acid) "
-         "and the specific discriminator from the second combo. 39 "
+         "and the specific discriminator from the second combo. 40 "
          "published discriminators are implemented, each with the "
          "boundaries of its own source. Each plot prints its citation "
          "as a subtitle, and the entry in the combo names the axes in "
@@ -578,6 +578,10 @@ SECTIONS = [
         {"type": "bullet", "items": [
             "Defant & Drummond (1990) Sr/Y vs Y — adakite.",
             "Defant & Drummond (1990) La/Yb vs Yb — adakite.",
+            "Martin (1986) (La/Yb)N vs YbN — Archean TTG against "
+            "post-Archean granitoids, both fields measured on his "
+            "Figure 1. Martin does not name his chondrite; Boynton "
+            "(1984) is used. Also under Acid.",
             "Verma & Verma (2013) — three five-panel DF sets: majors, "
             "immobile majors + traces, and immobile traces.",
             "Li et al. (2025) Nb/Yb vs Th/Nb and Godang et al. (2024) "
@@ -589,6 +593,7 @@ SECTIONS = [
             "Rb vs (Y+Nb).",
             "Harris et al. (1986) Rb/30 – Hf – Ta×3 ternary, with "
             "Rb/30 at the apex.",
+            "Martin (1986) (La/Yb)N vs YbN (see Intermediate).",
             "Verma, Pandarinath & Rivera-Gómez (2012) — acid rocks, "
             "five triplet DF panels.",
             "Verma et al. (2013) — three further five-panel DF sets: "
@@ -631,7 +636,7 @@ SECTIONS = [
             "Correlation matrix — Pearson r heatmap, poolable, "
             "facetable per group or shown for one group alone, with "
             "cell annotations if the matrix fits on screen.",
-            "Tectonic discrimination — 253 parameters, ticked from a "
+            "Tectonic discrimination — 255 parameters, ticked from a "
             "tree and computed per sample. See below.",
             "Plots — the figures that go with the tables.",
         ]},
