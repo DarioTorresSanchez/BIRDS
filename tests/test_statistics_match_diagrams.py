@@ -259,7 +259,7 @@ def test_every_verma_row_equals_its_diagram_panel(df):
                 np.testing.assert_allclose(a[ok], got[ok], rtol=0, atol=0)
                 compared += 1
 
-    assert compared == 80, f"expected 80 Verma panel axes, compared {compared}"
+    assert compared == 110, f"expected 110 Verma panel axes, compared {compared}"
 
 
 # ---------------------------------------------------------------------------

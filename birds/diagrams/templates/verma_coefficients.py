@@ -36,7 +36,7 @@ absence there is no evidence at all. Render the page and read it.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 
 @dataclass(frozen=True)
@@ -63,9 +63,14 @@ class DFCoefSet:
     lived on the diagram classes before, so the statistics tables —
     which evaluate the same sets by a different route — silently
     reported those +40 values.
+
+    ``denominator`` is ``None`` for a function of the adjusted oxides
+    themselves, ``DF = intercept + Σ coefs[i] * parts[i]``: Agrawal et
+    al. (2004) fitted theirs on the percentages, two years before the
+    group turned to log-ratios.
     """
     parts: Tuple[str, ...]
-    denominator: str
+    denominator: Optional[str]
     intercept: float
     coefs: Tuple[float, ...]
     ppm_parts: Tuple[str, ...] = ()
@@ -1221,6 +1226,327 @@ V13A_TACID_FIELDS: Dict[str, Dict] = {
             ((1.4,  -8.0), ("CA", "CR+OI")),
             ((-8.0,  3.1), ("CA", "Col")),
             ((5.8,   8.0), ("CR+OI", "Col")),
+        ),
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# The three earlier basic-rock sets: Agrawal et al. (2004), Verma et al.
+# (2006) and Agrawal et al. (2008).  Each has five panels over the four
+# settings IAB, CRB, OIB, MORB: one with all four (or, in 2008, with
+# CRB and OIB together) and the four ways of taking three.  The papers
+# print no centroids; each caption gives its boundaries as end points,
+# and those are the fields.
+#
+# In the two four-group panels the fields meet at two triple points,
+# so their geometry is a list of segments, ((x1, y1), (x2, y2),
+# (group, group)), rather than one triple point with three rays.
+#
+# The coefficients were checked on 2026-10-22 against the authors'
+# Statistica sheet (MGV_DB_4.sta), which defines all thirty functions
+# with the digits printed here.
+# ---------------------------------------------------------------------------
+
+# Agrawal S., Guevara M. & Verma S.P. (2004) Discriminant analysis
+# applied to establish major-element field boundaries for tectonic
+# varieties of basic rocks.  International Geology Review 46, 575-594,
+# doi:10.2747/0020-6814.46.7.575.  Functions of the SINCLAS-adjusted
+# oxides themselves (Middlemost 1989 Fe2O3/FeO), Tables 6 and 7; each
+# three-group function keeps only the oxides its stepwise selection did.
+_A04_FIG2 = ("SiO2", "TiO2", "Al2O3", "Fe2O3", "MnO", "MgO", "CaO",
+             "Na2O", "K2O", "P2O5")
+_A04_NO_P = ("SiO2", "TiO2", "Al2O3", "Fe2O3", "FeO", "MnO", "MgO",
+             "CaO", "Na2O", "K2O")
+_A04_NO_FE3 = ("SiO2", "TiO2", "Al2O3", "FeO", "MnO", "MgO", "CaO",
+               "Na2O", "K2O", "P2O5")
+_A04_NO_NA = ("SiO2", "TiO2", "Al2O3", "Fe2O3", "FeO", "MnO", "MgO",
+              "CaO", "K2O", "P2O5")
+
+A04: Dict[str, DFCoefSet] = {
+    # ----- Fig. 2, IAB · CRB · OIB · MORB — Table 6, eqs (3), (4) --------
+    "DF1_IAB_CRB_OIB_MORB": DFCoefSet(
+        parts=_A04_FIG2, denominator=None, intercept=-24.065,
+        coefs=(0.258, 2.395, 0.106, 1.019, -6.778, 0.405, 0.119, 0.071,
+               -0.198, 0.613)),
+    "DF2_IAB_CRB_OIB_MORB": DFCoefSet(
+        parts=_A04_FIG2, denominator=None, intercept=-59.472,
+        coefs=(0.730, 1.119, 0.156, 1.332, 4.376, 0.493, 0.936, 0.882,
+               -0.291, -1.572)),
+    # ----- Fig. 3A, IAB · CRB · OIB — Table 7 -----------------------------
+    "DF1_IAB_CRB_OIB": DFCoefSet(
+        parts=_A04_NO_P, denominator=None, intercept=-18.974,
+        coefs=(0.251, 2.034, -0.100, 0.573, 0.032, -2.877, 0.260, 0.052,
+               0.322, -0.229)),
+    "DF2_IAB_CRB_OIB": DFCoefSet(
+        parts=_A04_NO_P, denominator=None, intercept=-200.276,
+        coefs=(2.150, 2.711, 1.792, 2.295, 1.484, 8.594, 1.896, 2.158,
+               1.201, 1.763)),
+    # ----- Fig. 3B, IAB · CRB · MORB ---------------------------------------
+    "DF1_IAB_CRB_MORB": DFCoefSet(
+        parts=_A04_NO_FE3, denominator=None, intercept=-29.435,
+        coefs=(0.435, -1.392, 0.183, 0.148, 7.690, 0.021, 0.380, 0.036,
+               0.462, -1.192)),
+    "DF2_IAB_CRB_MORB": DFCoefSet(
+        parts=_A04_NO_FE3, denominator=None, intercept=-78.236,
+        coefs=(0.601, -0.335, 1.332, 1.449, 0.756, 0.893, 0.448, 0.525,
+               1.734, 2.494)),
+    # ----- Fig. 3C, IAB · OIB · MORB ---------------------------------------
+    "DF1_IAB_OIB_MORB": DFCoefSet(
+        parts=_A04_NO_P, denominator=None, intercept=-119.050,
+        coefs=(1.232, 4.166, 1.085, 3.522, 0.500, -3.930, 1.334, 1.085,
+               0.416, 0.827)),
+    "DF2_IAB_OIB_MORB": DFCoefSet(
+        parts=_A04_NO_P, denominator=None, intercept=-134.295,
+        coefs=(1.384, 1.091, 0.908, 2.419, 0.886, 5.281, 1.269, 1.790,
+               2.572, 0.138)),
+    # ----- Fig. 3D, CRB · OIB · MORB ---------------------------------------
+    "DF1_CRB_OIB_MORB": DFCoefSet(
+        parts=_A04_NO_NA, denominator=None, intercept=-32.909,
+        coefs=(0.310, 1.936, 0.341, 0.760, 0.351, -11.315, 0.526, 0.084,
+               0.312, 1.892)),
+    "DF2_CRB_OIB_MORB": DFCoefSet(
+        parts=_A04_NO_NA, denominator=None, intercept=-56.455,
+        coefs=(0.703, 2.454, 0.233, 1.943, -0.182, -2.421, 0.618, 0.712,
+               -0.866, -1.180)),
+}
+
+#: Field boundaries, Figure 2 and 3 captions (journal pages 584, 586).
+#: Figure 2 gives the IAB-CRB boundary as ending at (-0.52, -0.99); the
+#: two other boundaries through that triple point end at (-0.52, -1.03),
+#: and the line is closed there.
+A04_FIELDS: Dict[str, Dict] = {
+    "IAB_CRB_OIB_MORB": {
+        "segments": (
+            ((-1.03, -8.00), (-0.52, -1.03), ("IAB", "CRB")),
+            ((0.80, 0.32), (8.00, -4.75), ("CRB", "OIB")),
+            ((0.80, 0.32), (2.67, 8.00), ("OIB", "MORB")),
+            ((-0.52, -1.03), (-8.00, 6.33), ("IAB", "MORB")),
+            ((-0.52, -1.03), (0.80, 0.32), ("CRB", "MORB")),
+        ),
+    },
+    "IAB_CRB_OIB": {
+        "triple": (-0.52, 1.34),
+        "boundaries": (
+            ((-2.76, -8.00), ("IAB", "CRB")),
+            ((8.00, -5.11), ("CRB", "OIB")),
+            ((-1.09, 8.00), ("IAB", "OIB")),
+        ),
+    },
+    "IAB_CRB_MORB": {
+        "triple": (-0.49, 0.84),
+        "boundaries": (
+            ((-4.97, -8.00), ("CRB", "MORB")),
+            ((8.00, -3.04), ("IAB", "MORB")),
+            ((-1.93, 8.00), ("IAB", "CRB")),
+        ),
+    },
+    "IAB_OIB_MORB": {
+        "triple": (0.50, -2.17),
+        "boundaries": (
+            ((0.97, -8.00), ("IAB", "OIB")),
+            ((4.27, 8.00), ("OIB", "MORB")),
+            ((-8.00, 7.10), ("IAB", "MORB")),
+        ),
+    },
+    "CRB_OIB_MORB": {
+        "triple": (0.17, 0.07),
+        "boundaries": (
+            ((-3.83, -8.00), ("CRB", "MORB")),
+            ((8.00, -1.17), ("CRB", "OIB")),
+            ((-2.28, 8.00), ("OIB", "MORB")),
+        ),
+    },
+}
+
+
+# Verma S.P., Guevara M. & Agrawal S. (2006) Discriminating four tectonic
+# settings: five new geochemical diagrams for basic and ultrabasic
+# volcanic rocks based on log-ratio transformation of major-element
+# data.  Journal of Earth System Science 115(5), 485-528.  Ten
+# log-ratios over (SiO2)adj, Tables 6 and 7.
+_V06_PARTS = ("TiO2", "Al2O3", "Fe2O3", "FeO", "MnO", "MgO", "CaO",
+              "Na2O", "K2O", "P2O5")
+
+V06: Dict[str, DFCoefSet] = {
+    # ----- Fig. 5, IAB · CRB · OIB · MORB — Table 6, eqs (3), (4) --------
+    "DF1_IAB_CRB_OIB_MORB": DFCoefSet(
+        parts=_V06_PARTS, denominator="SiO2", intercept=1.5445,
+        coefs=(-4.6761, 2.5330, -0.3884, 3.9688, 0.8980, -0.5832,
+               -0.2896, -0.2704, 1.0810, 0.1845)),
+    "DF2_IAB_CRB_OIB_MORB": DFCoefSet(
+        parts=_V06_PARTS, denominator="SiO2", intercept=13.1639,
+        coefs=(0.6751, 4.5895, 2.0897, 0.8514, -0.4334, 1.4832,
+               -2.3627, -1.6558, 0.6757, 0.4130)),
+    # ----- Fig. 6a, IAB · CRB · OIB — Table 7 ------------------------------
+    "DF1_IAB_CRB_OIB": DFCoefSet(
+        parts=_V06_PARTS, denominator="SiO2", intercept=-0.5718,
+        coefs=(3.9998, -2.2385, 0.8110, -2.5865, -1.2433, 0.4872,
+               -0.3153, 0.4325, -1.0262, 0.0514)),
+    "DF2_IAB_CRB_OIB": DFCoefSet(
+        parts=_V06_PARTS, denominator="SiO2", intercept=1.8202,
+        coefs=(-1.3705, 3.0104, 0.3239, 1.8998, -1.9746, 1.4411,
+               -2.2656, 1.8665, 0.2872, 0.8138)),
+    # ----- Fig. 6b, IAB · CRB · MORB ---------------------------------------
+    "DF1_IAB_CRB_MORB": DFCoefSet(
+        parts=_V06_PARTS, denominator="SiO2", intercept=16.8712,
+        coefs=(-1.5736, 6.1498, 1.5544, 3.4134, -0.0087, 1.2480,
+               -2.1103, -0.7576, 1.1431, 0.3524)),
+    "DF2_IAB_CRB_MORB": DFCoefSet(
+        parts=_V06_PARTS, denominator="SiO2", intercept=5.0506,
+        coefs=(3.9844, 0.2200, 1.1516, -2.2036, -1.6228, 1.4291,
+               -1.2524, 0.3581, -0.6414, 0.2646)),
+    # ----- Fig. 6c, IAB · OIB · MORB ---------------------------------------
+    "DF1_IAB_OIB_MORB": DFCoefSet(
+        parts=_V06_PARTS, denominator="SiO2", intercept=5.7755,
+        coefs=(5.3396, -1.6279, 0.8338, -4.7362, -0.1254, 0.6452,
+               1.5153, -0.8154, -0.8888, -0.2255)),
+    "DF2_IAB_OIB_MORB": DFCoefSet(
+        parts=_V06_PARTS, denominator="SiO2", intercept=15.4984,
+        coefs=(1.1799, 5.5114, 2.7737, -0.1341, 0.6672, 1.1045,
+               -1.7231, -3.8948, 0.9471, -0.1082)),
+    # ----- Fig. 6d, CRB · OIB · MORB ---------------------------------------
+    "DF1_CRB_OIB_MORB": DFCoefSet(
+        parts=_V06_PARTS, denominator="SiO2", intercept=13.2625,
+        coefs=(-0.5183, 4.9886, 2.2204, 1.1801, -0.3008, 1.3297,
+               -2.1834, -1.9319, 0.6976, 0.8998)),
+    "DF2_CRB_OIB_MORB": DFCoefSet(
+        parts=_V06_PARTS, denominator="SiO2", intercept=2.8877,
+        coefs=(5.0509, -0.4972, 1.0046, -3.3848, 0.5528, 0.2925,
+               0.4007, -2.8637, -0.2189, -1.0558)),
+}
+
+#: Field boundaries, Figure 5 and 6 captions (journal page 505).
+V06_FIELDS: Dict[str, Dict] = {
+    "IAB_CRB_OIB_MORB": {
+        "segments": (
+            ((1.160, -0.333), (5.912, 8.000), ("IAB", "CRB")),
+            ((-0.266, 0.020), (-4.190, 8.000), ("CRB", "OIB")),
+            ((-8.000, -2.490), (-0.266, 0.020), ("OIB", "MORB")),
+            ((1.160, -0.333), (3.431, -8.000), ("IAB", "MORB")),
+            ((1.160, -0.333), (-0.266, 0.020), ("CRB", "MORB")),
+        ),
+    },
+    "IAB_CRB_OIB": {
+        "triple": (-0.733, -1.405),
+        "boundaries": (
+            ((-3.788, 8.000), ("IAB", "CRB")),
+            ((8.000, 5.428), ("CRB", "OIB")),
+            ((-1.343, -8.000), ("IAB", "OIB")),
+        ),
+    },
+    "IAB_CRB_MORB": {
+        "triple": (0.361, -0.619),
+        "boundaries": (
+            ((8.000, -1.332), ("IAB", "CRB")),
+            ((-2.673, 8.000), ("CRB", "MORB")),
+            ((-6.779, -8.000), ("IAB", "MORB")),
+        ),
+    },
+    "IAB_OIB_MORB": {
+        "triple": (-0.830, 1.224),
+        "boundaries": (
+            ((-1.824, 8.000), ("IAB", "OIB")),
+            ((8.000, -3.583), ("OIB", "MORB")),
+            ((-4.865, -8.000), ("IAB", "MORB")),
+        ),
+    },
+    "CRB_OIB_MORB": {
+        "triple": (0.029, -0.222),
+        "boundaries": (
+            ((8.000, 4.322), ("CRB", "OIB")),
+            ((-6.177, 8.000), ("OIB", "MORB")),
+            ((-0.819, -8.000), ("CRB", "MORB")),
+        ),
+    },
+}
+
+
+# Agrawal S., Guevara M. & Verma S.P. (2008) Tectonic discrimination of
+# basic and ultrabasic volcanic rocks through log-transformed ratios of
+# immobile trace elements.  International Geology Review 50, 1057-1079,
+# doi:10.2747/0020-6814.50.12.1057.  Four log-ratios over Th, all in
+# ppm, Table 6.  Its first panel takes CRB and OIB together.
+_A08_PARTS = ("La", "Sm", "Yb", "Nb")
+
+A08: Dict[str, DFCoefSet] = {
+    # ----- Fig. 1, IAB · CRB+OIB · MORB ------------------------------------
+    "DF1_IAB_CRBOIB_MORB": DFCoefSet(
+        parts=_A08_PARTS, denominator="Th", intercept=-5.4763,
+        coefs=(0.3518, 0.6013, -1.3450, 2.1056)),
+    "DF2_IAB_CRBOIB_MORB": DFCoefSet(
+        parts=_A08_PARTS, denominator="Th", intercept=-0.9944,
+        coefs=(-0.3050, -1.1801, 1.6189, 1.2260)),
+    # ----- Fig. 2A, IAB · CRB · OIB ----------------------------------------
+    "DF1_IAB_CRB_OIB": DFCoefSet(
+        parts=_A08_PARTS, denominator="Th", intercept=-5.6305,
+        coefs=(0.5533, 0.2173, -0.0969, 2.0454)),
+    "DF2_IAB_CRB_OIB": DFCoefSet(
+        parts=_A08_PARTS, denominator="Th", intercept=0.94,
+        coefs=(-2.4498, 4.8562, -2.1240, -0.1567)),
+    # ----- Fig. 2B, IAB · CRB · MORB ---------------------------------------
+    "DF1_IAB_CRB_MORB": DFCoefSet(
+        parts=_A08_PARTS, denominator="Th", intercept=-4.5628,
+        coefs=(0.3305, 0.3484, -0.9562, 2.0777)),
+    "DF2_IAB_CRB_MORB": DFCoefSet(
+        parts=_A08_PARTS, denominator="Th", intercept=-0.4384,
+        coefs=(-0.1928, -1.1989, 1.7531, 0.6607)),
+    # ----- Fig. 2C, IAB · OIB · MORB — no La -------------------------------
+    "DF1_IAB_OIB_MORB": DFCoefSet(
+        parts=("Sm", "Yb", "Nb"), denominator="Th", intercept=-5.0928,
+        coefs=(1.7517, -1.9508, 1.9573)),
+    "DF2_IAB_OIB_MORB": DFCoefSet(
+        parts=("Sm", "Yb", "Nb"), denominator="Th", intercept=-0.8243,
+        coefs=(-2.2412, 2.2060, 1.2481)),
+    # ----- Fig. 2D, CRB · OIB · MORB ---------------------------------------
+    "DF1_CRB_OIB_MORB": DFCoefSet(
+        parts=_A08_PARTS, denominator="Th", intercept=4.1422,
+        coefs=(-0.5558, -1.4260, 2.2935, -0.6890)),
+    "DF2_CRB_OIB_MORB": DFCoefSet(
+        parts=_A08_PARTS, denominator="Th", intercept=-4.4283,
+        coefs=(-0.9207, 3.6520, -1.9866, 1.0574)),
+}
+
+#: Field boundaries, Figure 1 and 2 captions (journal pages 1066-1067).
+A08_FIELDS: Dict[str, Dict] = {
+    "IAB_CRBOIB_MORB": {
+        "triple": (-1.03, -0.47),
+        "boundaries": (
+            ((-0.12, -8.00), ("IAB", "CRB+OIB")),
+            ((8.00, 7.32), ("CRB+OIB", "MORB")),
+            ((-8.00, 5.6), ("IAB", "MORB")),
+        ),
+    },
+    "IAB_CRB_OIB": {
+        "triple": (-1.12, 0.71),
+        "boundaries": (
+            ((-2.34, -8.00), ("IAB", "CRB")),
+            ((8.00, -2.08), ("CRB", "OIB")),
+            ((-1.8, 8.00), ("IAB", "OIB")),
+        ),
+    },
+    "IAB_CRB_MORB": {
+        "triple": (-0.44, -0.39),
+        "boundaries": (
+            ((-1.22, -8.00), ("IAB", "CRB")),
+            ((8.00, 3.65), ("CRB", "MORB")),
+            ((-7.18, 8.00), ("IAB", "MORB")),
+        ),
+    },
+    "IAB_OIB_MORB": {
+        "triple": (-0.36, -0.78),
+        "boundaries": (
+            ((0.03, -8.00), ("IAB", "OIB")),
+            ((8.00, 7.03), ("OIB", "MORB")),
+            ((-8.00, 6.06), ("IAB", "MORB")),
+        ),
+    },
+    "CRB_OIB_MORB": {
+        "triple": (0.67, 0.48),
+        "boundaries": (
+            ((-8.00, -2.06), ("CRB", "OIB")),
+            ((1.58, 8.00), ("OIB", "MORB")),
+            ((2.31, -8.00), ("CRB", "MORB")),
         ),
     },
 }

@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-3502%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-3630%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -33,7 +33,7 @@ diagram is *accounted for* rather than silently dropped, below-detection
 values are handled explicitly instead of becoming blanks, and the figure you
 export is sized in millimetres for the journal you are submitting to.
 
-**56 diagram templates · 28 published normalisers · classical CIPW norm ·
+**59 diagram templates · 28 published normalisers · classical CIPW norm ·
 8-tab statistics dashboard**
 
 ---
@@ -142,6 +142,9 @@ structured:
 - La/10–Y/15–Nb/8 ternary — Cabanis & Lecolle 1989
 - Major-element DF (no FeO) — Pearce 1976 / Vermeesch 2006
 - TiO₂–Zr–Y–Sr DF — Butler & Woronow / Vermeesch 2006
+- Adjusted-majors DF set, 5 panels — Agrawal et al. 2004
+- Major log-ratio DF set, 5 panels — Verma et al. 2006
+- La–Sm–Yb–Nb–Th DF set, 5 panels — Agrawal et al. 2008
 - TiO₂–Nb–V–Y–Zr DF set, 5 panels — Verma & Agrawal 2011
 - FCMS / FCKANTMS source proxy — Yang et al. 2019
 
@@ -445,13 +448,13 @@ What the suite covers, and why those things and not others:
 |---|---|
 | **CIPW norm** | Mass balance against the oxide sum, Q/Ne mutual exclusion, no negative minerals, scale invariance, determinism, and that the silica-deficit flag quantifies its own error |
 | **Detection limits** | Every censored form parses, each policy substitutes correctly, an unknown policy raises rather than discarding data, and the policy round-trips losslessly |
-| **Diagrams** | All 56 templates render against ten dataset shapes — normal, NaN-riddled, majors-only, all-NaN, single-row, negative, zeros, 10¹², 10⁻¹² — and their sample tallies stay self-consistent |
+| **Diagrams** | All 59 templates render against ten dataset shapes — normal, NaN-riddled, majors-only, all-NaN, single-row, negative, zeros, 10¹², 10⁻¹² — and their sample tallies stay self-consistent |
 | **Normalisers** | Every reference resolves, all values are positive and finite, REE tables cover the lanthanides, and a name listed in two categories resolves to the richer table |
 | **GUI state** | Each test corresponds to a bug that actually shipped: stale data tables, selections outliving their dataset, tallies that ignored group visibility, misaligned below-detection masks |
 | **Sessions** | `.birds` and `.birdstyle` round-trips, including the detection limits that make the policy changeable after a reload |
 | **Published coordinates** | Vertices and boundary points pinned against the figures and tables they were measured from, so a calibrated diagram cannot drift back |
 | **Which normaliser, which axis** | A diagram can carry the right boundary and still be wrong if it normalises against the wrong reference or plots the pair the other way up. Saccani's three are pinned on all of it — chondrite where the caption says chondrite, Dy on the x-axis where the figure puts Dy, linear where the source is linear — because all three were wrong at once, and so were four rows of the statistics table |
-| **Table against plot** | The same quantity reaches the statistics table and the diagram by two routes, and three faults here have been a correction landing on only one of them. So all 208 rows are paired with the axis plotting the same thing and required to equal it bit for bit, and the TiO₂ → Ti constant — which once had three values in five places — is checked against its own mass ratio |
+| **Table against plot** | The same quantity reaches the statistics table and the diagram by two routes, and three faults here have been a correction landing on only one of them. So all 238 rows are paired with the axis plotting the same thing and required to equal it bit for bit, and the TiO₂ → Ti constant — which once had three values in five places — is checked against its own mass ratio |
 | **Verma centroids** | Every discriminant function evaluated at its paper's own group means has to return that paper's own published centroid — 60 of them. This is what found ten wrong coefficients that a digit-by-digit check had scored 95–100 % |
 | **Verma probabilities** | The triple point of a panel must be the circumcentre of its three group centroids, which is where all three settings come out equally likely. The triple points come from the figure captions and the centroids from elsewhere in the same papers, so neither is checking itself |
 | **Reference materials** | USGS BHVO-2, BCR-2 and AGV-2 through the whole chain: classification, norm, chondrite-normalised pattern, and — for the two whose setting is not in dispute — tectonic discrimination |

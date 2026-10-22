@@ -19,8 +19,8 @@ apply. This was the lesson of the Pb NHRL: the drawn line in the source
 figure sits 5–7 px off Hart's published equation, which is the
 redrawing's error, not the equation's.
 
-The catalogue holds **50 unique diagrams**. The menus list 75 entries,
-but all 21 plutonic tectonic-discrimination entries re-use volcanic keys.
+The catalogue holds **53 unique diagrams**. The menus list 81 entries,
+but all 24 plutonic tectonic-discrimination entries re-use volcanic keys.
 The six modal diagrams of the Petrography view are outside these
 counts; they have their own section at the end, *The Petrography
 view*.
@@ -33,13 +33,14 @@ view*.
 |---|---|---|
 | Measured from the figure, or checked against the centroids it prints | 15 | *Measured, or checked against printed centroids* |
 | Equation or table, compared with the published numbers | 9 | *Equation or table* |
+| Verma's group, 2004–2008: functions and caption coordinates, checked against the authors' sheet | 3 | *Verma's group, 2004–2008* |
 | TAS, volcanic and plutonic, vertex by vertex | 2 | *Retracted findings*, *Middlemost (1994)* |
 | Rule, with the arithmetic under it checked | 1 | *Maniar & Piccoli (1989)* |
 | Drawn envelope, now measured, computed or read from printed coordinates | 21 | *Drawn envelope* to *Vermeesch (2006a) — the two QDA ternaries* |
 | A plane computed from printed equations, with no fields to check | 1 | *Yang et al. (2019)* |
 | **Known wrong — fix first** | **0** | |
 | Still drawn by eye, blocked on sources | 1 | *Still drawn by eye* |
-| **Total** | **50** | |
+| **Total** | **53** | |
 
 One curve inside the checked set is not verified: the Irvine & Baragar
 (1971) overlay on `afm`, whose coordinates the caption does not print.
@@ -84,12 +85,42 @@ below, and every one is now corrected and pinned.
 |---|---|---|
 | `verma_agrawal_2011` | none | 16/16 group means in their own field |
 | `verma_verma_2013_major` | none | 10/10 centroids, residual ≤ 0.008 |
-| `verma_verma_2013_imint` | none | 10/10 centroids, residual ≤ 0.042 |
-| `verma_verma_2013_trace` | none | 10/10 centroids, residual ≤ 0.009 |
+| `verma_verma_2013_imint` | 6 of 80, found against the authors' sheet | 10/10 centroids, residual ≤ 0.042 |
+| `verma_verma_2013_trace` | 2 of 80, found against the authors' sheet | 10/10 centroids, residual ≤ 0.009 |
 | `verma_2012_acid` | 7 of 110 | pinned digit-by-digit (no centroids published) |
 | `verma_2013_acid_macid` | 2 of 98 | centroids match, less the CR column (below) |
 | `verma_2013_acid_mtacid` | 1 of 58 | 10/10 centroids |
 | `verma_2013_acid_tacid` | 1 of 78 | 10/10 centroids |
+
+### Against the authors' own sheet (2026-10-22)
+
+`MGV_DB_4.sta` is the Statistica worksheet in which Verma's group
+computed all of these diagrams: it defines every function of the eight
+sets, most to 17 figures, and stores the scores and probabilities of
+518 samples. A paper prints the sheet's value rounded or cut short, so
+`tests/test_verma_statistica_sheet.py` requires each coefficient to be
+exactly that, and every exception was read on the rendered page.
+
+It found **eight more wrong coefficients**, all in Verma & Verma (2013)
+and all copying slips — the page agrees with the sheet each time. One
+mattered: P₂O₅ of eq (19), −1.1082014 for −1.082014, moved DF1 of the
+major + trace set by up to 0.19 on real samples. With them corrected,
+the program reproduces the sheet's scores on its 518 samples to 3 ×
+10⁻⁵ for the intermediate sets and 10⁻¹⁴ for `verma_2012_acid`, and
+its probabilities exactly for all three intermediate sets.
+
+Three printed values are neither the sheet's rounded nor truncated —
+eq (7) of Verma & Verma (2013) and the constants of eqs (1) and (16)
+of Verma et al. (2013) — and stay as printed. The sheet also settles
+the sign of Nb in eq (16) of Verma et al. (2013): −0.38213, as the
+program uses, not the printed +0.382 (*Known issues* in the
+CHANGELOG).
+
+The sheet is not without faults of its own. Its probabilities for
+panels (b)–(e) of Verma & Agrawal (2011) take the third group's
+distance in DF2 from DF1 (`Y32 = Sdf12 − MdfG322`, and likewise in the
+other three); the program does not, and agrees with the sheet once
+that is corrected.
 
 ### Why the previous pass missed them
 
@@ -287,6 +318,27 @@ figure before it can be done.
 **Lesson for the rest of this triage:** a diagram must be *rendered*
 before its geometry is called wrong. Three of the four defects listed
 above came from reading tuples instead of looking at the output.
+
+---
+
+## Verma's group, 2004–2008 — three basic-rock sets
+
+| Diagram | Paper | Functions | Fields |
+|---|---|---|---|
+| `agrawal_2004_basic` | Agrawal, Guevara & Verma (2004), IGR 46 | Tables 6, 7: the adjusted oxides themselves | Figure 2 and 3 captions |
+| `verma_2006_basic` | Verma, Guevara & Agrawal (2006), J Earth Syst Sci 115 | Tables 6, 7: ten ln(oxide/SiO₂) | Figure 5 and 6 captions |
+| `agrawal_2008_basic` | Agrawal, Guevara & Verma (2008), IGR 50 | Table 6: ln(La, Sm, Yb, Nb / Th) | Figure 1 and 2 captions |
+
+Five panels each over IAB, CRB, OIB and MORB. The papers print every
+boundary as two end points, so the fields are those segments; in the
+two four-group panels (2004 Fig. 2, 2006 Fig. 5) they meet at two
+triple points. All thirty functions are the authors' sheet digit for
+digit and reproduce its scores on 518 samples to 10⁻¹⁴; each field
+lies where the figure names it (`tests/test_verma_basic_sets.py`).
+None of the three prints centroids, so they give scores and fields, not
+probabilities. One caption slip: 2004 Fig. 2 ends the IAB–CRB boundary
+at (−0.52, −0.99) where the other two through that point end at
+(−0.52, −1.03); it is closed at the triple point.
 
 ---
 

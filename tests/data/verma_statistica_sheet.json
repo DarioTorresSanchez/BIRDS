@@ -1,6 +1,430 @@
 {
  "source": "MGV_DB_4.sta, the Statistica worksheet in which S.P. Verma's group computed these diagrams (received 2026-10-22).  Each function as the sheet defines it, to the digits it carries; sheet_name is its variable there.  Centroids are the sheet's MdfG constants, in the panel's group order.  Read with a parser of the .sta binary layout; no sample data is reproduced.",
  "functions": {
+  "A04": {
+   "DF1_IAB_CRB_OIB_MORB": {
+    "sheet_name": "DF1_4",
+    "intercept": -24.065,
+    "coefs": {
+     "SiO2": 0.258,
+     "TiO2": 2.395,
+     "Al2O3": 0.106,
+     "Fe2O3": 1.019,
+     "MnO": -6.778,
+     "MgO": 0.405,
+     "CaO": 0.119,
+     "Na2O": 0.071,
+     "K2O": -0.198,
+     "P2O5": 0.613
+    }
+   },
+   "DF2_IAB_CRB_OIB_MORB": {
+    "sheet_name": "DF2_4",
+    "intercept": -59.472,
+    "coefs": {
+     "SiO2": 0.73,
+     "TiO2": 1.119,
+     "Al2O3": 0.156,
+     "Fe2O3": 1.332,
+     "MnO": 4.376,
+     "MgO": 0.493,
+     "CaO": 0.936,
+     "Na2O": 0.882,
+     "K2O": -0.291,
+     "P2O5": -1.572
+    }
+   },
+   "DF1_IAB_CRB_OIB": {
+    "sheet_name": "DF1_3A",
+    "intercept": -18.974,
+    "coefs": {
+     "SiO2": 0.251,
+     "TiO2": 2.034,
+     "Al2O3": -0.1,
+     "Fe2O3": 0.573,
+     "FeO": 0.032,
+     "MnO": -2.877,
+     "MgO": 0.26,
+     "CaO": 0.052,
+     "Na2O": 0.322,
+     "K2O": -0.229
+    }
+   },
+   "DF2_IAB_CRB_OIB": {
+    "sheet_name": "DF2_3A",
+    "intercept": -200.276,
+    "coefs": {
+     "SiO2": 2.15,
+     "TiO2": 2.711,
+     "Al2O3": 1.792,
+     "Fe2O3": 2.295,
+     "FeO": 1.484,
+     "MnO": 8.594,
+     "MgO": 1.896,
+     "CaO": 2.158,
+     "Na2O": 1.201,
+     "K2O": 1.763
+    }
+   },
+   "DF1_IAB_CRB_MORB": {
+    "sheet_name": "DF1_3B",
+    "intercept": -29.435,
+    "coefs": {
+     "SiO2": 0.435,
+     "TiO2": -1.392,
+     "Al2O3": 0.183,
+     "FeO": 0.148,
+     "MnO": 7.69,
+     "MgO": 0.021,
+     "CaO": 0.38,
+     "Na2O": 0.036,
+     "K2O": 0.462,
+     "P2O5": -1.192
+    }
+   },
+   "DF2_IAB_CRB_MORB": {
+    "sheet_name": "DF2_3B",
+    "intercept": -78.236,
+    "coefs": {
+     "SiO2": 0.601,
+     "TiO2": -0.335,
+     "Al2O3": 1.332,
+     "FeO": 1.449,
+     "MnO": 0.756,
+     "MgO": 0.893,
+     "CaO": 0.448,
+     "Na2O": 0.525,
+     "K2O": 1.734,
+     "P2O5": 2.494
+    }
+   },
+   "DF1_IAB_OIB_MORB": {
+    "sheet_name": "DF1_3C",
+    "intercept": -119.05,
+    "coefs": {
+     "SiO2": 1.232,
+     "TiO2": 4.166,
+     "Al2O3": 1.085,
+     "Fe2O3": 3.522,
+     "FeO": 0.5,
+     "MnO": -3.93,
+     "MgO": 1.334,
+     "CaO": 1.085,
+     "Na2O": 0.416,
+     "K2O": 0.827
+    }
+   },
+   "DF2_IAB_OIB_MORB": {
+    "sheet_name": "DF2_3C",
+    "intercept": -134.295,
+    "coefs": {
+     "SiO2": 1.384,
+     "TiO2": 1.091,
+     "Al2O3": 0.908,
+     "Fe2O3": 2.419,
+     "FeO": 0.886,
+     "MnO": 5.281,
+     "MgO": 1.269,
+     "CaO": 1.79,
+     "Na2O": 2.572,
+     "K2O": 0.138
+    }
+   },
+   "DF1_CRB_OIB_MORB": {
+    "sheet_name": "DF1_3D",
+    "intercept": -32.909,
+    "coefs": {
+     "SiO2": 0.31,
+     "TiO2": 1.936,
+     "Al2O3": 0.341,
+     "Fe2O3": 0.76,
+     "FeO": 0.351,
+     "MnO": -11.315,
+     "MgO": 0.526,
+     "CaO": 0.084,
+     "K2O": 0.312,
+     "P2O5": 1.892
+    }
+   },
+   "DF2_CRB_OIB_MORB": {
+    "sheet_name": "DF2_3D",
+    "intercept": -56.455,
+    "coefs": {
+     "SiO2": 0.703,
+     "TiO2": 2.454,
+     "Al2O3": 0.233,
+     "Fe2O3": 1.943,
+     "FeO": -0.182,
+     "MnO": -2.421,
+     "MgO": 0.618,
+     "CaO": 0.712,
+     "K2O": -0.866,
+     "P2O5": -1.18
+    }
+   }
+  },
+  "V06": {
+   "DF1_IAB_CRB_OIB_MORB": {
+    "sheet_name": "DF1_1234",
+    "intercept": 1.5445,
+    "coefs": {
+     "TiO2": -4.6761,
+     "Al2O3": 2.533,
+     "Fe2O3": -0.3884,
+     "FeO": 3.9688,
+     "MnO": 0.898,
+     "MgO": -0.5832,
+     "CaO": -0.2896,
+     "Na2O": -0.2704,
+     "K2O": 1.081,
+     "P2O5": 0.1845
+    }
+   },
+   "DF2_IAB_CRB_OIB_MORB": {
+    "sheet_name": "DF2_1234",
+    "intercept": 13.1639,
+    "coefs": {
+     "TiO2": 0.6751,
+     "Al2O3": 4.5895,
+     "Fe2O3": 2.0897,
+     "FeO": 0.8514,
+     "MnO": -0.4334,
+     "MgO": 1.4832,
+     "CaO": -2.3627,
+     "Na2O": -1.6558,
+     "K2O": 0.6757,
+     "P2O5": 0.413
+    }
+   },
+   "DF1_IAB_CRB_OIB": {
+    "sheet_name": "DF1_123",
+    "intercept": -0.5718,
+    "coefs": {
+     "TiO2": 3.9998,
+     "Al2O3": -2.2385,
+     "Fe2O3": 0.811,
+     "FeO": -2.5865,
+     "MnO": -1.2433,
+     "MgO": 0.4872,
+     "CaO": -0.3153,
+     "Na2O": 0.4325,
+     "K2O": -1.0262,
+     "P2O5": 0.0514
+    }
+   },
+   "DF2_IAB_CRB_OIB": {
+    "sheet_name": "DF2_123",
+    "intercept": 1.8202,
+    "coefs": {
+     "TiO2": -1.3705,
+     "Al2O3": 3.0104,
+     "Fe2O3": 0.3239,
+     "FeO": 1.8998,
+     "MnO": -1.9746,
+     "MgO": 1.4411,
+     "CaO": -2.2656,
+     "Na2O": 1.8665,
+     "K2O": 0.2872,
+     "P2O5": 0.8138
+    }
+   },
+   "DF1_IAB_CRB_MORB": {
+    "sheet_name": "DF1_124",
+    "intercept": 16.8712,
+    "coefs": {
+     "TiO2": -1.5736,
+     "Al2O3": 6.1498,
+     "Fe2O3": 1.5544,
+     "FeO": 3.4134,
+     "MnO": -0.0087,
+     "MgO": 1.248,
+     "CaO": -2.1103,
+     "Na2O": -0.7576,
+     "K2O": 1.1431,
+     "P2O5": 0.3524
+    }
+   },
+   "DF2_IAB_CRB_MORB": {
+    "sheet_name": "DF2_124",
+    "intercept": 5.0506,
+    "coefs": {
+     "TiO2": 3.9844,
+     "Al2O3": 0.22,
+     "Fe2O3": 1.1516,
+     "FeO": -2.2036,
+     "MnO": -1.6228,
+     "MgO": 1.4291,
+     "CaO": -1.2524,
+     "Na2O": 0.3581,
+     "K2O": -0.6414,
+     "P2O5": 0.2646
+    }
+   },
+   "DF1_IAB_OIB_MORB": {
+    "sheet_name": "DF1_134",
+    "intercept": 5.7755,
+    "coefs": {
+     "TiO2": 5.3396,
+     "Al2O3": -1.6279,
+     "Fe2O3": 0.8338,
+     "FeO": -4.7362,
+     "MnO": -0.1254,
+     "MgO": 0.6452,
+     "CaO": 1.5153,
+     "Na2O": -0.8154,
+     "K2O": -0.8888,
+     "P2O5": -0.2255
+    }
+   },
+   "DF2_IAB_OIB_MORB": {
+    "sheet_name": "DF2_134",
+    "intercept": 15.4984,
+    "coefs": {
+     "TiO2": 1.1799,
+     "Al2O3": 5.5114,
+     "Fe2O3": 2.7737,
+     "FeO": -0.1341,
+     "MnO": 0.6672,
+     "MgO": 1.1045,
+     "CaO": -1.7231,
+     "Na2O": -3.8948,
+     "K2O": 0.9471,
+     "P2O5": -0.1082
+    }
+   },
+   "DF1_CRB_OIB_MORB": {
+    "sheet_name": "DF1_234",
+    "intercept": 13.2625,
+    "coefs": {
+     "TiO2": -0.5183,
+     "Al2O3": 4.9886,
+     "Fe2O3": 2.2204,
+     "FeO": 1.1801,
+     "MnO": -0.3008,
+     "MgO": 1.3297,
+     "CaO": -2.1834,
+     "Na2O": -1.9319,
+     "K2O": 0.6976,
+     "P2O5": 0.8998
+    }
+   },
+   "DF2_CRB_OIB_MORB": {
+    "sheet_name": "DF2_234",
+    "intercept": 2.8877,
+    "coefs": {
+     "TiO2": 5.0509,
+     "Al2O3": -0.4972,
+     "Fe2O3": 1.0046,
+     "FeO": -3.3848,
+     "MnO": 0.5528,
+     "MgO": 0.2925,
+     "CaO": 0.4007,
+     "Na2O": -2.8637,
+     "K2O": -0.2189,
+     "P2O5": -1.0558
+    }
+   }
+  },
+  "A08": {
+   "DF1_IAB_CRBOIB_MORB": {
+    "sheet_name": "DF1_1234t",
+    "intercept": -5.4763,
+    "coefs": {
+     "La": 0.3518,
+     "Sm": 0.6013,
+     "Yb": -1.345,
+     "Nb": 2.1056
+    }
+   },
+   "DF2_IAB_CRBOIB_MORB": {
+    "sheet_name": "DF2_1234t",
+    "intercept": -0.9944,
+    "coefs": {
+     "La": -0.305,
+     "Sm": -1.1801,
+     "Yb": 1.6189,
+     "Nb": 1.226
+    }
+   },
+   "DF1_IAB_CRB_OIB": {
+    "sheet_name": "DF1_123t",
+    "intercept": -5.6305,
+    "coefs": {
+     "La": 0.5533,
+     "Sm": 0.2173,
+     "Yb": -0.0969,
+     "Nb": 2.0454
+    }
+   },
+   "DF2_IAB_CRB_OIB": {
+    "sheet_name": "DF2_123t",
+    "intercept": 0.94,
+    "coefs": {
+     "La": -2.4498,
+     "Sm": 4.8562,
+     "Yb": -2.124,
+     "Nb": -0.1567
+    }
+   },
+   "DF1_IAB_CRB_MORB": {
+    "sheet_name": "DF1_124t",
+    "intercept": -4.5628,
+    "coefs": {
+     "La": 0.3305,
+     "Sm": 0.3484,
+     "Yb": -0.9562,
+     "Nb": 2.0777
+    }
+   },
+   "DF2_IAB_CRB_MORB": {
+    "sheet_name": "DF2_124t",
+    "intercept": -0.4384,
+    "coefs": {
+     "La": -0.1928,
+     "Sm": -1.1989,
+     "Yb": 1.7531,
+     "Nb": 0.6607
+    }
+   },
+   "DF1_IAB_OIB_MORB": {
+    "sheet_name": "DF1_134t",
+    "intercept": -5.0928,
+    "coefs": {
+     "Sm": 1.7517,
+     "Yb": -1.9508,
+     "Nb": 1.9573
+    }
+   },
+   "DF2_IAB_OIB_MORB": {
+    "sheet_name": "DF2_134t",
+    "intercept": -0.8243,
+    "coefs": {
+     "Sm": -2.2412,
+     "Yb": 2.206,
+     "Nb": 1.2481
+    }
+   },
+   "DF1_CRB_OIB_MORB": {
+    "sheet_name": "DF1_234t",
+    "intercept": 4.1422,
+    "coefs": {
+     "La": -0.5558,
+     "Sm": -1.426,
+     "Yb": 2.2935,
+     "Nb": -0.689
+    }
+   },
+   "DF2_CRB_OIB_MORB": {
+    "sheet_name": "DF2_234t",
+    "intercept": -4.4283,
+    "coefs": {
+     "La": -0.9207,
+     "Sm": 3.652,
+     "Yb": -1.9866,
+     "Nb": 1.0574
+    }
+   }
+  },
   "VA11": {
    "DF1_IAB_CRBOIB_MORB": {
     "sheet_name": "DF1_1234n",

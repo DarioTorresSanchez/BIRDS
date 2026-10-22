@@ -160,7 +160,9 @@ class TestCoverage:
         which is published, to 25 with `li2025_nbyb_thnb`, the frame of
         Li et al. (2025) Figure 1, and to 26 with `godang2024_nbzr_thnb`,
         the frame of their Figure 5.  A template may fix its limits
-        exactly when a published figure fixes them.
+        exactly when a published figure fixes them -- as the three
+        basic-rock DF sets of 2004, 2006 and 2008 do, on panels: their
+        boundaries end on the (-8, +8) frame each figure draws.
         """
         own = [k for k, d in _REGISTRY.items()
                if getattr(d, "x_range", None) or getattr(d, "y_range", None)]
@@ -168,7 +170,7 @@ class TestCoverage:
                     if getattr(d, "panels", None)
                     and getattr(d.panels[0], "x_range", None)]
         assert len(own) == 26, f"{len(own)} templates carry their own frame"
-        assert len(panelled) == 8, f"{len(panelled)} carry it on panels"
+        assert len(panelled) == 11, f"{len(panelled)} carry it on panels"
         assert "defant_drummond_YbLaYb" not in own
         assert "yang_2019_fcms" in own
         assert "li2025_nbyb_thnb" in own

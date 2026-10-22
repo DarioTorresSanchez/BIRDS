@@ -18,6 +18,19 @@ including what is still unverified.
 
 ### Added
 
+- **The three earlier basic-rock DF sets of Verma's group** — Agrawal,
+  Guevara & Verma (2004), on the adjusted major oxides themselves;
+  Verma, Guevara & Agrawal (2006), on ten ln(oxide/SiO₂); and Agrawal,
+  Guevara & Verma (2008), on ln(La, Sm, Yb, Nb / Th). Five panels each
+  over IAB, CRB, OIB and MORB, under Tectonic → Mafic, volcanic and
+  plutonic, with their 30 functions in the statistics table. The
+  fields are the boundary end points each figure caption prints; in
+  the two four-group panels they meet at two triple points, which a
+  new, general field builder handles alongside the three-group ones.
+  All thirty functions are the authors' Statistica sheet digit for
+  digit and reproduce its scores on 518 samples to 10⁻¹⁴, and each
+  field lies where the published figure names it. The papers print no
+  centroids, so these give scores and fields, not probabilities.
 - **The map recognises UTM numbers in degree columns.** Several of the
   user's sessions keep easting and northing in Latitude / Longitude;
   the map said only that nothing could be parsed. It now names the

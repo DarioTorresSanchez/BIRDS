@@ -229,6 +229,25 @@ REFERENCES: List[Section] = [
     ]),
     # ----------------------------------------------------------------------
     ("Tectonic discrimination — multidimensional (Verma & co-authors)", [
+        ("Agrawal, S., Guevara, M., & Verma, S. P. (2004). Discriminant "
+         "analysis applied to establish major-element field boundaries "
+         "for tectonic varieties of basic rocks. *International Geology "
+         "Review*, *46*(7), 575-594. "
+         "https://doi.org/10.2747/0020-6814.46.7.575",
+         "5-panel DF set on the adjusted major oxides, basic rocks."),
+        ("Verma, S. P., Guevara, M., & Agrawal, S. (2006). Discriminating "
+         "four tectonic settings: Five new geochemical diagrams for basic "
+         "and ultrabasic volcanic rocks based on log-ratio transformation "
+         "of major-element data. *Journal of Earth System Science*, "
+         "*115*(5), 485-528.",
+         "5-panel DF set on ln(oxide/SiO2), basic + ultrabasic rocks."),
+        ("Agrawal, S., Guevara, M., & Verma, S. P. (2008). Tectonic "
+         "discrimination of basic and ultrabasic volcanic rocks through "
+         "log-transformed ratios of immobile trace elements. "
+         "*International Geology Review*, *50*(12), 1057-1079. "
+         "https://doi.org/10.2747/0020-6814.50.12.1057",
+         "5-panel DF set on ln(La, Sm, Yb, Nb / Th), basic + ultrabasic "
+         "rocks."),
         ("Verma, S. P., & Agrawal, S. (2011). New tectonic discrimination "
          "diagrams for basic and ultrabasic volcanic rocks through "
          "log-transformed ratios of high field strength elements and "

@@ -677,11 +677,12 @@ def missing_logratio_columns(df: pd.DataFrame, parts: Sequence[str],
     a "missing columns: …" diagnostic on a panel that would otherwise
     be silently empty.
     """
+    names = list(parts) + ([denominator] if denominator else [])
     if df is None or df.empty:
-        return list(parts) + [denominator]
+        return names
     al = aliases or {}
     missing: list[str] = []
-    for name in list(parts) + [denominator]:
+    for name in names:
         candidates = [name] + list(al.get(name, ()))
         if resolve_column(df, candidates) is None:
             missing.append(name)

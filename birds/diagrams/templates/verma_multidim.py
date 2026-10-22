@@ -33,6 +33,10 @@ from .base import (
     resolve_column,
 )
 from .verma_coefficients import (
+    A04,
+    A04_FIELDS,
+    A08,
+    A08_FIELDS,
     DFCoefSet,
     V12_ACID,
     V12_ACID_FIELDS,
@@ -42,6 +46,8 @@ from .verma_coefficients import (
     V13A_MTACID_FIELDS,
     V13A_TACID,
     V13A_TACID_FIELDS,
+    V06,
+    V06_FIELDS,
     VA11,
     VA11_FIELDS,
     VV13_IMINT,
@@ -102,6 +108,30 @@ def _apply_df(lr: pd.DataFrame, coef: DFCoefSet) -> pd.Series:
 PPM_PER_WT_PERCENT = 10_000.0
 
 
+def _needed(coef: DFCoefSet) -> str:
+    """The columns a function reads, as the diagnostics name them."""
+    parts = ", ".join(coef.parts)
+    return f"{parts} ÷ {coef.denominator}" if coef.denominator else parts
+
+
+def _parts_as_given(df: pd.DataFrame, parts, aliases
+                    ) -> Optional[pd.DataFrame]:
+    """The parts themselves, for a function with no denominator.
+
+    ``None`` when a column is missing, as :func:`build_logratios`
+    answers.  A zero is a value here, not a gap: nothing is logged.
+    """
+    if df is None or df.empty:
+        return None
+    out = pd.DataFrame(index=df.index)
+    for name in parts:
+        col = resolve_column(df, [name] + list(aliases.get(name, ())))
+        if col is None:
+            return None
+        out[name] = pd.to_numeric(df[col], errors="coerce")
+    return out
+
+
 def _logratios_for_coef(df: pd.DataFrame, coef: DFCoefSet,
                         aliases=None) -> Optional[pd.DataFrame]:
     """Return ``ln(parts/denominator)`` for a single DFCoefSet.
@@ -110,6 +140,8 @@ def _logratios_for_coef(df: pd.DataFrame, coef: DFCoefSet,
     handling declared by ``coef.ppm_parts`` reaches the diagrams and
     the statistics tables alike.
     """
+    if coef.denominator is None:
+        return _parts_as_given(df, coef.parts, aliases or _MAJOR_ALIASES)
     # FeOt needs computation if not present directly
     if "FeOt" in coef.parts and resolve_column(df, _MAJOR_ALIASES["FeOt"]) is None:
         feo = feot_from_oxides(df)
@@ -255,7 +287,7 @@ class _BinaryPairsDF(MultiPanelDiagram):
                     "has zero / negative values.")
         return ("Missing columns for this DF:\n"
                 + ", ".join(missing)
-                + f"\n(needed: {', '.join(parts)} ÷ {denom})")
+                + f"\n(needed: {_needed(df1)})")
 
 
 # ---------------------------------------------------------------------------
@@ -506,7 +538,7 @@ class _TripletDF(MultiPanelDiagram):
                     "/ negative values (log undefined).")
         return ("Missing columns for this DF:\n"
                 + ", ".join(missing)
-                + f"\n(needed: {', '.join(df1.parts)} ÷ {df1.denominator})")
+                + f"\n(needed: {_needed(df1)})")
 
 
 def _corner_path(start, end, far, center=(0.0, 0.0)):
@@ -1474,3 +1506,245 @@ class Verma2013AcidTrace(_TripletDF):
                     color="#1c2237", linewidth=1.2, zorder=1)
         ax.plot(triple[0], triple[1], marker="o", markersize=4,
                 color="#1c2237", zorder=3)
+
+
+# ---------------------------------------------------------------------------
+# Fields from boundary segments — Agrawal et al. (2004), Verma et al.
+# (2006), Agrawal et al. (2008)
+# ---------------------------------------------------------------------------
+# These papers print each boundary as two end points.  In a three-group
+# panel the three meet at one triple point; in a four-group panel they
+# meet at two, joined by a short boundary between them.  One routine
+# covers both: a field is the stretch of frame between two consecutive
+# boundary ends, closed back through the interior along the boundaries
+# its group shares.
+
+def field_segments(geom: Dict) -> Tuple:
+    """Every boundary of *geom* as ``((x1, y1), (x2, y2), (g, g))``."""
+    if "segments" in geom:
+        return tuple(geom["segments"])
+    triple = geom["triple"]
+    return tuple((triple, outer, pair) for outer, pair in geom["boundaries"])
+
+
+def _same_point(a, b, tol=1e-9):
+    return abs(a[0] - b[0]) < tol and abs(a[1] - b[1]) < tol
+
+
+def field_regions(geom: Dict, x_range=(-8, 8), y_range=(-8, 8)
+                  ) -> Dict[str, list]:
+    """Group name -> polygon vertices, for the fields *geom* draws."""
+    segments = field_segments(geom)
+    ends = []                                  # (point on frame, pair)
+    for p, q, pair in segments:
+        for point in (p, q):
+            if np.isfinite(_perim_param(point, x_range, y_range)):
+                ends.append((tuple(point), pair))
+    ends.sort(key=lambda e: _perim_param(e[0], x_range, y_range))
+
+    def interior_path(start, goal, group):
+        """Nodes from *start* to *goal* along boundaries of *group*."""
+        edges = [(tuple(p), tuple(q)) for p, q, pair in segments
+                 if group in pair]
+        frontier, seen = [[start]], {start}
+        while frontier:
+            path = frontier.pop(0)
+            if _same_point(path[-1], goal):
+                return path
+            for p, q in edges:
+                for a, b in ((p, q), (q, p)):
+                    if _same_point(a, path[-1]) and b not in seen:
+                        seen.add(b)
+                        frontier.append(path + [b])
+        return None
+
+    regions: Dict[str, list] = {}
+    for i, (end_a, pair_a) in enumerate(ends):
+        end_b, pair_b = ends[(i + 1) % len(ends)]
+        common = set(pair_a) & set(pair_b)
+        if len(common) != 1:
+            continue
+        group = common.pop()
+        back = interior_path(end_b, end_a, group)
+        if back is None:
+            continue
+        corners = _frame_corners_between(end_a, end_b, x_range, y_range)
+        regions[group] = [end_a, *corners, *back[:-1]]
+    return regions
+
+
+def field_of(geom: Dict, x, y, x_range=(-8, 8), y_range=(-8, 8)
+             ) -> pd.Series:
+    """The field each point ``(x, y)`` falls in; "" outside the frame or
+    for a missing score."""
+    from matplotlib.path import Path
+    xs = pd.Series(x, dtype=float)
+    ys = pd.Series(y, dtype=float).set_axis(xs.index)
+    out = pd.Series("", index=xs.index, dtype=object)
+    pts = np.column_stack([xs.to_numpy(), ys.to_numpy()])
+    ok = np.isfinite(pts).all(axis=1)
+    for group, verts in field_regions(geom, x_range, y_range).items():
+        inside = Path(verts).contains_points(np.where(ok[:, None], pts, 0.0))
+        out[ok & inside & (out == "").to_numpy()] = group
+    return out
+
+
+class _SegmentFieldsDF(_TripletDF):
+    """Five panels whose fields come from printed boundary segments.
+
+    ``panel_groups`` lists ``(panel key, group, group, ...)``; a panel
+    may separate three groups or four.  ``fields`` maps the panel key
+    to its geometry, which :func:`field_regions` turns into fields.
+    """
+
+    fields: Dict[str, Dict] = {}
+    panel_groups: Tuple[Tuple[str, ...], ...] = ()
+
+    _FIELD_COLORS = {
+        "IAB":      "#FFE7D8",
+        "CRB":      "#E7DFF6",
+        "OIB":      "#E2F4D8",
+        "MORB":     "#DFEBFB",
+        "CRB+OIB":  "#EDE7DD",
+    }
+
+    def __init__(self):
+        MultiPanelDiagram.__init__(self)
+        panels = []
+        for panel_key, *groups in self.panel_groups:
+            names = "-".join(groups)
+            panels.append(PanelSpec(
+                key=panel_key,
+                title="  ·  ".join(groups),
+                x_label=f"DF1 ({names})",
+                y_label=f"DF2 ({names})",
+                x_range=(-8, 8),
+                y_range=(-8, 8),
+                field_polygons={g: [] for g in groups},
+            ))
+        self.panels = tuple(panels)
+        self.field_label_fontsize = 11
+
+    # The papers draw every panel on the (-8, +8) frame.
+    def _maybe_rescale_panel(self, spec, df):
+        return spec
+
+    def classify_panel(self, df: pd.DataFrame, panel_key: str) -> pd.Series:
+        """The field of every sample in one panel; "" where it cannot
+        be placed."""
+        spec = next(p for p in self.panels if p.key == panel_key)
+        xs, ys = self._compute_xy_for_panel(spec, df)
+        if xs is None:
+            return pd.Series("", index=df.index, dtype=object)
+        return field_of(self.fields[panel_key], xs, ys)
+
+    def _draw_panel_background(self, ax, panel, options):
+        from matplotlib.patches import Polygon as _Poly
+        geom = self.fields[panel.key]
+        x_range = panel.x_range or (-8, 8)
+        y_range = panel.y_range or (-8, 8)
+        for group, verts in field_regions(geom, x_range, y_range).items():
+            ax.add_patch(_Poly(verts, closed=True,
+                               facecolor=self._FIELD_COLORS.get(group, "#E0E0E0"),
+                               alpha=0.55, edgecolor="none", zorder=0))
+            cx, cy = _polygon_centroid(verts)
+            ax.text(cx, cy, group, ha="center", va="center",
+                    fontsize=self.field_label_fontsize, color="#1c2237",
+                    fontweight="bold", zorder=2,
+                    bbox=dict(facecolor="white", edgecolor="none",
+                              alpha=0.75, boxstyle="round,pad=0.25"))
+        junctions = []
+        for p, q, _pair in field_segments(geom):
+            ax.plot([p[0], q[0]], [p[1], q[1]], color="#1c2237",
+                    linewidth=1.2, zorder=1)
+            for point in (p, q):
+                if not np.isfinite(_perim_param(point, x_range, y_range)):
+                    junctions.append(point)
+        for jx, jy in junctions:
+            ax.plot(jx, jy, marker="o", markersize=4, color="#1c2237",
+                    zorder=3)
+
+
+class Agrawal2004(_SegmentFieldsDF):
+    """Agrawal, Guevara & Verma (2004) — basic rocks, adjusted majors.
+
+    The first of the group's discriminant-function schemes: functions
+    of the SINCLAS-adjusted oxides themselves, not of log-ratios.
+    Figure 2 separates all four settings; Figures 3A-3D take three at
+    a time.  Coefficients from Tables 6 and 7, fields from the Figure 2
+    and 3 captions (:data:`A04_FIELDS`).
+    """
+    key = "agrawal_2004_basic"
+    composition_filter = "basic"
+    title = "Agrawal et al. (2004) — Basic rocks, adjusted majors (5 DF panels)"
+    citation = ("Agrawal S., Guevara M. & Verma S.P. (2004) International "
+                "Geology Review 46, 575-594.  Discriminates IAB · CRB · OIB "
+                "· MORB from the SINCLAS-adjusted major oxides (Middlemost "
+                "1989 Fe2O3/FeO).  Functions from Tables 6 and 7, field "
+                "boundaries from the Figure 2 and 3 captions.")
+    coef_table = A04
+    fields = A04_FIELDS
+    panel_groups = (
+        ("IAB_CRB_OIB_MORB", "IAB", "CRB", "OIB", "MORB"),
+        ("IAB_CRB_OIB", "IAB", "CRB", "OIB"),
+        ("IAB_CRB_MORB", "IAB", "CRB", "MORB"),
+        ("IAB_OIB_MORB", "IAB", "OIB", "MORB"),
+        ("CRB_OIB_MORB", "CRB", "OIB", "MORB"),
+    )
+
+
+class Verma2006(_SegmentFieldsDF):
+    """Verma, Guevara & Agrawal (2006) — basic and ultrabasic rocks.
+
+    The same four settings as Agrawal et al. (2004), now from ten
+    log-ratios of the adjusted majors over SiO2.  Figure 5 separates all
+    four; Figures 6a-6d take three at a time.  Coefficients from Tables
+    6 and 7, fields from the Figure 5 and 6 captions
+    (:data:`V06_FIELDS`).
+    """
+    key = "verma_2006_basic"
+    composition_filter = "basic+ultrabasic"
+    title = ("Verma et al. (2006) — Basic + ultrabasic rocks, major "
+             "log-ratios (5 DF panels)")
+    citation = ("Verma S.P., Guevara M. & Agrawal S. (2006) Journal of Earth "
+                "System Science 115, 485-528.  Discriminates IAB · CRB · OIB "
+                "· MORB from ln(oxide/SiO2) of the SINCLAS-adjusted majors.  "
+                "Functions from Tables 6 and 7, field boundaries from the "
+                "Figure 5 and 6 captions.")
+    coef_table = V06
+    fields = V06_FIELDS
+    panel_groups = (
+        ("IAB_CRB_OIB_MORB", "IAB", "CRB", "OIB", "MORB"),
+        ("IAB_CRB_OIB", "IAB", "CRB", "OIB"),
+        ("IAB_CRB_MORB", "IAB", "CRB", "MORB"),
+        ("IAB_OIB_MORB", "IAB", "OIB", "MORB"),
+        ("CRB_OIB_MORB", "CRB", "OIB", "MORB"),
+    )
+
+
+class Agrawal2008(_SegmentFieldsDF):
+    """Agrawal, Guevara & Verma (2008) — basic and ultrabasic rocks.
+
+    Four log-ratios of immobile traces over Th: ln(La/Th), ln(Sm/Th),
+    ln(Yb/Th), ln(Nb/Th).  Figure 1 takes CRB and OIB together; Figures
+    2A-2D take three settings at a time.  Equations from Table 6, fields
+    from the Figure 1 and 2 captions (:data:`A08_FIELDS`).
+    """
+    key = "agrawal_2008_basic"
+    composition_filter = "basic+ultrabasic"
+    title = ("Agrawal et al. (2008) — Basic + ultrabasic rocks, "
+             "La-Sm-Yb-Nb-Th (5 DF panels)")
+    citation = ("Agrawal S., Guevara M. & Verma S.P. (2008) International "
+                "Geology Review 50, 1057-1079.  Discriminates IAB · CRB · OIB "
+                "· MORB from ln(La/Th), ln(Sm/Th), ln(Yb/Th) and ln(Nb/Th).  "
+                "Equations from Table 6, field boundaries from the Figure 1 "
+                "and 2 captions.")
+    coef_table = A08
+    fields = A08_FIELDS
+    panel_groups = (
+        ("IAB_CRBOIB_MORB", "IAB", "CRB+OIB", "MORB"),
+        ("IAB_CRB_OIB", "IAB", "CRB", "OIB"),
+        ("IAB_CRB_MORB", "IAB", "CRB", "MORB"),
+        ("IAB_OIB_MORB", "IAB", "OIB", "MORB"),
+        ("CRB_OIB_MORB", "CRB", "OIB", "MORB"),
+    )

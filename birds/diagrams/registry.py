@@ -57,6 +57,9 @@ from .templates.tectonic_ternary import (
     Wood1980ThHfTa,
 )
 from .templates.verma_multidim import (
+    Agrawal2004,
+    Agrawal2008,
+    Verma2006,
     Verma2012Acid,
     Verma2013AcidImMt,
     Verma2013AcidMajor,
@@ -92,7 +95,7 @@ _REGISTRY: Dict[str, object] = {
         # ----- Tectonic — single-axis DFs ------------------------------------
         Pearce1976DF, ButlerWoronowDF,
         # ----- Tectonic — Verma multidimensional -----------------------------
-        VermaAgrawal2011,
+        Agrawal2004, Verma2006, Agrawal2008, VermaAgrawal2011,
         VermaVerma2013Major, VermaVerma2013ImMint, VermaVerma2013Trace,
         Verma2012Acid,
         Verma2013AcidMajor, Verma2013AcidImMt, Verma2013AcidTrace,

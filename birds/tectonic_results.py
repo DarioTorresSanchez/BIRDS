@@ -37,6 +37,9 @@ from .diagrams.templates.tectonic_bivariate import (
     _yang_fcms,
 )
 from .diagrams.templates.verma_coefficients import (
+    A04,
+    A08,
+    V06,
     DFCoefSet,
     V12_ACID,
     V13A_MACID,
@@ -379,12 +382,18 @@ DISCRIMINATORS: List[Discriminator] = [
                   butler_woronow_df2),
 ]
 
-# Verma multi-panel DFs (5 / 5 / 5 / 3 / 4 / 4 = 26 DFs)
+# Verma multi-panel DFs: eleven sets of five panels, DF1 and DF2 each
 #: Every Verma set: the coefficient table, the label its category uses
 #: and the key prefix.  The centroid key is how
 #: :mod:`birds.verma_probability` names the same set, or ``None`` where
 #: the paper publishes no centroids to measure distances from.
 _VERMA_SETS = (
+    (A04, "Agrawal et al. (2004) — basic adjusted majors",
+     "a04", None),
+    (V06, "Verma et al. (2006) — basic major log-ratios",
+     "v06", None),
+    (A08, "Agrawal et al. (2008) — basic immobile traces",
+     "a08", None),
     (VA11, "Verma & Agrawal (2011) — mafic immobile traces",
      "va11", "VA11"),
     (VV13_MAJOR, "Verma & Verma (2013) — intermediate majors",

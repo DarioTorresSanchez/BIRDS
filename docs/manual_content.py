@@ -25,12 +25,12 @@ SECTIONS = [
         {"type": "p", "text":
          "B.I.R.D.S (Broad Igneous Rocks — Diagrams & Statistics) is a desktop "
          "application for plotting and analysing whole-rock geochemical "
-         "data of igneous rocks. It bundles 56 plotting templates, a "
+         "data of igneous rocks. It bundles 59 plotting templates, a "
          "spider-diagram engine with 28 published normalisers "
          "(REE chondrites and shales, multi-element references and "
-         "Ni-Cu-PGE metal references), a discrimination module with 36 "
+         "Ni-Cu-PGE metal references), a discrimination module with 39 "
          "tectonic diagrams, and a statistics dashboard with REE-anomaly "
-         "indices, a correlation-matrix heat-map and 208 tectonic "
+         "indices, a correlation-matrix heat-map and 238 tectonic "
          "discrimination parameters. A map view plots every sample at "
          "its longitude and latitude and kriges any numeric column "
          "across them, with the uncertainty of the result, and exports "
@@ -212,7 +212,7 @@ SECTIONS = [
             "Frost and others, volcanic and plutonic.",
             "Bivariate diagrams — single and paired Harker-style plots.",
             "Spider diagrams — REE and multi-element patterns.",
-            "Tectonic diagrams — 36 discrimination diagrams.",
+            "Tectonic diagrams — 39 discrimination diagrams.",
             "Isotopes — Sr–Nd and Pb–Pb diagrams, and any isotope ratio, "
             "δ value or ε against SiO2.",
             "Statistics and Anomalies — descriptive statistics, REE "
@@ -522,7 +522,7 @@ SECTIONS = [
         {"type": "p", "text":
          "Open Tectonic diagrams → Volcanic or → Plutonic. Inside the "
          "window, choose the composition (Mafic, Intermediate or Acid) "
-         "and the specific discriminator from the second combo. 36 "
+         "and the specific discriminator from the second combo. 39 "
          "published discriminators are implemented, each with the "
          "boundaries of its own source. Each plot prints its citation "
          "as a subtitle, and the entry in the combo names the axes in "
@@ -550,6 +550,13 @@ SECTIONS = [
             "with Y/15 at the apex.",
             "Pearce (1976) / Vermeesch (2006a) major-element DF, and "
             "Butler & Woronow (1986) / Vermeesch (2006a) Zr–Y–Sr–Ti DF.",
+            "Agrawal et al. (2004), Verma et al. (2006) and Agrawal et "
+            "al. (2008) — the group's three earlier basic-rock sets, "
+            "five DF panels each over IAB, CRB, OIB and MORB: from the "
+            "adjusted oxides themselves, from ten ln(oxide/SiO2), and "
+            "from ln(La, Sm, Yb, Nb / Th). Their papers print no "
+            "centroids, so they give scores and fields but no "
+            "probabilities.",
             "Verma & Agrawal (2011) — basic and ultrabasic rocks, five "
             "triplet DF panels.",
             "Yang et al. (2019) ln(FeO/CaO) vs ln(MgO/SiO2), the FCMS "
@@ -624,7 +631,7 @@ SECTIONS = [
             "Correlation matrix — Pearson r heatmap, poolable, "
             "facetable per group or shown for one group alone, with "
             "cell annotations if the matrix fits on screen.",
-            "Tectonic discrimination — 208 parameters, ticked from a "
+            "Tectonic discrimination — 238 parameters, ticked from a "
             "tree and computed per sample. See below.",
             "Plots — the figures that go with the tables.",
         ]},
@@ -644,12 +651,13 @@ SECTIONS = [
          "reported as numbers. Tick what you want in the tree on the "
          "left; the count in the tab title follows your selection."},
         {"type": "bullet", "items": [
-            "For seven of the eight Verma coefficient sets the "
+            "For seven of the eleven Verma coefficient sets the "
             "posterior probability of each tectonic setting is given "
             "as well as the discriminant score, following Verma & "
             "Agrawal (2011). Verma et al. (2012) publishes neither "
-            "group centroids nor group means, so that set reports "
-            "scores alone.",
+            "group centroids nor group means, and the three earlier "
+            "basic-rock sets (2004, 2006, 2008) classify by their "
+            "drawn boundaries alone, so those four report scores.",
             "33.3 % is the by-chance level for a three-group panel. A "
             "sample sitting near it is inconclusive, and seeing the "
             "number says so where a field name would not.",
