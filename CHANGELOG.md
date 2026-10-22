@@ -555,6 +555,23 @@ including what is still unverified.
 
 #### Numerical core
 
+- **Verma's coefficient sets, against the authors' Statistica sheet.**
+  The worksheet in which Verma's group computed these diagrams
+  (`MGV_DB_4.sta`) defines all 80 functions of the eight sets, most to
+  17 figures; every coefficient the program carries must be the
+  sheet's, rounded or cut short as the paper prints it. Eight were not,
+  all in Verma & Verma (2013) and all copied wrong — the rendered page
+  agrees with the sheet each time: in the major + trace set, P₂O₅ of eq
+  (19) was −1.1082014 for −1.082014, which moved DF1 by up to 0.19 on
+  real samples, and Ni of eq (16), MgO of eq (19), Y of eq (15) and
+  the constants of eqs (11) and (15) carried a wrong digit; in the
+  trace set, La of eq (27) and Nb of eq (26). Run on the 518 samples
+  stored in the sheet, the program now reproduces the sheet's DF
+  scores to 3 × 10⁻⁵ for that set (2012 acid set: 10⁻¹⁴) and its
+  probabilities exactly for all three intermediate sets. The sheet
+  also settles a sign the paper left in doubt: Nb in eq (16) of Verma
+  et al. (2013) is −0.38213, as the program already used, not the
+  printed +0.382.
 - **Spider-diagram normalisers, against Rollinson & Pease (2021).**
   The REE chondrites, shale composites and multi-element normalisers
   credit Tables 4.7–4.9; all 366 values those tables print were

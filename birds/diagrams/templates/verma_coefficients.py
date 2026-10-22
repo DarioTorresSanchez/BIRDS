@@ -249,6 +249,16 @@ VV13_MAJOR_FIELDS: Dict[str, Dict] = {
 # Denominator: TiO2_adj.  Traces are in ppm but TiO2 in wt%, so the trace
 # numerators are converted ppm → wt% (÷ 10 000) BEFORE the log-ratio is
 # computed (see VermaVerma2013ImMint in verma_multidim.py).
+#
+# Sets 2 and 3 were checked on 2026-10-22 against the authors' own
+# Statistica sheet (MGV_DB_4.sta), which carries every function to 17
+# figures, and each disagreement against the rendered page.  Eight
+# values had been copied wrong; the page agrees with the sheet on all
+# of them: here P2O5 of eq (19) was -1.1082014 for -1.082014 -- 0.19 on
+# DF1 for real samples -- Ni of eq (16) -0.1339918, MgO of eq (19)
+# -1.255543, Y of eq (15) -0.6405806, and the constants of eqs (11) and
+# (15) 1.90072648 and 8.108721398; in Set 3, La of eq (27) 0.7208951
+# and Nb of eq (26) -0.07828951.
 # ---------------------------------------------------------------------------
 
 _VV13_PARTS_IMINT = ("MgO", "P2O5", "Nb", "Ni", "V", "Y", "Zr")
@@ -257,7 +267,7 @@ VV13_IMINT: Dict[str, DFCoefSet] = {
     # ----- (a) IA+CA · CR+OI · Col  — Eqs (11), (12) ----------------------
     "DF1_IACA_CROI_COL": DFCoefSet(
         parts=_VV13_PARTS_IMINT, denominator="TiO2",
-        intercept=1.90072648,
+        intercept=1.900726416,
         coefs=(1.02293,  0.63053,  -0.93889,  -0.41538,
                1.676898, 0.453813,  0.5831823),
     ),
@@ -283,14 +293,14 @@ VV13_IMINT: Dict[str, DFCoefSet] = {
     # ----- (c) IA · CA · Col  — Eqs (15), (16) ---------------------------
     "DF1_IA_CA_COL": DFCoefSet(
         parts=_VV13_PARTS_IMINT, denominator="TiO2",
-        intercept=8.108721398,
+        intercept=8.1087217398,
         coefs=(-0.801371, 0.125028,   0.908386,  0.320442,
-               -0.3683636, -0.6405806, 0.72337227),
+               -0.3683636, -0.6405805, 0.72337227),
     ),
     "DF2_IA_CA_COL": DFCoefSet(
         parts=_VV13_PARTS_IMINT, denominator="TiO2",
         intercept=-20.63036447,
-        coefs=(1.317201, 2.199955, -0.1235449, -0.1339918,
+        coefs=(1.317201, 2.199955, -0.1235449, -0.1339018,
                -0.8720114, -1.7825807, -1.36498299),
     ),
     # ----- (d) IA · CR+OI · Col  — Eqs (17), (18) ------------------------
@@ -310,7 +320,7 @@ VV13_IMINT: Dict[str, DFCoefSet] = {
     "DF1_CA_CROI_COL": DFCoefSet(
         parts=_VV13_PARTS_IMINT, denominator="TiO2",
         intercept=5.752160917,
-        coefs=(-1.255543, -1.1082014,  1.437934,  0.5454469,
+        coefs=(-1.25554, -1.082014,  1.437934,  0.5454469,
                -1.6196297,  0.3368725, -0.71359906),
     ),
     "DF2_CA_CROI_COL": DFCoefSet(
@@ -422,14 +432,14 @@ VV13_TRACE: Dict[str, DFCoefSet] = {
     "DF2_IA_CA_COL": DFCoefSet(
         parts=_VV13_PARTS_TR, denominator="Yb",
         intercept=-3.684349292,
-        coefs=(-2.038286, -0.073322, -1.360432, -0.07828951,
+        coefs=(-2.038286, -0.073322, -1.360432, -0.0782899,
                 1.8248761,  2.7738488, 0.44440139),
     ),
     # ----- (d) IA · CR+OI · Col  — Eqs (27), (28) ------------------------
     "DF1_IA_CROI_COL": DFCoefSet(
         parts=_VV13_PARTS_TR, denominator="Yb",
         intercept=-2.9336489118,
-        coefs=(0.7208951, -1.352147, 1.378563, 1.1641465,
+        coefs=(0.720851, -1.352147, 1.378563, 1.1641465,
                -0.0423769, 1.5584709, -0.1644980),
     ),
     "DF2_IA_CROI_COL": DFCoefSet(
