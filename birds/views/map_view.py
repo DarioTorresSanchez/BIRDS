@@ -999,7 +999,7 @@ class MapView(QWidget):
             return ""
         values = [pd.to_numeric(df[c], errors="coerce").dropna() for c in cols]
         if any(v.empty for v in values):
-            return ""
+            return self._utm_columns_hint(df)
         medians = [float(v.abs().median()) for v in values]
         if max(medians) <= 180:
             return ""
@@ -1013,6 +1013,22 @@ class MapView(QWidget):
                 "degrees.\nThey look like UTM easting and northing — pick "
                 "UTM under Coordinates → Format, with the columns and the "
                 "zone they belong to.")
+
+    @staticmethod
+    def _utm_columns_hint(df) -> str:
+        """The data template has Easting / Northing beside Latitude /
+        Longitude: when the degrees are empty and those are not, say
+        where the location is."""
+        east = _coords.resolve_column(df, _coords.EASTING_ALIASES)
+        north = _coords.resolve_column(df, _coords.NORTHING_ALIASES)
+        if not (east and north):
+            return ""
+        if (pd.to_numeric(df[east], errors="coerce").dropna().empty
+                or pd.to_numeric(df[north], errors="coerce").dropna().empty):
+            return ""
+        return (f"The degree columns are empty, but “{east}” and "
+                f"“{north}” hold UTM coordinates — pick UTM under "
+                "Coordinates → Format.")
 
     def _collect(self):
         """``(samples, None)``, or ``(None, message)`` when there is nothing

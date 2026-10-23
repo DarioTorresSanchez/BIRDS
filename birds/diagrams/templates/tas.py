@@ -181,7 +181,8 @@ def _classify_points(points, paths, splits, *, normative_ol, normative_q):
 # to call an alkaline trachyte sub-alkaline.  See the import above.
 
 
-def _draw_ib_boundary(ax, x_max: float = 78.0) -> None:
+def _draw_ib_boundary(ax, x_max: float = 78.0,
+                      side_label_x: float = 70.0) -> None:
     """Draw the Irvine & Baragar (1971) alkaline / sub-alkaline curve on
     top of an existing TAS axis, plus the two side labels.
 
@@ -198,13 +199,14 @@ def _draw_ib_boundary(ax, x_max: float = 78.0) -> None:
     if xs[-1] < x_max:
         ax.plot([xs[-1], x_max], [ys[-1], ys[-1]], color="#1f3a93",
                 linewidth=1.4, linestyle="--", alpha=0.35, zorder=2)
-    # Tiny italic labels on either side of the curve.  Positioned at
-    # SiO2 ≈ 70 where the curve is roughly flat — high-Si rocks land
-    # cleanly above (alkaline) or below (sub-alkaline).
-    ax.text(70, 11.0, "Alkaline", fontsize=8.5, color="#1f3a93",
+    # Tiny italic labels on either side of the flat stretch of the
+    # curve, at *side_label_x* -- 70 on the volcanic diagram, further out
+    # on the plutonic one, where 70 lands on Quartz Monzonite.
+    ax.text(side_label_x, 11.0, "Alkaline", fontsize=8.5, color="#1f3a93",
             style="italic", alpha=0.9, ha="center", zorder=2)
-    ax.text(70, 8.6, "Sub-alkaline", fontsize=8.5, color="#1f3a93",
-            style="italic", alpha=0.9, ha="center", zorder=2)
+    ax.text(side_label_x, 8.6, "Sub-alkaline", fontsize=8.5,
+            color="#1f3a93", style="italic", alpha=0.9, ha="center",
+            zorder=2)
 
 
 class TASVolcanic(Diagram):
@@ -220,16 +222,16 @@ class TASVolcanic(Diagram):
     field_polygons = _VOLCANIC_FIELDS
     field_label_pos = {
         "Phonolite":       (56.5, 14),       # centred in the new pentagon
-        "Picrobasalt":     (43, 1.5),
+        "Picrobasalt":     (43, 0.55),       # under the I&B line
         "Basalt":          (48.5, 2.5),
         "Basaltic\nandesite": (54.5, 3),
         "Andesite":        (60, 3.5),
         "Dacite":          (67, 3.5),
         "Rhyolite":        (75, 8),
         "Trachybasalt":    (48.5, 5.5),          # bottom-centre (widest part)
-        "Basaltic\ntrachyandesite": (53.5, 6.8),
+        "Basaltic\ntrachyandesite": (52.6, 7.25),  # clear of the I&B line
         "Trachyandesite":  (57.5, 8.5),
-        "Trachyte /\nTrachydacite": (65, 10),
+        "Trachyte /\nTrachydacite": (65.6, 11.35),  # above the I&B line
         "Tephrite /\nBasanite": (43, 6.0),
         "Phonotephrite":   (48.5, 9.0),
         "Tephriphonolite": (53, 12.0),
@@ -423,17 +425,17 @@ class TASPlutonic(Diagram):
     field_label_pos = {
         "Foidolite":      (40, 12.5),
         "Foid\nSyenite":   (56.5, 15),
-        "Peridot\ngabbro":  (40, 1.5),
+        "Peridot\ngabbro":  (43.8, 0.7),     # in its field, under the I&B line
         "Gabbro":         (48.5, 2.5),
         "Diorite":        (60, 3.0),
         "Granodiorite":   (70, 3.5),
         "Granite":        (80, 5.0),
-        "Monzo\n-gabbro":   (47, 6.5),
+        "Monzo\n-gabbro":   (47.6, 6.3),
         "Monzo\ndiorite":   (52, 7.2),
-        "Monzonite":      (58, 8.5),
+        "Monzonite":      (57, 9.3),
         "Syenite":        (65, 12),
-        "Quartz\nMonzonite": (66, 8.5),
-        "Foid\ngabbro":    (43, 7.0),
+        "Quartz\nMonzonite": (66.6, 8.25),
+        "Foid\ngabbro":    (42.8, 7.6),
         "Foid\nMonzodiorite": (49, 10),
         "Foid\nMonzosyenite": (53, 12),
     }
@@ -451,7 +453,7 @@ class TASPlutonic(Diagram):
 
     def _draw_background(self, ax, options) -> None:
         super()._draw_background(ax, options)
-        _draw_ib_boundary(ax, x_max=self.x_range[1])
+        _draw_ib_boundary(ax, x_max=self.x_range[1], side_label_x=80.0)
 
     # ------------------------------------------------------------------
     # Classification

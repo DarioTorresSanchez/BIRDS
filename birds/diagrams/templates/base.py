@@ -149,6 +149,25 @@ def draw_note(ax, text: str) -> None:
                       boxstyle="round,pad=0.3"))
 
 
+#: Without a renderer to measure with, a legend this long is assumed to
+#: cover something.
+LEGEND_ENTRIES_OUTSIDE = 6
+
+
+def _hides_field_names(ax, legend) -> bool:
+    """Would *legend*, where it sits, cover any text drawn on *ax*?"""
+    get_renderer = getattr(ax.figure.canvas, "get_renderer", None)
+    if get_renderer is None:
+        return len(legend.get_texts()) > LEGEND_ENTRIES_OUTSIDE
+    renderer = get_renderer()
+    box = legend.get_window_extent(renderer)
+    for text in ax.texts:
+        if text.get_text().strip() and text.get_visible() \
+                and box.overlaps(text.get_window_extent(renderer)):
+            return True
+    return False
+
+
 def get_groups(df: pd.DataFrame, plot_style) -> List[Tuple[str, pd.DataFrame, object]]:
     """Split *df* into (label, sub_df, GroupStyle) tuples.
 
@@ -540,14 +559,21 @@ class Diagram:
             return
         kwargs: dict = {"fontsize": options.legend.font_size,
                         "ncol": legend_columns(len(handles))}
-        if options.legend.location == "outside":
-            kwargs.update(loc="upper left", bbox_to_anchor=(1.02, 1.0),
-                          borderaxespad=0.0)
-        else:
-            kwargs["loc"] = options.legend.location
         if options.legend.title:
             kwargs["title"] = options.legend.title
-        ax.legend(**kwargs)
+        outside = options.legend.location == "outside"
+        if not outside:
+            legend = ax.legend(loc=options.legend.location, **kwargs)
+            # "best" only steers clear of the samples.  With many groups
+            # the box grows over the field names, so the default moves
+            # it out to the right instead; a place the user picked stays.
+            if (options.legend.location == "best"
+                    and _hides_field_names(ax, legend)):
+                legend.remove()
+                outside = True
+        if outside:
+            ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0),
+                      borderaxespad=0.0, **kwargs)
 
 
 # ---------------------------------------------------------------------------

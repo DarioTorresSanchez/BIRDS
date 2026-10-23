@@ -227,6 +227,17 @@ def context_columns() -> List[Column]:
         Column("Longitude", "Location", "°",
                "Decimal degrees (WGS-84). Negative = west.",
                "-69.1583"),
+        Column("Easting", "Location", "m",
+               "UTM easting, if the location is in UTM rather than "
+               "degrees; the map reads either.", "483382"),
+        Column("Northing", "Location", "m",
+               "UTM northing, in metres from the equator (south: "
+               "from 10 000 km below it).", "7852139"),
+        Column("UTM_Zone", "Location", "",
+               "UTM zone number, 1-60.", "19"),
+        Column("Hemisphere", "Location", "",
+               "N or S: the UTM hemisphere. Pick from the dropdown.",
+               "S", options=("N", "S")),
         Column("Elevation", "Location", "m",
                "Sampling elevation above sea level.", "4250"),
         Column("Country", "Location", "",

@@ -48,7 +48,7 @@ def test_both_sheets_open_with_the_same_context_columns(workbook):
     data = _headers(workbook["Data"])
     iso = _headers(workbook["Isotopes"])
     first_major = data.index("SiO2")
-    assert first_major == N_CONTEXT == 28
+    assert first_major == N_CONTEXT == 32     # 28, plus the four UTM columns
     assert iso[:first_major] == data[:first_major]
     assert iso[first_major] == "SiO2"
     assert iso[first_major + 1] == "87Sr/86Sr"

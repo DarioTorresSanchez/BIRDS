@@ -692,7 +692,10 @@ SECTIONS = [
             "and west.",
             "UTM — easting and northing in metres, with the zone and "
             "hemisphere fixed for the whole dataset or read row by row "
-            "from columns.",
+            "from columns. The data template has the four columns, "
+            "Easting, Northing, UTM_Zone and Hemisphere, beside Latitude "
+            "and Longitude; fill whichever you have, and when only the "
+            "UTM ones are filled the map says to pick UTM here.",
             "Degrees, minutes and seconds — strings such as 19°25'57\"N.",
             "Decimal with a hemisphere letter — 19.42N, 99.13W.",
             "MGRS grid references — 14QMG5780012345 (needs the optional "

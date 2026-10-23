@@ -18,6 +18,11 @@ including what is still unverified.
 
 ### Added
 
+- **UTM columns in the data template**: Easting, Northing, UTM_Zone and
+  Hemisphere, beside Latitude and Longitude, on the Data and Isotopes
+  sheets. The map's UTM format picks them up by name, and when only they
+  are filled the map says to switch to UTM instead of reporting that
+  nothing parsed. The example row is the same place in both systems.
 - **(La/Yb)N vs YbN — Martin (1986).** Archean TTG against post-Archean
   granitoids, Figure 1 of the paper, under Tectonic → Intermediate and
   → Acid, volcanic and plutonic, with its two axes in the statistics
@@ -60,6 +65,21 @@ including what is still unverified.
 
 ### Changed
 
+- **The legend leaves the plot when it would hide a field name.** With
+  the default location, "best", matplotlib keeps the box off the samples
+  but not off the fields' names; with many groups it covered them — on
+  Li et al. (2025), "Continental extensional zone". The legend now moves
+  out to the right whenever it would cover a name; a location picked in
+  the panel is kept as it is.
+- **TAS names clear of the Irvine & Baragar line.** The curve ran
+  through Picrobasalt, Basaltic trachyandesite and Trachyte /
+  Trachydacite on the volcanic diagram, and through Peridot gabbro,
+  Monzonite and Quartz monzonite on the plutonic one, where the
+  Alkaline / Sub-alkaline captions also sat on Quartz monzonite; those
+  captions now stand at SiO₂ 80. The Peridot gabbro name was outside its
+  field altogether, at SiO₂ 40 for a field that starts at 41. A test
+  checks every name against the line and the other names at three
+  window sizes, and that each sits in its own field.
 - **Every panel control redraws at once.** Log scales, the legend,
   fonts and axis titles, the regression line, the isotope reservoirs and
   reference lines, the map's options — about 110 controls in eight
