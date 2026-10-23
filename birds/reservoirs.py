@@ -34,7 +34,9 @@ References
 
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict, List, Optional
+
+from .normalizations import OXIDE_TO_ELEMENT_PPM
 
 
 # ---------------------------------------------------------------------------
@@ -186,11 +188,12 @@ RESERVOIRS: Dict[str, Dict[str, float]] = {
         "Ta": 0.0096,
         "Cr": 3900, "Ni": 1886,
     },
-    # Hirose & Kushiro (1993) Table 2: as printed, and always was.
+    # Hirose & Kushiro (1993) Table 2, as printed; the Cr2O3 and NiO it
+    # also prints were added on 2026-10-23.
     "Spinel lherzolite (KLB-1)": {
         "SiO2": 44.48, "TiO2": 0.16, "Al2O3": 3.59, "FeOT": 8.10,
         "MnO": 0.12, "MgO": 39.22, "CaO": 3.44, "Na2O": 0.30, "K2O": 0.02,
-        "P2O5": 0.03,
+        "P2O5": 0.03, "Cr2O3": 0.31, "NiO": 0.25,
     },
     # Walter (1998) Table 1, column 1.  Al2O3, FeOT, MgO and K2O were
     # 4.27, 8.05, 38.16 and 0.02, and the table prints no P2O5 -- the
@@ -198,6 +201,7 @@ RESERVOIRS: Dict[str, Dict[str, float]] = {
     "Garnet lherzolite (KR4003)": {
         "SiO2": 44.9, "TiO2": 0.16, "Al2O3": 4.26, "FeOT": 8.02,
         "MnO": 0.13, "MgO": 37.3, "CaO": 3.45, "Na2O": 0.22, "K2O": 0.09,
+        "Cr2O3": 0.41, "NiO": 0.24,
     },
     # Hirschmann et al. (2003) Table 1, the 1 GPa glass of run 95MMH09,
     # which the table says gives the bulk composition.  Every oxide but
@@ -206,7 +210,7 @@ RESERVOIRS: Dict[str, Dict[str, float]] = {
     "Pyroxenite (MIX1G)": {
         "SiO2": 45.6, "TiO2": 0.90, "Al2O3": 15.2, "FeOT": 7.8,
         "MnO": 0.15, "MgO": 16.67, "CaO": 11.48, "Na2O": 1.4, "K2O": 0.04,
-        "P2O5": 0.01,
+        "P2O5": 0.01, "Cr2O3": 0.11,
     },
 }
 
@@ -246,34 +250,74 @@ RESERVOIR_CATEGORIES: Dict[str, List[str]] = {
 }
 
 
-# Aliases / case-insensitive lookup of element symbols.
-_ELEMENT_ALIASES = {
-    "feot": "FeOT", "feo(t)": "FeOT", "feo_total": "FeOT", "fet": "FeOT",
-    "fe2o3t": "FeOT",  # interpret total iron as FeOT for the purposes of overlay
-    "mg#": "MgO",  # rough fallback; real Mg# is not stored in the table
+# ---------------------------------------------------------------------------
+# A reservoir as the plots read it
+# ---------------------------------------------------------------------------
+#
+# The entries hold what their papers print.  A plot asks in the names of
+# the data template, so it needs a little more: total iron is ``FeOt``
+# there, and a mantle rock printed as Cr2O3 and NiO has to answer for Cr
+# and Ni in ppm.  KLB-1, KR4003 and MIX1G, printed as oxides only, used
+# to plot on nothing but an axis of their own oxides -- never against
+# FeOt, Ni, Cr, Ti or K -- and no reservoir at all plotted against FeOt.
+
+#: wt.% Fe2O3 per wt.% FeO: 2 FeO + O = Fe2O3.
+FEO_TO_FE2O3 = 159.687 / (2 * 71.844)
+
+#: ppm of the element per wt.% of its oxide, for an entry printing only
+#: the oxide.  K, Ti and P as the data columns are converted; Cr and Ni
+#: from the atomic weights, as the DMM entry's Cr and Ni were.
+_ELEMENT_FROM_OXIDE: Dict[str, tuple] = {
+    "K": OXIDE_TO_ELEMENT_PPM["K"],
+    "Ti": OXIDE_TO_ELEMENT_PPM["Ti"],
+    "P": OXIDE_TO_ELEMENT_PPM["P"],
+    "Cr": ("Cr2O3", 6842.0),
+    "Ni": ("NiO", 7858.0),
 }
 
 
-def get_reservoir_value(name: str, element: str) -> float | None:
-    """Return the value of *element* in reservoir *name*.
-
-    Element matching is case-insensitive; common aliases (FeOT, Fe2O3T...)
-    are resolved to the stored key.
-    """
+def composition(name: str) -> Optional[Dict[str, float]]:
+    """Reservoir *name* as the plots read it: its values as printed,
+    and what follows from them alone -- total iron as ``FeOt``,
+    ``Fe2O3T`` and ``Fe2O3t``; K, Ti, P, Cr and Ni in ppm from their
+    oxides, and Cr2O3 and NiO from Cr and Ni.  A printed value is never
+    replaced by a derived one.  ``None`` for an unknown name."""
     table = RESERVOIRS.get(name)
     if table is None:
         return None
+    out = dict(table)
+    if "FeOT" in out:
+        out.setdefault("FeOt", out["FeOT"])
+        for key in ("Fe2O3T", "Fe2O3t"):
+            out.setdefault(key, out["FeOT"] * FEO_TO_FE2O3)
+    for element, (oxide, factor) in _ELEMENT_FROM_OXIDE.items():
+        if element not in out and oxide in out:
+            out[element] = out[oxide] * factor
+        elif oxide not in out and element in out and element in ("Cr", "Ni"):
+            out[oxide] = out[element] / factor
+    return out
+
+
+def get_reservoir_value(name: str, element: str) -> float | None:
+    """The value of *element* in reservoir *name*, as :func:`composition`
+    gives it; the symbol is matched without regard to case."""
+    table = composition(name)
+    if table is None:
+        return None
     key = element.strip()
-    # Direct hit
     if key in table:
         return table[key]
-    lookup = {k.lower(): k for k in table.keys()}
+    lookup = {k.lower(): k for k in table}
     if key.lower() in lookup:
         return table[lookup[key.lower()]]
-    alias = _ELEMENT_ALIASES.get(key.lower())
-    if alias and alias in table:
-        return table[alias]
     return None
+
+
+def has_trace_elements(name: str) -> bool:
+    """Whether reservoir *name* prints any rare-earth element -- a
+    pattern a spider diagram can draw.  KLB-1, KR4003 and MIX1G do not."""
+    table = RESERVOIRS.get(name) or {}
+    return any(el in table for el in ("La", "Ce", "Nd", "Sm", "Yb"))
 
 
 def all_reservoir_names() -> List[str]:

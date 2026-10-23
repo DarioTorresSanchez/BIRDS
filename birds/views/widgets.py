@@ -418,14 +418,19 @@ class ReservoirGroup(QGroupBox):
     # style changes.  Parent view connects this to ``update_plot``.
     styles_changed = Signal()
 
-    def __init__(self, title: str = "Reservoirs (reference compositions)") -> None:
+    def __init__(self, title: str = "Reservoirs (reference compositions)",
+                 only=None, note: str = "") -> None:
+        """*only*, a predicate on the reservoir name, keeps the entries a
+        view can draw; *note* says what was left out."""
         super().__init__(title)
+        self._only = only
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 12, 8, 8)
         layout.setSpacing(4)
         intro = QLabel(
             "Tick reservoirs to overlay them on the plot. Sources are cited "
             "next to each entry. Major elements in wt.%, traces in ppm."
+            + (f" {note}" if note else "")
         )
         intro.setWordWrap(True)
         intro.setStyleSheet("color: #6c7388; font-size: 11px;")
@@ -457,6 +462,10 @@ class ReservoirGroup(QGroupBox):
 
     def _populate(self) -> None:
         for category, names in RESERVOIR_CATEGORIES.items():
+            if self._only is not None:
+                names = [n for n in names if self._only(n)]
+            if not names:
+                continue
             parent = QTreeWidgetItem(self.tree, [category])
             parent.setFlags(parent.flags() | Qt.ItemFlag.ItemIsAutoTristate
                             | Qt.ItemFlag.ItemIsUserCheckable)

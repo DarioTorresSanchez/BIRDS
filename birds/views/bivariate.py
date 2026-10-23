@@ -36,7 +36,7 @@ from ..derived import DESCRIPTIONS as _DERIVED_DESCRIPTIONS
 from ..derived import available as _derived_available
 from ..expression import ExpressionError, evaluate, evaluate_scalar
 from ..preprocess import ADJ_SUFFIX, adjusted_name, interleave_twins
-from ..reservoirs import RESERVOIRS
+from ..reservoirs import composition as reservoir_composition
 from .plot_canvas import PlotCanvas
 from .widgets import (
     ANN_MODE_ARROW,
@@ -1269,13 +1269,15 @@ class BivariateView(QWidget):
         expressions; reservoir compositions are evaluated through
         :func:`evaluate_scalar`, so e.g. *La/Yb* of the Primitive Mantle
         is computed on the fly and a reservoir is silently skipped when
-        any referenced element is missing from its composition.
+        any referenced element is missing from its composition.  The
+        composition is the one :func:`birds.reservoirs.composition`
+        gives: FeOt for the printed FeOT, Ni and Cr from NiO and Cr2O3.
         """
         if not names:
             return
         for ax in axes:
             for name in names:
-                composition = RESERVOIRS.get(name)
+                composition = reservoir_composition(name)
                 if composition is None:
                     continue
                 xv = evaluate_scalar(composition, x_col)

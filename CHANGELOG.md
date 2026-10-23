@@ -387,6 +387,18 @@ including what is still unverified.
 
 #### Diagrams measured or recomputed against their sources
 
+- **KLB-1, KR4003 and MIX1G plot.** Printed as major oxides only, they
+  showed on nothing but an axis of their own oxides: not against FeOt —
+  every reservoir holds total iron as FeOT, so none at all plotted
+  against the template's FeOt — nor against Ni or Cr, which their
+  papers print as NiO and Cr2O3. Each reservoir now answers in the
+  template's names, from its own printed values only: FeOt and Fe2O3T
+  for FeOT, Ni and Cr from NiO and Cr2O3 (the three gain the Cr2O3 and
+  NiO their tables print), K, Ti and P from their oxides, so Rudnick &
+  Gao's middle, lower and bulk crust patterns gain K, Ti and P too. An
+  alias that read Fe2O3T as FeOT, 11 % low, and Mg# as MgO is gone. The
+  spider views no longer list the three, which have no pattern to draw.
+
 - **The bibliography, checked against Crossref and the papers.** Every
   DOI resolved and compared — title, first author, year, volume, first
   page — and every citation without one searched for; 42 entries

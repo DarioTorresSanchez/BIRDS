@@ -92,20 +92,21 @@ WH05_TABLE2 = {
 HK93_KLB1 = {
     "SiO2": 44.48, "TiO2": 0.16, "Al2O3": 3.59, "FeOT": 8.10,
     "MnO": 0.12, "MgO": 39.22, "CaO": 3.44, "Na2O": 0.30, "K2O": 0.02,
-    "P2O5": 0.03,
+    "P2O5": 0.03, "Cr2O3": 0.31, "NiO": 0.25,
 }
 
 #: Walter (1998) Table 1, column 1, KR4003.  No P2O5.
 W98_KR4003 = {
     "SiO2": 44.9, "TiO2": 0.16, "Al2O3": 4.26, "FeOT": 8.02,
     "MnO": 0.13, "MgO": 37.3, "CaO": 3.45, "Na2O": 0.22, "K2O": 0.09,
+    "Cr2O3": 0.41, "NiO": 0.24,
 }
 
 #: Hirschmann et al. (2003) Table 1, 95MMH09 glass, "MIX1G bulk".
 H03_MIX1G = {
     "SiO2": 45.6, "TiO2": 0.90, "Al2O3": 15.2, "FeOT": 7.8,
     "MnO": 0.15, "MgO": 16.67, "CaO": 11.48, "Na2O": 1.4, "K2O": 0.04,
-    "P2O5": 0.01,
+    "P2O5": 0.01, "Cr2O3": 0.11,
 }
 
 

@@ -464,7 +464,12 @@ SECTIONS = [
             "Convex-hull shaded range per group.",
             "Reservoir overlays — tick reference compositions (Bulk CC, "
             "N-MORB, OIB, KLB-1, …) to add labelled stars at the "
-            "corresponding (X, Y) coordinates.",
+            "corresponding (X, Y) coordinates. Each answers in the "
+            "template's names: total iron as FeOt (or Fe2O3T), Ni and Cr "
+            "in ppm from the NiO and Cr2O3 its paper prints, K, Ti and P "
+            "from their oxides. A reservoir with nothing for an axis is "
+            "left off that plot — MIX1G on Ni, say, since its paper "
+            "gives no NiO.",
         ]},
         {"type": "h2", "text": "Annotations and Identify sample"},
         {"type": "p", "text":
@@ -519,7 +524,9 @@ SECTIONS = [
          "Reservoir patterns can be overlaid as dashed reference lines. "
          "Major elements K, Ti and P are auto-converted from wt.% oxide "
          "to ppm element so they sit on the same vertical scale as the "
-         "trace data."},
+         "trace data. KLB-1, KR4003 and MIX1G are given as major "
+         "elements only, have no pattern, and are offered in Bivariate "
+         "instead."},
     ]),
 
     ("10. Tectonic discriminators", [

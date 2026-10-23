@@ -37,7 +37,7 @@ from ..normalizations import (
     REE_SHALES,
     get_normaliser,
 )
-from ..reservoirs import get_reservoir_value
+from ..reservoirs import get_reservoir_value, has_trace_elements
 from .annotation_controller import AnnotationController
 from .plot_canvas import PlotCanvas
 from .widgets import (
@@ -235,8 +235,13 @@ class _SpiderControls(QWidget):
         layout.addWidget(self.grouping_grp)
 
         # ── Reservoir overlays ─────────────────────────────────────────
+        # KLB-1, KR4003 and MIX1G are printed as major elements only:
+        # no pattern to draw, so they are offered in Bivariate instead.
         self.reservoirs_grp = ReservoirGroup(
-            "Reservoir patterns (overlay reference lines)"
+            "Reservoir patterns (overlay reference lines)",
+            only=has_trace_elements,
+            note="Rocks given as major elements only (KLB-1, KR4003, "
+                 "MIX1G) have no pattern here; plot them in Bivariate.",
         )
         # Cap the tree so the outer panel does not need a second scroll.
         self.reservoirs_grp.tree.setMaximumHeight(220)
