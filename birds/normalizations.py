@@ -20,7 +20,9 @@ the right, and Table 4.9 has no P -- was then read in the primary
 sources on 2026-10-22 (``tests/test_normalisers_primary_sources.py``):
 Boynton (1984) and the Sun & McDonough (1989) rows agree; Taylor &
 McLennan's (1985) Y is 2.1, not 2.25, and Sun & McDonough's E-MORB P is
-620, not 1410.  Only Rudnick & Gao's bulk crust remains unread.
+620, not 1410.  Rudnick & Gao's bulk crust, read on 2026-10-23 in the
+2003 edition, has K 15026, Ti 4315 and P 567 where it carried 15000,
+4320 and the upper crust's 655.
 """
 
 from __future__ import annotations
@@ -215,11 +217,15 @@ MULTIELEMENT_NORMS: Dict[str, Mapping[str, float]] = {
         "Gd": 4.0, "Tb": 0.7, "Dy": 3.9, "Ho": 0.83, "Y": 21,
         "Er": 2.3, "Tm": 0.30, "Yb": 2.0, "Lu": 0.31,
     },
+    # Read in Rudnick & Gao (2003) Table 11, whose upper-crust column is
+    # the one Rollinson & Pease print for 2014, value for value.  K, Ti
+    # and P were 15000, 4320 and 655 -- the last the upper crust's --
+    # and are now the table's K2O 1.81, TiO2 0.72 and P2O5 0.13.
     "Bulk Continental Crust (Rudnick & Gao 2014)": {
         "Cs": 2.0, "Rb": 49, "Ba": 456, "Th": 5.6, "U": 1.3,
-        "Nb": 8, "Ta": 0.7, "K": 15000, "La": 20, "Ce": 43,
-        "Pb": 11, "Pr": 4.9, "Sr": 320, "P": 655, "Nd": 20,
-        "Zr": 132, "Hf": 3.7, "Sm": 3.9, "Eu": 1.1, "Ti": 4320,
+        "Nb": 8, "Ta": 0.7, "K": 15026, "La": 20, "Ce": 43,
+        "Pb": 11, "Pr": 4.9, "Sr": 320, "P": 567, "Nd": 20,
+        "Zr": 132, "Hf": 3.7, "Sm": 3.9, "Eu": 1.1, "Ti": 4315,
         "Gd": 3.7, "Tb": 0.6, "Dy": 3.6, "Ho": 0.77, "Y": 19,
         "Er": 2.1, "Tm": 0.28, "Yb": 1.9, "Lu": 0.30,
     },

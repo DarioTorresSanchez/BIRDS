@@ -28,6 +28,9 @@ from .diagrams.templates.martin1986 import (
     CHONDRITE as _MARTIN_CHONDRITE,
     normalised as _martin_normalised,
 )
+from .diagrams.templates.drummond_defant1990 import (
+    normalised as _dd_normalised,
+)
 from .diagrams.templates.major_df import (
     butler_woronow_df1,
     butler_woronow_df2,
@@ -326,9 +329,15 @@ DISCRIMINATORS: List[Discriminator] = [
     Discriminator("dd.sr_y", "Sr/Y",
                   "Defant & Drummond (1990) — adakite vs ADR",
                   lambda df: _ratio(df, "Sr", "Y")),
-    Discriminator("dd.la_yb", "La/Yb",
-                  "Defant & Drummond (1990) — adakite vs ADR",
-                  lambda df: _ratio(df, "La", "Yb")),
+    # ----- Drummond & Defant (1990) Fig. 10 -----------------------------
+    # Key kept as it was so a selection made in the tree survives; the
+    # quantity and the label are the diagram's, normalised to Wakita.
+    Discriminator("dd.yb_n", "YbN (Wakita et al. 1971)",
+                  "Drummond & Defant (1990) — TTG, post-Archean, MORB",
+                  lambda df: _dd_normalised(df)[0]),
+    Discriminator("dd.la_yb", "(La/Yb)N (Wakita et al. 1971)",
+                  "Drummond & Defant (1990) — TTG, post-Archean, MORB",
+                  lambda df: _dd_normalised(df)[1]),
     # ----- Martin (1986) -------------------------------------------------
     Discriminator("martin1986.yb_n", f"YbN ({_MARTIN_CHONDRITE})",
                   "Martin (1986) — Archean TTG vs post-Archean granitoids",

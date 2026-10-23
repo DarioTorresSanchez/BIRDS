@@ -36,10 +36,10 @@ view*.
 | Verma's group, 2004–2008: functions and caption coordinates, checked against the authors' sheet | 3 | *Verma's group, 2004–2008* |
 | TAS, volcanic and plutonic, vertex by vertex | 2 | *Retracted findings*, *Middlemost (1994)* |
 | Rule, with the arithmetic under it checked | 1 | *Maniar & Piccoli (1989)* |
-| Drawn envelope, now measured, computed or read from printed coordinates | 21 | *Drawn envelope* to *Vermeesch (2006a) — the two QDA ternaries* |
+| Drawn envelope, now measured, computed or read from printed coordinates | 22 | *Drawn envelope* to *Drummond & Defant (1990, JGR)* |
 | A plane computed from printed equations, with no fields to check | 1 | *Yang et al. (2019)* |
 | **Known wrong — fix first** | **0** | |
-| Still drawn by eye, blocked on sources | 1 | *Still drawn by eye* |
+| Still drawn by eye | **0** | *Still drawn by eye* |
 | **Total** | **54** | |
 
 The Irvine & Baragar (1971) overlay on `afm`, the one curve this summary
@@ -461,12 +461,12 @@ faded to say so.
 `Ti` was converted from TiO₂ with 5995 ppm per wt.% in four places;
 the mass ratio gives 5993.4. Now a named constant, shared.
 
-## Drawn envelope — 21 done, 1 blocked
+## Drawn envelope — 22 done, none blocked
 
 Twelve are in the three subsections below; Saccani, Defant & Drummond,
-Pearce & Gale, Cabanis & Lecolle, Harris and the two Vermeesch QDA
-ternaries have a section each after them; the one still drawn by eye is
-listed last.
+Pearce & Gale, Cabanis & Lecolle, Harris, the two Vermeesch QDA
+ternaries and Drummond & Defant's Figure 10, the last to be blocked,
+have a section each after them.
 
 ### Done (3)
 
@@ -685,7 +685,7 @@ see there are two answers.
 normaliser of each figure, the axis order, the linear scales, and the
 band where Saccani's two rules disagree.
 
-## Defant & Drummond (1990) — one diagram measured, one not in the paper
+## Defant & Drummond (1990) — one diagram measured, one not in the paper (now drawn from its real source)
 
 `Defant_Drummond 1990.pdf` — *Nature* **347**, 662–665. Keys
 `defant_drummond_YSrY`, `defant_drummond_YbLaYb`. The file is a scan
@@ -738,14 +738,12 @@ already had.
 & Pease (2021) list one in their table of discrimination diagrams,
 under this reference and marked *unevaluated*, and that is where the
 attribution came from. It cannot be reproduced from a source that does
-not contain it. `defant_drummond_YbLaYb` therefore draws only the
-Yb ≤ 1.9 ppm threshold the paper does state, says so in its citation,
-and **has given up its frame**: its limits were `(0, 6)` by `(0, 80)`,
-which clipped samples and came from nowhere, and the axes now follow
-the data. To complete it, the real source is needed — most likely
-Drummond & Defant (1990, *J. Geophys. Res.* **95**, 21503–21521),
-Defant & Drummond (1993, *Geology*) or Martin (1986, *Geology* **14**,
-753–756); none is on disk.
+not contain it. For a while `defant_drummond_YbLaYb` drew only the
+Yb ≤ 1.9 ppm threshold the paper does state, and gave up its frame:
+its limits were `(0, 6)` by `(0, 80)`, which clipped samples and came
+from nowhere. The figure turned out to be Drummond & Defant (1990,
+*J. Geophys. Res.*) Figure 10, and the key now draws it; see *Drummond
+& Defant (1990, JGR)* below.
 
 `tests/test_defant_drummond_1990.py` pins both thresholds, Figure 2's
 frame, the two measured fields, the agreement between the measured
@@ -1091,20 +1089,54 @@ and that each segment starts where the last ended. Swapping two digits
 of any one control-point coordinate — 216 such typos — fails it every
 time.
 
-## Still drawn by eye (1) — blocked, none pending
+## Drummond & Defant (1990, JGR) — (La/Yb)N against YbN
 
-Nothing is left that a measurement could fix. The one below is blocked
-on a source, not on effort.
+`drummond_defant_1990.pdf` — *J. Geophys. Res.* **95**(B13),
+21503–21521, a scan with an OCR text layer. Key `defant_drummond_YbLaYb`,
+kept so that saved sessions reopen on it. Figure 10, "modified after
+Jahn et al. [1981] and Martin [1986]", plots (La/Yb)N against YbN,
+linear, ticked to 25 and 150 and drawn on to 27 and 170, with three
+fields: Archean TTG (dotted), post-Archean granitic rocks (unpatterned)
+and the range of MORB (a diagonally shaded bar along the foot).
 
-| Diagram | Source on disk | Why |
-| --- | --- | --- |
-| `defant_drummond_YbLaYb` | **not on disk** | the paper it cites does not contain that figure; see above |
+Measured on the figure's image in the PDF (671 × 428 px): the axes on
+their ticks — 24.25 px per unit of YbN, 2.456 px per unit of (La/Yb)N —
+and each edge of the two outlined fields fitted to the ink along it, the
+vertices being where neighbouring edges cross; the overlay on the scan
+follows both outlines. The MORB bar is filled, so its extent is the run
+of ink along it: YbN 7.91–15.99, from the axis to the line at
+(La/Yb)N 5.2.
 
-The figure is in Drummond & Defant (1990, *J. Geophys. Res.* 95(B13),
-21503–21521). Martin (1986, *Geology* 14, 753–756) is now on disk and
-drawn as a diagram of its own, `martin_1986_LaYbN`, in (La/Yb)N–YbN with
-his Archean TTG and post-Archean fields; Defant & Drummond's adakite
-fields still need their 1990 paper.
+Two checks come from outside the figure. The caption's melting models
+start from MORB sources at YbN 10 and 12 with (La/Yb)N 1, and both fall
+in the measured bar, as do Sun & McDonough's N- and E-MORB. And the TTG
+field is Martin's redrawn: vertex by vertex within 1.7 in (La/Yb)N and
+0.12 in YbN of his Figure 1, measured separately on another scan. The
+post-Archean field agrees less closely — its lower right corner is at
+5.3 here against 3.8 in Martin.
+
+**The chondrite is the one the paper names**, once, in the caption of
+Figure 1: Wakita et al. (1971). Figures 5 to 10 say only
+"chondrite-normalized", and the same normalisation throughout is the
+reading taken. So this diagram and `martin_1986_LaYbN` (Boynton) agree
+as drawings but not as normalisations: the same rock lands about 5 %
+lower in YbN here.
+
+**Not drawn**: the four partial-melting curves, which are model results
+on Martin's (1987) partition coefficients, not fields. **Added**: the
+Nature paper's Yb ≤ 1.9 ppm, as a dotted line at YbN 8.64 labelled with
+its source. It lands 0.29 to the right of the TTG field's right edge,
+which is 1.84 ppm — two papers, the same limit to 0.06 ppm.
+
+`tests/test_drummond_defant_1990_jgr.py` pins the frame, the chondrite,
+the fields, the MORB checks, the agreement with Martin and the
+classification.
+
+## Still drawn by eye — none
+
+Nothing is drawn by eye and nothing is blocked. The last one,
+`defant_drummond_YbLaYb`, was waiting for Drummond & Defant (1990, JGR),
+which is now on disk and drawn; see above.
 
 ## Maniar & Piccoli (1989) — the rules were right, one label was not
 

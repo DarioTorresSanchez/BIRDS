@@ -568,9 +568,9 @@ class Saccani2015NbTh(Diagram):
 # **There is no Yb against La/Yb figure in this paper at all.**
 # Rollinson & Pease (2021) list one in their table of discrimination
 # diagrams, attributed to Defant & Drummond (1990) and marked
-# "unevaluated", and that is where the attribution here came from.  It
-# cannot be reproduced from this source because it is not in it; see
-# DefantDrummondYbLaYb below.
+# "unevaluated", and that is where the attribution here came from.  The
+# figure is Drummond & Defant (1990, J. Geophys. Res.) Figure 10, drawn
+# in drummond_defant1990.py under the key the attribution gave it.
 
 #: Figure 2's own frame.  It was (0, 50) by (0, 200) here, so a sample
 #: landed at less than half its published Y and more than twice its
@@ -652,38 +652,6 @@ class DefantDrummondYSrY(Diagram):
                 style="italic", ha="center", va="bottom", zorder=0)
         ax.text(22.5, 7.0, "MORB", fontsize=8, color="#fff",
                 style="italic", ha="center", va="center", zorder=0)
-
-
-class DefantDrummondYbLaYb(Diagram):
-    key = "defant_drummond_YbLaYb"
-    title = "La/Yb vs Yb — Defant & Drummond (1990)"
-    citation = ("Defant & Drummond (1990) give the threshold drawn here "
-                "— adakites have Yb ≤ 1.9 ppm — on page 663. They "
-                "do not publish this diagram: their paper's three "
-                "figures are Y or Yb against slab age, Sr/Y against Y, "
-                "and a spider. Rollinson & Pease (2021) list a Yb–La/Yb "
-                "diagram under this reference, marked unevaluated, "
-                "which is where the attribution came from. No field is "
-                "drawn and the axes follow the data, because there is "
-                "no published figure here to take either from.")
-    x_label = "Yb (ppm)"
-    y_label = "La/Yb"
-
-    def _compute_xy(self, df):
-        la = resolve_column(df, ["La"])
-        yb = resolve_column(df, ["Yb"])
-        if not (la and yb):
-            return None, None
-        yb_s = pd.to_numeric(df[yb], errors="coerce")
-        yb_s = yb_s.where(yb_s > 0)
-        return yb_s, pd.to_numeric(df[la], errors="coerce") / yb_s
-
-    def _draw_background(self, ax, options):
-        ax.axvline(DD_ADAKITE_YB_MAX, color="#444", lw=1.2, zorder=0)
-        ax.text(DD_ADAKITE_YB_MAX, 0.98, "adakite: Yb ≤ 1.9 ppm",
-                transform=ax.get_xaxis_transform(), fontsize=9,
-                color="#333", style="italic", ha="right", va="top",
-                rotation=90, zorder=0)
 
 
 # ---------------------------------------------------------------------------

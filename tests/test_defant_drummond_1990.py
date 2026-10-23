@@ -17,9 +17,10 @@ Sr/Y relative to anything drawn around it.
 **There is no Yb against La/Yb figure in the paper at all.**  Rollinson
 & Pease (2021) list one in their table of discrimination diagrams,
 under this reference and marked "unevaluated", which is where the
-attribution came from.  It cannot be reproduced from a source that
-does not contain it, so that diagram now draws only the threshold the
-paper does state and lets its axes follow the data.
+attribution came from.  The figure is Drummond & Defant's, in the
+*Journal of Geophysical Research* the same year, and the key now draws
+it; see test_drummond_defant_1990_jgr.py.  What it keeps from here is
+the Yb threshold, as a dotted line labelled with this paper.
 
 What the paper gives for adakites is a list of numbers on page 663:
 "low Y and HREE relative to island-arc ADRs (for example, Y and Yb
@@ -38,6 +39,7 @@ from matplotlib.figure import Figure
 
 from birds.diagrams.registry import get_diagram
 from birds.diagrams.templates.base import PlotOptions
+from birds.diagrams.templates.drummond_defant1990 import ADAKITE_YB_N_MAX
 from birds.diagrams.templates.tectonic_bivariate import (
     DD_ADAKITE_Y_MAX,
     DD_ADAKITE_YB_MAX,
@@ -61,11 +63,14 @@ def test_the_two_published_thresholds():
 
 @pytest.mark.parametrize("key, column, other, threshold", [
     ("defant_drummond_YSrY", "Y", "Sr", DD_ADAKITE_Y_MAX),
-    ("defant_drummond_YbLaYb", "Yb", "La", DD_ADAKITE_YB_MAX),
+    ("defant_drummond_YbLaYb", "Yb", "La", ADAKITE_YB_N_MAX),
 ])
 def test_the_threshold_is_on_the_x_axis(key, column, other, threshold):
-    """Both thresholds are on the element, which is x on both diagrams."""
-    df = pd.DataFrame({column: [threshold], other: [100.0]})
+    """Both thresholds are on the element, which is x on both diagrams;
+    on the second it is chondrite-normalised, so 1.9 ppm lands on the
+    line drawn at 1.9 / 0.220."""
+    raw = DD_ADAKITE_Y_MAX if column == "Y" else DD_ADAKITE_YB_MAX
+    df = pd.DataFrame({column: [raw], other: [100.0]})
     x, _y = get_diagram(key)._compute_xy(df)
     assert float(x.iloc[0]) == pytest.approx(threshold)
 
@@ -230,31 +235,21 @@ def test_both_diagrams_name_the_threshold_on_the_plot():
         fig.clf()
 
 
-def test_the_yb_diagram_has_no_frame_of_its_own():
-    """There is no published figure to take one from.
-
-    Its limits were (0, 6) by (0, 80), which clipped anything beyond
-    and came from nowhere.  The axes now follow the data.
-    """
-    d = get_diagram("defant_drummond_YbLaYb")
-    assert d.x_range is None
-    assert d.y_range is None
-
-
 def test_both_citations_say_what_the_source_actually_contains():
     """The old ones asserted thresholds the paper does not state.
 
     "Sr/Y > 40" was in the first and "La/Yb > 20" in the second;
-    neither appears in Defant & Drummond (1990).  The second now says
-    outright that the paper does not publish that diagram, because a
-    user who goes looking for it will not find it.
+    neither appears in Defant & Drummond (1990).  The second now cites
+    the paper that has the figure, and names this one only for the
+    line it adds.
     """
     sry = get_diagram("defant_drummond_YSrY").citation
     laybb = get_diagram("defant_drummond_YbLaYb").citation
     assert "Sr/Y > 40" not in sry and "40" not in sry.split("400")[0][-4:]
     assert "draws no adakite envelope" in sry
-    assert "do not publish this diagram" in laybb
-    assert "Rollinson" in laybb
+    assert "La/Yb > 20" not in laybb
+    assert "J. Geophys. Res." in laybb and "Figure 10" in laybb
+    assert "not part of the figure" in laybb
 
 
 # ---------------------------------------------------------------------------
@@ -273,7 +268,7 @@ def test_the_two_diagrams_agree_on_a_sample(name, sr, y, la, yb, adakite):
     x1, _ = get_diagram("defant_drummond_YSrY")._compute_xy(df)
     x2, _ = get_diagram("defant_drummond_YbLaYb")._compute_xy(df)
     assert (float(x1.iloc[0]) <= DD_ADAKITE_Y_MAX) == adakite, name
-    assert (float(x2.iloc[0]) <= DD_ADAKITE_YB_MAX) == adakite, name
+    assert (float(x2.iloc[0]) <= ADAKITE_YB_N_MAX) == adakite, name
 
 
 def test_zero_yttrium_does_not_become_an_infinite_ratio():

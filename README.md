@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-3740%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-3780%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -62,7 +62,7 @@ export is sized in millimetres for the journal you are submitting to.
 
 | | |
 |---|---|
-| **Everything is sourced** | Field boundaries and discriminant functions are transcribed, measured or recomputed from the original paper rather than redrawn by eye, and [`docs/DIAGRAM_PROVENANCE.md`](docs/DIAGRAM_PROVENANCE.md) says which of the three it was, diagram by diagram — including the three still drawn by eye, every one of them blocked on a source rather than pending. Each plot carries its citation in the subtitle, and `References → Show full bibliography` prints the complete APA list. |
+| **Everything is sourced** | Field boundaries and discriminant functions are transcribed, measured or recomputed from the original paper rather than redrawn by eye, and [`docs/DIAGRAM_PROVENANCE.md`](docs/DIAGRAM_PROVENANCE.md) says which of the three it was, diagram by diagram — and none is left drawn by eye. Each plot carries its citation in the subtitle, and `References → Show full bibliography` prints the complete APA list. |
 | **No silent data loss** | A counter under every canvas reports how many samples were plotted, filtered, hidden or missing the required elements — and clicking any of those numbers lists the samples by name. |
 | **Detection limits are real values** | `<0.5`, `≤0.2`, `b.d.l.`, `n.d.` are parsed at import and substituted under an explicit policy (x/2, x/√2 or blank), flagged in amber in the data table, and the policy can be changed afterwards without re-importing. |
 | **Cross-view sample identification** | Modifier-click a point in any view to highlight the same sample in every other view. |
@@ -153,7 +153,8 @@ structured:
 <details>
 <summary><b>Tectonic discrimination — intermediate (6)</b></summary>
 
-- Y vs Sr/Y and Yb vs La/Yb (adakite) — Defant & Drummond 1990
+- Y vs Sr/Y (adakite) — Defant & Drummond 1990
+- Yb<sub>N</sub> vs (La/Yb)<sub>N</sub>, Archean TTG, post-Archean and MORB — Drummond & Defant 1990 (JGR)
 - Yb<sub>N</sub> vs (La/Yb)<sub>N</sub>, Archean TTG vs post-Archean granitoids — Martin 1986
 - Majors DF set, 5 panels — Verma & Verma 2013
 - Immobile majors + traces DF set, 5 panels — Verma & Verma 2013
@@ -464,7 +465,7 @@ What the suite covers, and why those things and not others:
 | **Sessions** | `.birds` and `.birdstyle` round-trips, including the detection limits that make the policy changeable after a reload |
 | **Published coordinates** | Vertices and boundary points pinned against the figures and tables they were measured from, so a calibrated diagram cannot drift back |
 | **Which normaliser, which axis** | A diagram can carry the right boundary and still be wrong if it normalises against the wrong reference or plots the pair the other way up. Saccani's three are pinned on all of it — chondrite where the caption says chondrite, Dy on the x-axis where the figure puts Dy, linear where the source is linear — because all three were wrong at once, and so were four rows of the statistics table |
-| **Table against plot** | The same quantity reaches the statistics table and the diagram by two routes, and three faults here have been a correction landing on only one of them. So all 255 rows are paired with the axis plotting the same thing and required to equal it bit for bit, and the TiO₂ → Ti constant — which once had three values in five places — is checked against its own mass ratio |
+| **Table against plot** | The same quantity reaches the statistics table and the diagram by two routes, and three faults here have been a correction landing on only one of them. So all 256 rows are paired with the axis plotting the same thing and required to equal it bit for bit, and the TiO₂ → Ti constant — which once had three values in five places — is checked against its own mass ratio |
 | **Verma centroids** | Every discriminant function evaluated at its paper's own group means has to return that paper's own published centroid — 60 of them. This is what found ten wrong coefficients that a digit-by-digit check had scored 95–100 % |
 | **Verma probabilities** | The triple point of a panel must be the circumcentre of its three group centroids, which is where all three settings come out equally likely. The triple points come from the figure captions and the centroids from elsewhere in the same papers, so neither is checking itself |
 | **Reference materials** | USGS BHVO-2, BCR-2 and AGV-2 through the whole chain: classification, norm, chondrite-normalised pattern, and — for the two whose setting is not in dispute — tectonic discrimination |

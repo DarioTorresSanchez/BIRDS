@@ -52,8 +52,9 @@ CHECKED = {
 #: Whole references this copy cannot confirm.  Table 4.7 is cut off at
 #: its tenth column (Taylor & McLennan is its 12th, Boynton its 14th),
 #: Table 4.9 at its eleventh (bulk crust), and Table 4.9 has no E-MORB.
-#: All but the bulk crust were then read in their own papers:
-#: ``test_normalisers_primary_sources.py``.
+#: All four were then read in their own papers:
+#: ``test_normalisers_primary_sources.py``, and for the bulk crust
+#: ``test_reservoirs_primary_sources.py``.
 NOT_IN_THE_BOOKS_COPY = {
     ("REE_CHONDRITES", "Boynton (1984)"),
     ("REE_CHONDRITES", "Taylor & McLennan (1985) – CI calc. volatile-free"),

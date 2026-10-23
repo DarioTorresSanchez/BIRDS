@@ -71,7 +71,7 @@ TECTONIC_VOLCANIC: dict[str, list[tuple[str, str]]] = {
     ],
     "Intermediate": [
         ("Sr/Y vs Y (adakite) - Defant & Drummond 1990", "defant_drummond_YSrY"),
-        ("La/Yb vs Yb (adakite) - Defant & Drummond 1990", "defant_drummond_YbLaYb"),
+        ("(La/Yb)N vs YbN (TTG, post-Archean, MORB) - Drummond & Defant 1990", "defant_drummond_YbLaYb"),
         ("(La/Yb)N vs YbN (Archean TTG vs post-Archean) - Martin 1986", "martin_1986_LaYbN"),
         ("Nb/Yb vs Th/Nb - Li et al. 2025 (mafic to felsic)", "li2025_nbyb_thnb"),
         ("Nb/Zr vs Th/Nb - Godang et al. 2024 (mafic to felsic)", "godang2024_nbzr_thnb"),

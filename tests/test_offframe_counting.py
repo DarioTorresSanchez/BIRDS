@@ -162,17 +162,20 @@ class TestCoverage:
         the frame of their Figure 5.  A template may fix its limits
         exactly when a published figure fixes them -- as the three
         basic-rock DF sets of 2004, 2006 and 2008 do, on panels: their
-        boundaries end on the (-8, +8) frame each figure draws -- and, to
-        27, `martin_1986_LaYbN`, the frame of Martin's Figure 1.
+        boundaries end on the (-8, +8) frame each figure draws -- to
+        27, `martin_1986_LaYbN`, the frame of Martin's Figure 1, and to
+        28 when `defant_drummond_YbLaYb` took its frame back, this time
+        from the figure it had been missing: Drummond & Defant (1990,
+        J. Geophys. Res.) Figure 10.
         """
         own = [k for k, d in _REGISTRY.items()
                if getattr(d, "x_range", None) or getattr(d, "y_range", None)]
         panelled = [k for k, d in _REGISTRY.items()
                     if getattr(d, "panels", None)
                     and getattr(d.panels[0], "x_range", None)]
-        assert len(own) == 27, f"{len(own)} templates carry their own frame"
+        assert len(own) == 28, f"{len(own)} templates carry their own frame"
         assert len(panelled) == 11, f"{len(panelled)} carry it on panels"
-        assert "defant_drummond_YbLaYb" not in own
+        assert "defant_drummond_YbLaYb" in own
         assert "yang_2019_fcms" in own
         assert "li2025_nbyb_thnb" in own
         assert "godang2024_nbzr_thnb" in own

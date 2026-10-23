@@ -179,6 +179,7 @@ def test_no_row_disagrees_with_its_own_familys_diagram(rows, axes):
     ("pearcegale.zr_y", "pearce_gale_1977:y"),
     ("shervais.v", "shervais_1982_TiV:y"),
     ("dd.sr_y", "defant_drummond_YSrY:y"),
+    ("dd.yb_n", "defant_drummond_YbLaYb:x"),
     ("dd.la_yb", "defant_drummond_YbLaYb:y"),
     ("martin1986.yb_n", "martin_1986_LaYbN:x"),
     ("martin1986.la_yb_n", "martin_1986_LaYbN:y"),

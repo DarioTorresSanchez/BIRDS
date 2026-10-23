@@ -65,6 +65,24 @@ including what is still unverified.
 
 ### Changed
 
+- **Reservoirs read in their own papers.** Rudnick & Gao (2003)
+  Table 11: the middle crust's Pb and Sc were 15.3 and 22, for 15.2 and
+  19. Workman & Hart (2005) DMM: Nb, Ta and Sr were 0.21, 0.0138 and
+  7.66 for 0.1485, 0.0096 and 7.664, Cr and Ni 2500 and 1960 for the
+  3900 and 1886 of its Cr₂O₃ and NiO; Ti 716.3 is added, and Cs, Sc, V
+  and Co, which the paper does not give, are gone. KR4003 is Walter's
+  (1998) Table 1 (Al₂O₃ 4.26, FeOT 8.02, MgO 37.3, K₂O 0.09, no P₂O₅)
+  and MIX1G Hirschmann et al.'s (2003) bulk glass (SiO₂ 45.6 … P₂O₅
+  0.01); every oxide but one had differed. MIX1G was cited to a
+  *J. Petrol.* paper it is not in; it is *Geology* 31, 481–484. KLB-1
+  was right. N-MORB, E-MORB and OIB of Sun & McDonough (1989) carry
+  trace elements only: the paper prints no majors and theirs had no
+  source. "Average peridotite (PM-like)" has no recorded source and is
+  marked so.
+- **Rudnick & Gao's bulk crust normaliser**, read in their Table 11:
+  K, Ti and P were 15000, 4320 and 655 — the last the upper crust's —
+  for 15026, 4315 and 567. Every trace element already agreed, so all
+  normalisers are now checked against a source.
 - **The legend leaves the plot when it would hide a field name.** With
   the default location, "best", matplotlib keeps the box off the samples
   but not off the fields' names; with many groups it covered them — on
@@ -350,6 +368,19 @@ including what is still unverified.
 ### Fixed
 
 #### Diagrams measured or recomputed against their sources
+
+- **(La/Yb)N vs YbN — Drummond & Defant (1990, JGR), Figure 10.** The
+  key `defant_drummond_YbLaYb` was attributed to the Nature paper of the
+  same year, which has no such figure, and for a while drew only the
+  Yb ≤ 1.9 ppm line. It now draws the figure it was meant to: Archean
+  TTG, post-Archean granitic rocks and the MORB range, measured on the
+  scan, on the Wakita et al. (1971) chondrite the paper names, in its
+  own frame (YbN 0–27, (La/Yb)N 0–170), with a classification. The
+  caption's MORB sources (YbN 10 and 12, (La/Yb)N 1) fall in the
+  measured MORB bar, and the TTG field matches Martin's (1986) within
+  1.7 in (La/Yb)N. The Yb ≤ 1.9 ppm line stays, dotted and labelled as
+  the Nature paper's. Its statistics row is now (La/Yb)N on Wakita,
+  joined by YbN: 256 parameters. Nothing is left drawn by eye.
 
 - **AFM: Irvine & Baragar's curve as they drew it.** The overlay was an
   approximation running up to 8 units of F off their line; it is now
@@ -974,16 +1005,9 @@ including what is still unverified.
   the type to be fixed first, with SINCLAS or IgRoCS; fed a basalt, the
   intermediate-magma set answers arc at better than even odds with no
   warning.
-- **1 diagram still has boundaries drawn by eye, blocked on its source
-  rather than pending** — `defant_drummond_YbLaYb`: the paper it cites
-  does not contain that diagram, and its adakite fields need Drummond &
-  Defant (1990, JGR). Martin's (1986) TTG and post-Archean fields, in
-  (La/Yb)N–YbN, are now a diagram of their own. Nothing is left that a
-  measurement could fix.
-- **One normaliser is not yet checked against a source**: Rudnick &
-  Gao's bulk continental crust, which this copy of Rollinson & Pease
-  (2021) cuts off and which is not on disk. Its P of 655 ppm equals the
-  upper crust's and is the most suspect value.
+- **One reservoir has no source**: "Average peridotite (PM-like)". It
+  is close to McDonough & Sun's (1995) primitive mantle, rounded, which
+  is listed beside it.
 - **The La/10–Y/15–Nb/8 diagram misplaces reference MORB and OIB.** Not
   a fault in the code: Verma (2010) puts OIB + MORB at 29–62 %
   correctly classified, and Sun & McDonough's N-MORB duly falls in the

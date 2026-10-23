@@ -321,9 +321,11 @@ def test_the_provenance_counts_are_the_catalogues(provenance):
     total = counts.pop("Total")
     assert total == len(set(keys)) == sum(counts.values())
 
+    # The section lists what is still drawn by eye as table rows; with
+    # none left it has no table, and the count must be 0 to match.
     blocked = provenance.split("## Still drawn by eye", 1)[1].split("\n## ")[0]
-    named = set(re.findall(r"`(\w+)`", blocked.split("\n\n", 3)[2]))
-    assert counts["Still drawn by eye, blocked on sources"] == len(named)
+    named = set(re.findall(r"^\| `(\w+)`", blocked, re.MULTILINE))
+    assert counts["Still drawn by eye"] == len(named)
     assert named <= set(keys)
 
 
