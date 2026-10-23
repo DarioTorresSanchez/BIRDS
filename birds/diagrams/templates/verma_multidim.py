@@ -303,7 +303,7 @@ class _BinaryPairsDF(MultiPanelDiagram):
 
 # Canonical 3-sector layout in (DF1, DF2) space.  The first listed group
 # lands on the right, the second top-left, the third bottom-left — this
-# matches the canonical Fig 12.14 of Verma (2021) / Verma & Agrawal
+# matches the canonical Fig 12.14 of Verma (2020) / Verma & Agrawal
 # (2011) where IAB occupies the right wedge, MORB the bottom-left and
 # the "extra" group (CRB / OIB / CRB+OIB) the top-left.
 _TRIPLET_CENTROIDS = (

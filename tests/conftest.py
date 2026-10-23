@@ -55,6 +55,7 @@ TRACES = [
 MODAL = [
     "Q", "A", "P", "F", "Ol", "Opx", "Cpx", "Pl", "Hbl", "Px",
     "An", "Ab", "Or", "Lithic", "Crystal", "Vitric",
+    "Blocks", "Lapilli", "Ash",
 ]
 
 

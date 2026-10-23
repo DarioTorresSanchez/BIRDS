@@ -4,8 +4,8 @@ Major elements are wt.% on an anhydrous basis; trace elements are ppm
 (unless noted otherwise — K, Ti and P shown in both wt.% and ppm where
 useful).
 
-Every entry but the last was read in its own paper on 2026-10-23, the
-values as printed (``tests/test_reservoirs_primary_sources.py``).
+Every entry was read in its own paper on 2026-10-23, the values as
+printed (``tests/test_reservoirs_primary_sources.py``).
 
 References
 ----------
@@ -208,14 +208,14 @@ RESERVOIRS: Dict[str, Dict[str, float]] = {
         "MnO": 0.15, "MgO": 16.67, "CaO": 11.48, "Na2O": 1.4, "K2O": 0.04,
         "P2O5": 0.01,
     },
-    # No source is recorded for this one.  It is close to McDonough &
-    # Sun's (1995) primitive mantle, above, rounded: within 0.05 wt.% in
-    # every oxide but MgO, 38.0 for 37.8.
-    "Average peridotite (PM-like)": {
-        "SiO2": 45.0, "TiO2": 0.20, "Al2O3": 4.5, "FeOT": 8.10,
-        "MnO": 0.13, "MgO": 38.0, "CaO": 3.5, "Na2O": 0.35, "K2O": 0.03,
-        "P2O5": 0.02,
-    },
+}
+
+
+#: Names a saved session may hold that are no longer in the catalogue.
+#: "Average peridotite (PM-like)" had no recorded source and was
+#: McDonough & Sun's primitive mantle rounded; removed on 2026-10-23.
+RENAMED_RESERVOIRS: Dict[str, str] = {
+    "Average peridotite (PM-like)": "Primitive mantle (McDonough & Sun 1995)",
 }
 
 
@@ -242,7 +242,6 @@ RESERVOIR_CATEGORIES: Dict[str, List[str]] = {
         "Spinel lherzolite (KLB-1)",
         "Garnet lherzolite (KR4003)",
         "Pyroxenite (MIX1G)",
-        "Average peridotite (PM-like)",
     ],
 }
 

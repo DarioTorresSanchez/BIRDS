@@ -34,10 +34,11 @@ from birds.diagrams.templates.petrography import (
     GABBRO_FIELDS,
     QAPF_PLUTONIC_FIELDS,
     QAPF_VOLCANIC_FIELDS,
+    FISHER_1966_FIELDS,
     SCHMID_TUFF_FIELDS,
-    TUFF_FIELDS,
     ULTRAMAFIC_FIELDS,
     _box_outline,
+    _FISHER_LABELS,
     _GABBRO_LABELS,
     _polygon_centroid,
     _SCHMID_LABELS,
@@ -222,7 +223,7 @@ def _tiles(fields):
 
 
 @pytest.mark.parametrize("fields", [GABBRO_FIELDS, ULTRAMAFIC_FIELDS,
-                                    TUFF_FIELDS, SCHMID_TUFF_FIELDS])
+                                    FISHER_1966_FIELDS, SCHMID_TUFF_FIELDS])
 def test_the_fields_tile_the_triangle(fields):
     assert _tiles(fields) > 0.999
 
@@ -252,13 +253,14 @@ def test_the_ultramafic_strips_are_the_5_percent_lines():
     (GABBRO_FIELDS, _GABBRO_LABELS),
     (ULTRAMAFIC_FIELDS, _ULTRAMAFIC_LABELS),
     (SCHMID_TUFF_FIELDS, _SCHMID_LABELS),
+    (FISHER_1966_FIELDS, _FISHER_LABELS),
 ])
 def test_each_label_points_into_its_own_field(fields, labels):
     for text, abc, _outside, _ha in labels:
         name = field_of(fields, abc)
         assert name is not None, text
-        assert name.split(" / ")[0].split()[0] in text.replace("\n", " "), (
-            text, name)
+        assert (name.split(" / ")[0].split()[0]
+                in text.replace("\n", " ").lower()), (text, name)
 
 
 @pytest.mark.parametrize("v, c, lithic, name", [
@@ -269,18 +271,36 @@ def test_schmid_names_a_tuff_for_its_dominant_component(v, c, lithic, name):
     assert field_of(SCHMID_TUFF_FIELDS, (v, c, lithic)) == name
 
 
-@pytest.mark.parametrize("lithic, crystal, vitric, name", [
-    (40, 30, 30, "Lithic-\ncrystal tuff"),    # was lithic-vitric: ray at 12.5
-    (40, 20, 40, "Lithic-\nvitric tuff"),
-    (15, 30, 55, "Crystal-\nlithic tuff"),
-    (5, 55, 40, "Crystal\ntuff"),
-    (5, 40, 55, "Crystal-\nvitric tuff"),
-    (5, 15, 80, "Vitric-\ncrystal tuff"),
-    (5, 5, 90, "Vitric\ntuff"),
+@pytest.mark.parametrize("blocks, lapilli, ash, name", [
+    (80, 10, 10, "pyroclastic breccia"),
+    (50, 30, 20, "tuff-breccia"),
+    (10, 80, 10, "lapillistone"),
+    (20, 40, 40, "lapilli-tuff"),
+    (10, 15, 75, "tuff"),
+    # Between Fisher's thirds and the IUGS 75/25: Fisher's names.
+    (70, 20, 10, "pyroclastic breccia"),     # IUGS: tuff breccia
+    (30, 50, 20, "lapilli-tuff"),            # IUGS: tuff breccia
+    (5, 70, 25, "lapillistone"),             # IUGS: lapilli tuff
 ])
-def test_the_banded_tuff_divides_on_constant_crystal(lithic, crystal,
-                                                     vitric, name):
-    assert field_of(TUFF_FIELDS, (lithic, crystal, vitric)) == name
+def test_fisher_1966_names_by_fragment_size(blocks, lapilli, ash, name):
+    assert field_of(FISHER_1966_FIELDS, (blocks, lapilli, ash)) == name
+
+
+def test_fisher_1966_lines_are_at_thirds():
+    """Fisher prints no percentages; his lines measured 66.4 and 33.0 %
+    blocks, 66.9 % lapilli and 67.2 % ash, which is thirds."""
+    third = 100 / 3
+    values = {round(v, 9) for field in FISHER_1966_FIELDS.values()
+              for vertex in field for v in vertex}
+    assert values == {0, round(third, 9), round(2 * third, 9), 100}
+
+
+def test_fisher_1966_reads_fragment_sizes():
+    df = pd.DataFrame({"Sample_Name": ["a"], "Blocks_bombs_pct": [10.0],
+                       "Lapilli_pct": [30.0], "Ash_pct": [60.0]})
+    a, b, c = get_diagram("pyroclastic_fisher_1966")._abc(df)
+    assert (a.iloc[0], b.iloc[0], c.iloc[0]) == (10.0, 30.0, 60.0)
+    assert len(_drawn(_render("pyroclastic_fisher_1966", df))) == 1
 
 
 def test_the_gabbroic_diagram_reads_the_template_columns():
@@ -294,5 +314,15 @@ def test_the_gabbroic_diagram_reads_the_template_columns():
 
 def test_the_tuff_diagrams_say_whose_they_are():
     assert "Schmid (1981)" in get_diagram("tuff_schmid_1981").citation
-    banded = get_diagram("tuff_crystal_vitric_lithic").citation
-    assert "not identified" in banded and "use Schmid (1981)" in banded
+    fisher = get_diagram("pyroclastic_fisher_1966").citation
+    assert "Fisher (1966)" in fisher and "no percentages" in fisher
+
+
+def test_the_banded_scheme_is_gone_and_its_sessions_reopen_on_schmid():
+    """It had no identified source; Fisher (1966) took its place."""
+    from birds.diagrams.registry import _REGISTRY
+    from birds.views.petrography import _PETROGRAPHY_CATALOG, _RENAMED_DIAGRAMS
+    assert "tuff_crystal_vitric_lithic" not in _REGISTRY
+    assert "pyroclastic_fisher_1966" in dict(
+        (k, v) for v, k in _PETROGRAPHY_CATALOG)
+    assert _RENAMED_DIAGRAMS["tuff_crystal_vitric_lithic"] == "tuff_schmid_1981"

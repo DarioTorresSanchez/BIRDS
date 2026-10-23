@@ -21,9 +21,9 @@ from .templates.major_df import ButlerWoronowDF, Pearce1976DF
 from .templates.maniar_piccolli import ManiarPiccolli1989
 from .templates.petrography import (
     GabbroPlPxOl,
+    PyroclasticFisher1966,
     StreckeisenQAPFPlutonic,
     StreckeisenQAPFVolcanic,
-    TuffCrystalVitricLithic,
     TuffSchmid1981,
     UltramaficOlOpxCpx,
 )
@@ -103,7 +103,7 @@ _REGISTRY: Dict[str, object] = {
         # ----- Petrography — IUGS modal ternaries ----------------------------
         StreckeisenQAPFPlutonic, StreckeisenQAPFVolcanic,
         GabbroPlPxOl, UltramaficOlOpxCpx, TuffSchmid1981,
-        TuffCrystalVitricLithic,
+        PyroclasticFisher1966,
     )
 }
 

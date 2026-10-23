@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-3780%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-3831%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -91,7 +91,7 @@ structured:
 | **Spider diagrams** | REE, multi-element and Ni-Cu-PGE metal patterns with 28 normalisers |
 | **Tectonic diagrams** | Discrimination schemes, grouped by composition and rock family |
 | **Norm** | CIPW normative mineralogy |
-| **Petrography** | Modal ternaries (QAPF, gabbro, ultramafic, tuff) |
+| **Petrography** | Modal ternaries (QAPF, gabbro, ultramafic, tuff) and pyroclastic rocks by fragment size |
 | **Isotopes** | Sr-Nd and Pb-Pb systematics |
 | **Map** | Sample locations on longitude/latitude axes, from decimal, DMS, UTM or MGRS coordinates, and ordinary kriging of any numeric column — per group or pooled — with its uncertainty, variogram and cross-validation, exportable as ESRI ASCII grids for a GIS |
 | **Statistics and Anomalies** | Descriptive statistics, anomalies, correlations, paper tables |
@@ -218,15 +218,17 @@ P25–P75 envelopes, editable reservoir lines and full annotation support.
 </details>
 
 <details>
-<summary><b>Petrography — modal ternaries (5)</b></summary>
+<summary><b>Petrography — modal and pyroclastic ternaries (6)</b></summary>
 
 - Streckeisen QAPF — plutonic
 - Streckeisen QAPF — volcanic
 - Gabbroic rocks — Pl / Px / Ol
 - Ultramafic rocks — Ol / Opx / Cpx
-- Pyroclastic tuffs — Crystal / Vitric / Lithic
+- Tuffs — Vitric / Crystal / Lithic — Schmid 1981
+- Pyroclastic rocks — Blocks and bombs / Lapilli / Ash — Fisher 1966
 
-All follow the IUGS recommendations, including the 5 % and 10 % rules.
+The modal ones follow the IUGS recommendations, including the 5 % and
+10 % rules; Fisher's lines are at thirds, as he drew them.
 
 </details>
 
@@ -291,20 +293,24 @@ isotope views, so you can follow one sample through every diagram.
 
 An eight-tab dashboard:
 
-1. **Descriptive** — n, mean, SD, median, min, max, quartiles per element
+1. **Descriptive** — n, mean, SD, median, min, max, quartiles per element,
+   trace ratio and anomaly
 2. **By group** — the same, split by your grouping columns
 3. **Paper table** — mean ± SD formatted to significant figures, ready to
-   paste into a manuscript as Markdown, LaTeX or TSV
+   paste into a manuscript as Markdown, LaTeX or TSV; trace ratios and
+   anomalies can be ticked in
 4. **Anomalies & ratios** — Eu/Eu*, Ce/Ce*, Mg#, CIA and the Ishikawa
    alteration index
-5. **Trace-element ratios** — the usual diagnostic ratios
-6. **Correlation matrix** — heat-map with selectable method
+5. **Trace-element ratios** — the usual diagnostic ratios, Nb/U and Ce/Pb
+   among them
+6. **Correlation matrix** — heat-map with selectable method, over elements,
+   ratios and anomalies
 7. **Tectonic discrimination** — probability tables for the multidimensional
    schemes
 8. **Plots** — box, violin, histogram, density and scatter-matrix panels
 
 The **CIPW norm** module (`Norm` menu) computes the classical
-Cross-Iddings-Pirsson-Washington (1903) normative mineralogy, writes the
+Cross-Iddings-Pirsson-Washington (1902) normative mineralogy, writes the
 normative columns back into the dataset and exports a multi-sheet XLSX
 report. Because the minerals are written back as ordinary columns, they
 become plottable immediately: `norm_An` vs `norm_Q`, or any normative

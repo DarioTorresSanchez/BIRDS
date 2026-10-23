@@ -531,10 +531,11 @@ def build_isotope_columns() -> List[Column]:
 def build_petrography_columns() -> List[Column]:
     """Column spec for the Petrography sheet.
 
-    Modal-mineralogy percentages feed the five IUGS ternaries in the
-    Petrography view: Streckeisen QAPF (plutonic / volcanic), gabbro
-    Pl-Px-Ol, ultramafic Ol-Opx-Cpx and pyroclastic tuff
-    Crystal-Vitric-Lithic. All modal columns are in volume %.
+    Modal-mineralogy percentages feed the ternaries of the Petrography
+    view: Streckeisen QAPF (plutonic / volcanic), gabbro Pl-Px-Ol,
+    ultramafic Ol-Opx-Cpx, Schmid's (1981) tuffs Crystal-Vitric-Lithic
+    and Fisher's (1966) pyroclastic rocks Blocks-Lapilli-Ash. All modal
+    columns are in volume %.
     """
     cols: List[Column] = []
 
@@ -636,6 +637,13 @@ def build_petrography_columns() -> List[Column]:
         Column("Pyroclast_size", "Petro-Tuff", "",
                "Granulometric class. Pick from the dropdown.",
                "Lapilli (2-64 mm)", options=PYROCLAST_SIZES),
+        Column("Blocks_bombs_pct", "Petro-Tuff", "vol %",
+               "Blocks and bombs, fragments over 64 mm — top apex of "
+               "Fisher's (1966) fragment-size ternary.", "10"),
+        Column("Lapilli_pct", "Petro-Tuff", "vol %",
+               "Lapilli, fragments of 2-64 mm — left apex.", "35"),
+        Column("Ash_pct", "Petro-Tuff", "vol %",
+               "Ash, fragments under 2 mm — right apex.", "55"),
     ]
 
     # ---- Texture & grain-size metadata --------------------------------
@@ -900,8 +908,9 @@ def _build_instructions_sheet(ws: Worksheet, columns: List[Column]) -> None:
     W(r, "Petrography sheet (optional)", bold=True, size=13); r += 1
     W(r, "9. The 'Petrography' sheet captures modal mineralogy from "
          "thin sections: Q-A-P-F (Streckeisen QAPF), Ol-Opx-Cpx "
-         "(ultramafic rocks), Pl-Px-Ol (gabbroic rocks) and "
-         "Crystal-Vitric-Lithic (pyroclastic tuffs). Rows are joined "
+         "(ultramafic rocks), Pl-Px-Ol (gabbroic rocks), "
+         "Crystal-Vitric-Lithic (tuffs) and Blocks-Lapilli-Ash "
+         "(pyroclastic rocks by fragment size). Rows are joined "
          "to the bulk dataset by 'Sample_Name'."); r += 1
     W(r, "10. The Petrography view (menu Petrography → QAPF, Gabbro, "
          "Ultramafic, Tuff …) reads these modal % columns and plots "
@@ -949,8 +958,10 @@ def _build_instructions_sheet(ws: Worksheet, columns: List[Column]) -> None:
          "Pl_mode, Px_mode (or Opx+Cpx), Ol_mode"),
         ("Petrography — Ultramafic rocks (Ol-Opx-Cpx)",
          "Ol_mode, Opx_mode, Cpx_mode"),
-        ("Petrography — Pyroclastic tuffs",
+        ("Petrography — Pyroclastic tuffs (Schmid 1981)",
          "Crystal_pct, Vitric_pct, Lithic_pct"),
+        ("Petrography — Pyroclastic rocks by fragment size (Fisher 1966)",
+         "Blocks_bombs_pct, Lapilli_pct, Ash_pct"),
     )
     for title, cols_needed in needs:
         W(r, f"• {title} → {cols_needed}", size=10); r += 1

@@ -521,9 +521,10 @@ VV13_TRACE_FIELDS: Dict[str, Dict] = {
 # ---------------------------------------------------------------------------
 # Verma & Agrawal (2011) - basic + ultrabasic rocks, immobile-trace DF set
 # ---------------------------------------------------------------------------
-# Canonical equations from Verma S.P. & Agrawal S. (2011), J. Geol. Soc.
-# India 79, 519-525. Reproduced verbatim from Verma S.P. (2021) "Road to
-# Geochemistry", Eqs. (12.74)–(12.83), pp. 515–517.
+# Canonical equations from Verma S.P. & Agrawal S. (2011), Revista
+# Mexicana de Ciencias Geológicas 28, 24-44, as reproduced in Verma S.P.
+# (2020) "Road from Geochemistry to Geochemometrics" (Springer),
+# Eqs. (12.74)–(12.83), pp. 507–508.
 #
 # Variables: Nb, V, Y, Zr — each divided by TiO2 in wt %, both adjusted
 # to 100 % anhydrous (the ``adj`` subscript in the paper).  The four

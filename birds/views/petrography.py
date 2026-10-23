@@ -58,9 +58,18 @@ _PETROGRAPHY_CATALOG: tuple[tuple[str, str], ...] = (
      "ultramafic_ol_opx_cpx"),
     ("Pyroclastic tuffs — Vitric / Crystal / Lithic (Schmid 1981, IUGS)",
      "tuff_schmid_1981"),
-    ("Pyroclastic tuffs — banded Lithic / Crystal / Vitric scheme",
-     "tuff_crystal_vitric_lithic"),
+    ("Pyroclastic rocks — Blocks / Lapilli / Ash (Fisher 1966)",
+     "pyroclastic_fisher_1966"),
 )
+
+#: Diagrams a saved session may name that are no longer offered.  The
+#: banded crystal-vitric-lithic scheme had no identified source and was
+#: replaced by Fisher (1966) on 2026-10-23; Fisher's triangle reads
+#: fragment sizes, so a session that used it reopens on Schmid (1981),
+#: which reads the same three columns.
+_RENAMED_DIAGRAMS = {
+    "tuff_crystal_vitric_lithic": "tuff_schmid_1981",
+}
 
 
 class PetrographyView(QWidget):
@@ -310,7 +319,8 @@ class PetrographyView(QWidget):
         from .. import widget_state as ws
         if not state:
             return
-        key = state.get("diagram_key", "")
+        key = _RENAMED_DIAGRAMS.get(state.get("diagram_key", ""),
+                                    state.get("diagram_key", ""))
         if key:
             self.show_diagram(key)
         ws.restore_axis_group(self.axis_grp, state.get("axis"))

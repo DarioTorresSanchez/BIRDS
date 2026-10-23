@@ -200,3 +200,25 @@ def test_mix1g_is_cited_where_it_is_published():
                      "10.1093/petroj/39.1.29",
                      "10.1016/B0-08-043751-6/03016-4"):
         assert fragment in blob
+
+
+def test_the_unsourced_peridotite_is_gone():
+    """"Average peridotite (PM-like)" had no recorded source and was the
+    primitive mantle above, rounded; removed on 2026-10-23."""
+    from birds.reservoirs import RENAMED_RESERVOIRS, RESERVOIR_CATEGORIES
+    assert "Average peridotite (PM-like)" not in RESERVOIRS
+    listed = {n for names in RESERVOIR_CATEGORIES.values() for n in names}
+    assert listed == set(RESERVOIRS)
+    assert (RENAMED_RESERVOIRS["Average peridotite (PM-like)"]
+            == "Primitive mantle (McDonough & Sun 1995)")
+
+
+def test_a_session_that_ticked_it_reopens_on_the_primitive_mantle(qapp):
+    from birds import widget_state as ws
+    from birds.views.bivariate import _ReservoirGroup
+    group = _ReservoirGroup()
+    ws.restore_reservoirs(group, ["Average peridotite (PM-like)",
+                                  "N-MORB (Sun & McDonough 1989)"])
+    assert set(group.selected_reservoirs()) == {
+        "Primitive mantle (McDonough & Sun 1995)",
+        "N-MORB (Sun & McDonough 1989)"}

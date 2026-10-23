@@ -950,7 +950,7 @@ class Saccani2015CeDyYb(Diagram):
 # ---------------------------------------------------------------------------
 #
 # Equations transcribed from Table 1 of Yang, Li, Jiang, Xu, Guo, Li &
-# Zhang (2019), J. Geophys. Res. Solid Earth 124, 3429-3480,
+# Zhang (2019), J. Geophys. Res. Solid Earth 124, 3458-3490,
 # doi:10.1029/2018JB016145.  All oxides in wt.%.
 #
 # FCMS and FCKANTMS are *residuals*: the measured ln(FeO/CaO) minus the
@@ -1091,7 +1091,7 @@ class Yang2019FCMS(Diagram):
 
     key = "yang_2019_fcms"
     title = "ln(FeO/CaO) vs ln(MgO/SiO$_2$) — Yang et al. (2019)"
-    citation = ("Yang et al. (2019) JGR Solid Earth 124, 3429-3480, "
+    citation = ("Yang et al. (2019) JGR Solid Earth 124, 3458-3490, "
                 "Fig. 1a. The curve is their lherzolite trend, the "
                 "cubic of equation (2), printed on the figure: "
                 "y = 0.058x³ + 0.636x² + 1.850x + 1.170, R² = 0.944. "
@@ -1136,7 +1136,7 @@ class Yang2019FCKANTMS(Diagram):
     key = "yang_2019_fckantms"
     title = ("FCKANTMS vs ln(SiO$_2$/(CaO+Na$_2$O+TiO$_2$)) — "
              "Yang et al. (2019)")
-    citation = ("Yang et al. (2019) JGR Solid Earth 124, 3429-3480, "
+    citation = ("Yang et al. (2019) JGR Solid Earth 124, 3458-3490, "
                 "Fig. 7b.  FCKANTMS is equation (8) of their Table 1: "
                 "the measured ln(FeO/CaO) minus what a lherzolite melt "
                 "of the same ln(MgO/SiO2) would have, after correcting "

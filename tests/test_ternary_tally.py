@@ -50,7 +50,7 @@ def test_every_triangle_is_on_the_shared_mapping():
         "vermeesch_SmTiV", "vermeesch_VTiSc",
         # the Petrography view's triangles
         "gabbro_pl_px_ol", "ultramafic_ol_opx_cpx", "tuff_schmid_1981",
-        "tuff_crystal_vitric_lithic",
+        "pyroclastic_fisher_1966",
     }
 
 

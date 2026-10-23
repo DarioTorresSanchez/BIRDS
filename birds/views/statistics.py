@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
 
 from ..plot_style import legend_columns
 from ..stats_engine import (
+    ALTERATION_DESCRIPTIONS,
     available_normalisers,
     compute_anomalies_extended,
     compute_correlation_matrix,
@@ -124,8 +125,11 @@ TRACE_SET = frozenset({
 })
 
 
-def _categorise(column: str) -> str:
-    """Return the category bucket a column name belongs to."""
+def _categorise(column: str, kinds: Optional[dict] = None) -> str:
+    """Return the category bucket a column name belongs to; *kinds*
+    names the calculated columns' own (see :func:`calculated_columns`)."""
+    if kinds and column in kinds:
+        return kinds[column]
     if column in MAJOR_OXIDES_SET:
         return "Major oxides"
     if column in REE_SET:
@@ -133,6 +137,53 @@ def _categorise(column: str) -> str:
     if column in TRACE_SET:
         return "Trace elements"
     return "Other numeric columns"
+
+
+# ---------------------------------------------------------------------------
+# Per-sample indices summarised beside the dataset's own columns
+# ---------------------------------------------------------------------------
+# Descriptive, By group, the Paper table and the Correlation matrix
+# summarise columns.  The trace ratios, alteration indices and anomalies
+# of the per-sample tabs are columns too, so they are summarised with
+# the rest -- the same numbers, computed once, that those tabs and the
+# data table show.
+
+RATIOS_KIND = "Trace-element ratios"
+ALTERATION_KIND = "Alteration indices"
+ANOMALIES_KIND = "Anomalies"
+#: The headings the calculated columns are listed under, in this order.
+CALCULATED_KINDS = (RATIOS_KIND, ALTERATION_KIND, ANOMALIES_KIND)
+
+
+def calculated_columns(df: pd.DataFrame, ratios: Optional[pd.DataFrame],
+                       anomalies: Optional[pd.DataFrame]
+                       ) -> "tuple[pd.DataFrame, dict[str, str]]":
+    """The ratios and anomalies tables as columns to set beside *df*,
+    and the kind of each (``CALCULATED_KINDS``).
+
+    The ratios table's Mg# is left out -- *df* has it from the derived
+    variables -- and so is any column *df* already holds under the same
+    name, which stays the user's.  A column with no value is dropped.
+    """
+    parts, kinds = [], {}
+    if ratios is not None and not ratios.empty:
+        ratios = ratios[[c for c in ratios.columns
+                         if not str(c).startswith("Mg#")]]
+        parts.append(ratios)
+        for c in ratios.columns:
+            kinds[c] = (ALTERATION_KIND if c in ALTERATION_DESCRIPTIONS
+                        else RATIOS_KIND)
+    if anomalies is not None and not anomalies.empty:
+        parts.append(anomalies)
+        for c in anomalies.columns:
+            kinds.setdefault(c, ANOMALIES_KIND)
+    if not parts:
+        return pd.DataFrame(index=df.index), {}
+    extra = pd.concat(parts, axis=1)
+    extra = extra.loc[:, ~extra.columns.duplicated()]
+    keep = [c for c in extra.columns
+            if c not in df.columns and extra[c].notna().any()]
+    return extra[keep].reindex(df.index), {c: kinds[c] for c in keep}
 
 
 # ---------------------------------------------------------------------------
@@ -248,6 +299,9 @@ class StatisticsView(QWidget):
         self._ratios = pd.DataFrame()
         self._correlation = pd.DataFrame()
         self._tectonic = pd.DataFrame()
+        # Which summarised columns are calculated, and of what kind.
+        self._calculated_kinds: dict[str, str] = {}
+        self._summary: Optional[pd.DataFrame] = None
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -458,17 +512,24 @@ class StatisticsView(QWidget):
         first_run = self.paper_tree.topLevelItemCount() == 0
         self.paper_tree.blockSignals(True)
         self.paper_tree.clear()
-        numeric = interleave_twins(df.select_dtypes(include="number").columns)
+        kinds = self._calculated_kinds
+        numeric = interleave_twins(
+            [c for c in df.select_dtypes(include="number").columns
+             if c not in kinds])
         majors = ([c for c in numeric
                    if self._is_major(c) and c not in DERIVED]
                   + [c for c in numeric if c in DERIVED])
         traces = [c for c in numeric if not self._is_major(c)]
         # First open ticks the analysed majors and the Mg#: a full
-        # 60-column table is unreadable and nobody publishes one.
+        # 60-column table is unreadable and nobody publishes one.  The
+        # ratios and anomalies are there to be ticked.
         default = {c for c in majors
                    if c in self._MAJOR_OXIDES or c in DERIVED}
-        for header, names in (("Major elements", majors),
-                              ("Trace elements & others", traces)):
+        blocks = [("Major elements", majors),
+                  ("Trace elements & others", traces)]
+        blocks += [(kind, [c for c in kinds if kinds[c] == kind])
+                   for kind in CALCULATED_KINDS]
+        for header, names in blocks:
             if not names:
                 continue
             parent = QTreeWidgetItem(self.paper_tree, [header])
@@ -514,6 +575,35 @@ class StatisticsView(QWidget):
         self.paper_tree.blockSignals(False)
         self._update_paper_table()
 
+    def summary_frame(self, normaliser_name: Optional[str] = None, *,
+                      ratios: Optional[pd.DataFrame] = None,
+                      anomalies: Optional[pd.DataFrame] = None
+                      ) -> Optional[pd.DataFrame]:
+        """What Descriptive, By group and the Paper table summarise: the
+        dataset with its Mg# (``_stats_frame``), then the trace ratios,
+        alteration indices and anomalies of the per-sample tabs, against
+        *normaliser_name*.  Shared with the exported report."""
+        df = self._stats_frame()
+        if df is None:
+            return None
+        if ratios is None:
+            ratios = self.ratio_frame()
+        if anomalies is None:
+            anomalies = self.anomaly_frame(normaliser_name)
+        extra, self._calculated_kinds = calculated_columns(df, ratios,
+                                                           anomalies)
+        return pd.concat([df, extra], axis=1) if not extra.empty else df
+
+    def _correlation_source(self) -> Optional[pd.DataFrame]:
+        """The dataset as the correlation matrix reads it: its own
+        columns, then the calculated ones of the summary."""
+        df = self.data.df
+        if df is None or df.empty:
+            return df
+        extra, _kinds = calculated_columns(df, self._ratios,
+                                           self._anomalies)
+        return pd.concat([df, extra], axis=1) if not extra.empty else df
+
     def _stats_frame(self) -> Optional[pd.DataFrame]:
         """The dataset as the column-summarising tables read it: with
         the Mg# variants added as columns, reported like any oxide, and
@@ -548,7 +638,9 @@ class StatisticsView(QWidget):
         return table
 
     def _update_paper_table(self, *_args) -> None:
-        df = self._stats_frame()
+        df = getattr(self, "_summary", None)
+        if df is None:
+            df = self._stats_frame()
         if df is None or df.empty:
             self._paper = pd.DataFrame()
             self._fill_table(self.paper_table, self._paper)
@@ -1495,14 +1587,17 @@ class StatisticsView(QWidget):
             return
 
         norm_name = self.norm_combo.currentData()
-        # Mg# is summarised like any oxide in the descriptive tables.
-        stats_df = self._stats_frame()
+        self._anomalies = self.anomaly_frame(norm_name)
+        self._ratios = self.ratio_frame()
+        # Mg# is summarised like any oxide in the descriptive tables,
+        # and the ratios and anomalies like any other column.
+        stats_df = self.summary_frame(norm_name, ratios=self._ratios,
+                                      anomalies=self._anomalies)
+        self._summary = stats_df
         self._descriptive = compute_descriptive_full(stats_df)
         self._by_group = compute_descriptive_by_group(
             stats_df, getattr(self.plot_style, "group_columns", []) or []
         )
-        self._anomalies = self.anomaly_frame(norm_name)
-        self._ratios = self.ratio_frame()
 
         self._fill_table(self.descriptive_table, self._descriptive)
         self._fill_table(self.by_group_table, self._by_group)
@@ -1525,7 +1620,7 @@ class StatisticsView(QWidget):
         # Repopulate the correlation-tree selector. Default: tick all
         # available numeric columns so the matrix is non-empty on first
         # open. The user can then narrow down via the tree.
-        self._populate_corr_tree(df)
+        self._populate_corr_tree(self._correlation_source())
         self._refresh_corr_group_combo()
         self._update_correlation()
 
@@ -1533,7 +1628,7 @@ class StatisticsView(QWidget):
             getattr(self.plot_style, "group_columns", []) or []
         )
         self._set_tab_text("descriptive",
-            f"Descriptive ({len(self._descriptive)} elements)")
+            f"Descriptive ({len(self._descriptive)} variables)")
         self._set_tab_text("by_group",
             f"By group ({len(self._by_group)} groups)"
             + (f" – {', '.join(cols)}" if cols else " – set in Edit plot"))
@@ -1636,9 +1731,11 @@ class StatisticsView(QWidget):
             "Trace elements": [],
             "Rare-earth elements": [],
             "Other numeric columns": [],
+            **{kind: [] for kind in CALCULATED_KINDS},
         }
+        kinds = self._calculated_kinds
         for col in numeric.columns:
-            buckets[_categorise(str(col))].append(str(col))
+            buckets[_categorise(str(col), kinds)].append(str(col))
 
         for category, names in buckets.items():
             if not names:
@@ -1656,9 +1753,11 @@ class StatisticsView(QWidget):
                 child = QTreeWidgetItem(parent, [name])
                 child.setFlags(child.flags() | Qt.ItemFlag.ItemIsUserCheckable)
                 child.setData(0, Qt.ItemDataRole.UserRole, name)
-                # Tick by default the first time around; on subsequent
-                # refreshes preserve the user's previous selection.
-                if first_open or name in prev_checked:
+                # Tick by default the first time around, but for the
+                # calculated columns, which would swamp the matrix; on
+                # later refreshes keep the user's selection.
+                if ((first_open and category not in CALCULATED_KINDS)
+                        or name in prev_checked):
                     child.setCheckState(0, Qt.CheckState.Checked)
                 else:
                     child.setCheckState(0, Qt.CheckState.Unchecked)
@@ -1707,7 +1806,7 @@ class StatisticsView(QWidget):
 
     def _corr_subsets(self) -> "list[tuple[str, pd.DataFrame]]":
         """(title, rows) pairs the matrix should be computed over."""
-        df = self.data.df
+        df = self._correlation_source()
         choice = (getattr(self, "corr_group_combo", None)
                   and self.corr_group_combo.currentData()) or self._CORR_ALL
         if choice == self._CORR_ALL:

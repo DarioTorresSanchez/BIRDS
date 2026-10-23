@@ -18,6 +18,24 @@ including what is still unverified.
 
 ### Added
 
+- **Trace ratios and anomalies in every Statistics tab.** Descriptive
+  and By group summarise them like any column; the Paper table and the
+  Correlation matrix list them under their own headings — trace-element
+  ratios, alteration indices, anomalies — unticked, to add as needed.
+  They are the per-sample tabs' own numbers, against the chondrite
+  picked, and the saved report summarises the same frame, its anomaly
+  sheet now read from the majors in use as on screen.
+- **Nb/U and Ce/Pb** among the trace ratios, so in every tab above and
+  in the data table. Their tooltip quotes the reservoirs BIRDS carries:
+  N-MORB 50 and 25, primitive mantle 32 and 11, bulk continental crust
+  6.2 and 3.9 (Hofmann et al. 1986).
+- **Pyroclastic rocks by fragment size — Fisher (1966)**, in the
+  Petrography view and menu: blocks and bombs, lapilli, ash; pyroclastic
+  breccia, tuff-breccia, lapillistone, lapilli-tuff, tuff. Fisher prints
+  no percentages; his lines measured at 66.4, 33.0, 66.9 and 67.2 % and
+  are drawn at thirds. The template's Petrography sheet gains
+  Blocks_bombs_pct, Lapilli_pct and Ash_pct.
+
 - **UTM columns in the data template**: Easting, Northing, UTM_Zone and
   Hemisphere, beside Latitude and Longitude, on the Data and Isotopes
   sheets. The map's UTM format picks them up by name, and when only they
@@ -368,6 +386,25 @@ including what is still unverified.
 ### Fixed
 
 #### Diagrams measured or recomputed against their sources
+
+- **The bibliography, checked against Crossref and the papers.** Every
+  DOI resolved and compared — title, first author, year, volume, first
+  page — and every citation without one searched for; 42 entries
+  gained a DOI that matches on all five. Wrong were: Yang et al. (2019), cited
+  as a *Lithos* paper by other authors, which is *JGR Solid Earth* 124,
+  3458–3490 — and the two FCMS diagrams gave its pages as 3429–3480;
+  the Hanski entry, another Hanski (2001) on Os-Nd isotopes; Verma's
+  book, *Road from Geochemistry to Geochemometrics* (Springer 2020)
+  where it said "Road to geochemistry" (Elsevier 2021) with a DOI that
+  did not resolve — and the Verma & Agrawal (2011) coefficients
+  credited to a *J. Geol. Soc. India* paper and to the wrong pages of
+  that book; the PySide6 "DOI", which is a figure in a paper on
+  millipedes; Cross et al., 1902 and *J. Geol.* 10, not 1903 and 11;
+  and three truncated titles. Sixteen works cited by diagrams,
+  normalisers and the ratio notes were not in it and now are, among
+  them Frost & Frost (2008), Jahn et al. (1981), Kuno (1966), MacDonald
+  (1968), Verma (2010) and the sources of seven normalisers. A test
+  finds any such gap from the names themselves.
 
 - **(La/Yb)N vs YbN — Drummond & Defant (1990, JGR), Figure 10.** The
   key `defant_drummond_YbLaYb` was attributed to the Nature paper of the
@@ -974,6 +1011,13 @@ including what is still unverified.
   constants; the fallback still agrees with pyproj to 10⁻⁹ degrees.
 
 ### Removed
+
+- **The banded crystal-vitric-lithic tuff scheme**, whose source was
+  never identified; Fisher (1966) takes its place. A session that used
+  it reopens on Schmid (1981), which reads the same columns.
+- **The "Average peridotite (PM-like)" reservoir**, which had no
+  recorded source and was McDonough & Sun's primitive mantle rounded. A
+  session that ticked it gets the primitive mantle.
 
 - **Web basemaps, and everything that existed to serve them.** The
   satellite, topographic and grayscale backgrounds of the Map view

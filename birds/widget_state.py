@@ -242,4 +242,10 @@ def reservoirs_state(rg) -> list[str]:
 
 
 def restore_reservoirs(rg, names: Optional[Iterable[str]]) -> None:
+    """A name since removed from the catalogue is restored as the entry
+    that replaced it (``RENAMED_RESERVOIRS``)."""
+    from .reservoirs import RENAMED_RESERVOIRS
+    if names is not None:
+        names = list(dict.fromkeys(RENAMED_RESERVOIRS.get(n, n)
+                                   for n in names))
     restore_tree_checked(rg.tree, names)

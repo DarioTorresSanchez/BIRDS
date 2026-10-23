@@ -576,7 +576,7 @@ class NormView(QWidget):
                     ],
                     "Value": [
                         "Classical CIPW "
-                        "(Cross-Iddings-Pirsson-Washington 1903)",
+                        "(Cross-Iddings-Pirsson-Washington 1902)",
                         len(self._result),
                         f"{self._result['norm_Total'].mean():.3f}",
                     ],

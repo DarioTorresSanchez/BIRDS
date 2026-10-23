@@ -619,7 +619,26 @@ RATIO_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
     ("Ti/V",   "Ti",  "V"),
     ("Ba/Nb",  "Ba",  "Nb"),
     ("Rb/Sr",  "Rb",  "Sr"),
+    # Mantle against crust: about constant in oceanic basalts, low in
+    # continental crust, so a drop marks crustal input (Hofmann et al.
+    # 1986).
+    ("Nb/U",   "Nb",  "U"),
+    ("Ce/Pb",  "Ce",  "Pb"),
 )
+
+#: What a ratio is beyond its two elements, where that needs saying.
+#: The reference values are the ratios of the reservoirs BIRDS carries,
+#: each checked against its paper: Sun & McDonough (1989) Table 1,
+#: McDonough & Sun (1995) Table 5, Rudnick & Gao (2003) Table 11.
+RATIO_NOTES: Mapping[str, str] = {
+    "Nb/U": "About constant in oceanic basalts and low in continental "
+            "crust, so it falls with crustal input (Hofmann et al. "
+            "1986): N-MORB 50, OIB 47, primitive mantle 32, bulk "
+            "continental crust 6.2.",
+    "Ce/Pb": "About constant in oceanic basalts and low in continental "
+             "crust (Hofmann et al. 1986): N-MORB, E-MORB and OIB 25, "
+             "primitive mantle 11, bulk continental crust 3.9.",
+}
 
 
 def compute_ratios(df: pd.DataFrame) -> pd.DataFrame:
@@ -825,6 +844,8 @@ def ratio_description(name: str) -> Optional[str]:
             if "Ti" in (num, den):
                 text += (f" Ti from TiO2 × {TIO2_WT_TO_TI_PPM:g} when "
                          "there is no Ti column.")
+            if name in RATIO_NOTES:
+                text += " " + RATIO_NOTES[name]
             return text
     return None
 

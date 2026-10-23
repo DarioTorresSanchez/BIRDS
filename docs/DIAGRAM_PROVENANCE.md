@@ -497,7 +497,7 @@ Both panels were wrong before:
 
 **`yang_2019_fckantms`** — the source turned out to be the unidentified
 `Using_Major_Element_Logratios_…pdf` already in the folder: Yang, Li,
-Jiang, Xu, Guo, Li & Zhang (2019), *JGR Solid Earth* 124, 3429–3480.
+Jiang, Xu, Guo, Li & Zhang (2019), *JGR Solid Earth* 124, 3458–3490.
 Its Table 1 prints all eight equations, so nothing needed measuring.
 
 This one was invented outright. FCMS and FCKANTMS are **log-ratio
@@ -871,7 +871,7 @@ misplaced reference basalts.
 ## Yang *et al.* (2019) — the FCMS plane, and the diagram it does not get
 
 `Using_Major_Element_Logratios_to_Recognize_Composi.pdf` — *JGR Solid
-Earth* **124**, 3429–3480, Figure 1a. Key `yang_2019_fcms`.
+Earth* **124**, 3458–3490, Figure 1a. Key `yang_2019_fcms`.
 
 FCMS was computed and reported in the statistics table and had no
 diagram, so there was nothing to read the number against. That gap was
@@ -1449,7 +1449,7 @@ composition, volcanic and plutonic.
 the diagonal to the primitive mantle and the corner, and classifies the
 case studies Li et al. plot on it.
 
-## The Petrography view — the IUGS modal diagrams (6)
+## The Petrography view — the IUGS modal diagrams and Fisher (1966) (6)
 
 Checked 2026-10-12. Every boundary is a definition, a percentage the
 IUGS fixed, so nothing needed measuring except the one scheme that is
@@ -1501,16 +1501,28 @@ whose Opx and Cpx were filled.
 
 **Tuffs.** Schmid (1981), the IUGS classification, is the three-field
 triangle of Figure 7: glass, crystals, rock fragments, each tuff named
-for its dominant component. The diagram that cited him draws a
+for its dominant component. The diagram that cited him drew a
 different, finer scheme — lithic at the top, lines at 50, 25 and 10 %
-— from a figure in the project material whose source is not
-identified. Both are now offered: `tuff_schmid_1981` (new) and the
-banded one, cited honestly. Measuring that figure showed its dividers
-are lines of constant crystal content, parallel to the lithic-vitric
-side (Crystal 25 % below Lithic 50, and 50 and 10 % in the base band),
-each keeping 61-62, 114 and 24 px from that side; the code had rays
-from the lithic apex, which put the upper divider at Crystal 12.5 % on
-the Lithic 50 line.
+— from a figure in the project material whose source was never
+identified. For a while both were offered, the banded one cited
+honestly; on 2026-10-23 it was **replaced by Fisher (1966)**, and a
+session that used it reopens on Schmid, which reads the same columns.
+
+**Fisher (1966), pyroclastic rocks by fragment size.** `Fisher_1966.pdf`
+— *Earth-Sci. Rev.* **1**, 287–298, Figure 1. Key
+`pyroclastic_fisher_1966`. Blocks and bombs (> 64 mm) at the top,
+lapilli (64–2 mm) left, ash (< 2 mm) right; five names: pyroclastic
+breccia, tuff-breccia, lapillistone, lapilli-tuff and tuff. Fisher
+prints no percentages — the boundaries "vary from perhaps as much as
+40 % to as little as 15 %, depending upon the prejudices of the
+individual" (p. 293) — so the lines are the figure's. Measured on the
+1950 × 2850 scan of page 292, the sides fitted to within 1.6 px: the
+two horizontal lines at blocks 66.4 and 33.0 %, the lapillistone
+divider at lapilli 66.9 % and the tuff divider at ash 67.2 %, each
+parallel to its side to 0.01 in slope. They are thirds, and are drawn
+as thirds. Schmid (1981) puts the same names at 75 and 25 % (from Le
+Maitre 2002, not re-read for this). The data template gains
+`Blocks_bombs_pct`, `Lapilli_pct` and `Ash_pct`.
 
 `tests/test_petrography_iugs.py` pins the field tables against the
 figures, checks that the fields tile each diagram, places the corners

@@ -43,7 +43,6 @@ from .cipw import compute_cipw
 from .plot_style import PlotStyle
 from .preprocess import pre_process
 from .stats_engine import (
-    compute_anomalies_extended,
     compute_correlation_matrix,
     compute_descriptive_by_group,
     compute_descriptive_full,
@@ -267,7 +266,7 @@ class BirdsMainWindow(QMainWindow):
         act.setShortcut("Ctrl+Shift+C")
         act.setStatusTip(
             "Compute the classical CIPW normative mineralogy "
-            "(Cross-Iddings-Pirsson-Washington 1903). Auto-fills the "
+            "(Cross-Iddings-Pirsson-Washington 1902). Auto-fills the "
             "normative columns into the dataset and exports a "
             "multi-sheet XLSX report."
         )
@@ -289,8 +288,8 @@ class BirdsMainWindow(QMainWindow):
             ("Gabbroic rocks — Pl / Px / Ol", "gabbro_pl_px_ol"),
             ("Ultramafic rocks — Ol / Opx / Cpx", "ultramafic_ol_opx_cpx"),
             ("Pyroclastic tuffs — Schmid (1981)", "tuff_schmid_1981"),
-            ("Pyroclastic tuffs — banded scheme",
-             "tuff_crystal_vitric_lithic"),
+            ("Pyroclastic rocks — Fisher (1966)",
+             "pyroclastic_fisher_1966"),
         )
         for label, key in entries:
             act = QAction(label + "…", self)
@@ -947,8 +946,11 @@ class BirdsMainWindow(QMainWindow):
                 sections["CIPW norm"] = compute_cipw(adjusted)
             except Exception:                              # noqa: BLE001
                 pass
-        # Mg# is reported like any oxide in the summary tables.
-        stats_df = with_derived(df)
+        # Mg# is reported like any oxide in the summary tables, and the
+        # trace ratios and anomalies like any column: what the view shows.
+        stats_df = self.statistics.summary_frame(norm_name)
+        if stats_df is None:
+            stats_df = with_derived(df)
         if sections_flags["descriptive"]:
             sections["Descriptive statistics"] = compute_descriptive_full(
                 stats_df)
@@ -978,8 +980,10 @@ class BirdsMainWindow(QMainWindow):
             except Exception:                              # noqa: BLE001
                 pass
         if sections_flags["anomalies"]:
-            sections["REE anomalies"] = compute_anomalies_extended(
-                self.data.df, norm_name)
+            # From the majors the switch selects, as on screen: Ti/Ti*
+            # takes its TiO2 where Ti/Y and Ti/V do.
+            sections["REE anomalies"] = self.statistics.anomaly_frame(
+                norm_name)
         if sections_flags["ratios"]:
             # The same table the Statistics view shows, following the
             # adjusted-majors switch.

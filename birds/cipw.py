@@ -2,7 +2,7 @@
 
 This module computes the normative mineralogy of an igneous rock from
 its bulk major-element analysis following the classical
-Cross-Iddings-Pirsson-Washington (1903) recipe, as codified by Kelsey
+Cross-Iddings-Pirsson-Washington (1902) recipe, as codified by Kelsey
 (1965). It produces the 19 main normative minerals:
 
     Q, C, Or, Ab, An, Ne, Lc, Kp, Ac, Ns, Di, Wo, Hy, Ol,
@@ -18,8 +18,11 @@ carbonate, halide and fluoride minerals of the extended schemes.
 
 References
 ----------
-- Cross, W., Iddings, J.P., Pirsson, L.V. & Washington, H.S. (1903).
-  *Quantitative Classification of Igneous Rocks*. Univ. of Chicago Press.
+- Cross, W., Iddings, J.P., Pirsson, L.V. & Washington, H.S. (1902).
+  A quantitative chemico-mineralogical classification and nomenclature
+  of igneous rocks. *J. Geol.* 10, 555-690.  Expanded the next year
+  as the book *Quantitative Classification of Igneous Rocks* (Univ. of
+  Chicago Press, 1903).
 - Kelsey, C.H. (1965). Calculation of the CIPW norm.
   *Mineral. Mag.* 34, 276-282.
 """

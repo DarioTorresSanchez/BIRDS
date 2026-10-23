@@ -204,9 +204,13 @@ SECTIONS = [
             "Map — sample locations and kriging (section 12).",
             "Petrography — the IUGS modal diagrams: QAPF plutonic and "
             "volcanic (each with its own fields, numbered as the IUGS "
-            "numbers them, with a key), gabbroic, ultramafic, and two "
-            "tuff schemes — Schmid (1981), which the IUGS recommends, "
-            "and a finer banded one.",
+            "numbers them, with a key), gabbroic, ultramafic, Schmid's "
+            "(1981) tuffs by glass, crystals and rock fragments, which "
+            "the IUGS recommends, and Fisher's (1966) pyroclastic rocks "
+            "by fragment size — blocks and bombs, lapilli, ash — from "
+            "the Blocks_bombs_pct, Lapilli_pct and Ash_pct columns of "
+            "the Petrography sheet. Fisher gives no percentages; his "
+            "lines are drawn at thirds and are used as drawn.",
             "Norm — the classical CIPW norm.",
             "Classification diagrams — TAS, K2O–SiO2, AFM, Jensen, "
             "Frost and others, volcanic and plutonic.",
@@ -621,26 +625,36 @@ SECTIONS = [
          "window. Eight tabs hold the results:"},
         {"type": "bullet", "items": [
             "Descriptive — count, mean, std, percentiles, median, MAD, "
-            "%RSD, skewness and kurtosis for every numeric column.",
+            "%RSD, skewness and kurtosis for every numeric column, and "
+            "for every trace ratio, alteration index and anomaly of the "
+            "two per-sample tabs.",
             "By group — the same statistics broken down by your "
-            "grouping column(s).",
+            "grouping column(s), ratios and anomalies included.",
             "Paper table — a publication-ready mean ± 1SD (n) per group, "
             "with the Mg# at the foot of the major elements and each "
-            "adjusted oxide beside the analysed one.",
+            "adjusted oxide beside the analysed one. The trace ratios, "
+            "alteration indices and anomalies are listed under their "
+            "own headings, unticked, to add as needed.",
             "Anomalies & ratios — Eu/Eu*, Ce/Ce*, Pr/Pr*, Gd/Gd*, "
             "Dy/Dy*, Y/Y*, Y/Ho (raw), the primitive-mantle Ta/Ta*, "
             "Nb/Nb* and Ti/Ti*, Verma's Nb/Nb* and Ta/Ta*, and the "
             "normalised (La/Yb)_N, (La/Sm)_N, (Gd/Yb)_N, (Sm/Yb)_N per "
             "sample. Positive anomalies are highlighted in pink, "
             "negative in light blue.",
-            "Trace-element ratios — 19 commonly used ratios per sample "
-            "(La/Yb, Zr/Y, Th/Yb, Nb/Y, Ti/Y, Ti/V, Ba/Nb, Rb/Sr, …), "
-            "with the Mg# and the alteration indices. Ti is the Ti "
-            "column, or TiO2 × 5993.4 when there is none, as the "
-            "diagrams take it.",
+            "Trace-element ratios — 21 commonly used ratios per sample "
+            "(La/Yb, Zr/Y, Th/Yb, Nb/Y, Ti/Y, Ti/V, Ba/Nb, Rb/Sr, …, "
+            "and Nb/U and Ce/Pb, about constant in oceanic basalts and "
+            "low in continental crust — Hofmann et al. 1986), with the "
+            "Mg# and the alteration indices. Ti is the Ti column, or "
+            "TiO2 × 5993.4 when there is none, as the diagrams take it. "
+            "The same ratios are columns of the data table (section "
+            "6.6).",
             "Correlation matrix — Pearson r heatmap, poolable, "
             "facetable per group or shown for one group alone, with "
-            "cell annotations if the matrix fits on screen.",
+            "cell annotations if the matrix fits on screen. The trace "
+            "ratios, alteration indices and anomalies are in the picker "
+            "under their own headings, unticked so as not to swamp the "
+            "matrix.",
             "Tectonic discrimination — 256 parameters, ticked from a "
             "tree and computed per sample. See below.",
             "Plots — the figures that go with the tables.",
@@ -1054,6 +1068,11 @@ SECTIONS = [
             "Schmid, R. (1981). Descriptive nomenclature and "
             "classification of pyroclastic deposits and fragments. "
             "Geology 9, 41–43.",
+            "Fisher, R.V. (1966). Rocks composed of volcanic fragments "
+            "and their classification. Earth-Sci. Rev. 1, 287–298.",
+            "Hofmann, A.W., Jochum, K.P., Seufert, M., White, W.M. "
+            "(1986). Nb and Pb in oceanic basalts: new constraints on "
+            "mantle evolution. Earth Planet. Sci. Lett. 79, 33–45.",
             "Gillespie, M.R., Styles, M.T. (1999). BGS Rock "
             "Classification Scheme, Vol. 1: Classification of igneous "
             "rocks. British Geological Survey Research Report RR 99-06.",

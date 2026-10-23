@@ -13,14 +13,14 @@ thin-section work:
   clinopyroxene, for peridotites and pyroxenites (Streckeisen 1973).
 * ``tuff_schmid_1981``           – vitric – crystal – lithic, the
   three-field tuff classification the IUGS recommends (Schmid 1981).
-* ``tuff_crystal_vitric_lithic`` – a finer tuff scheme with lithic at the
-  top and bands at 50, 25 and 10 %, from the figure in the project's
-  reference material; its original source is not identified.
+* ``pyroclastic_fisher_1966``    – blocks and bombs – lapilli – ash, the
+  fragment-size classification of Fisher (1966), Figure 1.
 
 Inputs are modal proportions read from the *Petrography* sheet of the
 data template (``Q_mode``, ``A_mode``, ``P_mode``, ``F_mode``,
 ``Ol_mode``, ``Opx_mode``, ``Cpx_mode``, ``Px_mode``, ``Crystal_pct``,
-``Vitric_pct``, ``Lithic_pct``).
+``Vitric_pct``, ``Lithic_pct``, ``Blocks_bombs_pct``, ``Lapilli_pct``,
+``Ash_pct``).
 
 Provenance
 ----------
@@ -678,66 +678,84 @@ class TuffSchmid1981(TernaryDiagram):
         figure.tight_layout()
 
 
-#: The finer scheme of the project's reference figure, as ``(Lithic,
-#: Crystal, Vitric)`` %, lithic at the top.  Lines at Lithic 50, 25 and
-#: 10; every divider inside is a line of constant crystal content,
-#: parallel to the lithic-vitric side: Crystal 25 % from Lithic 50 down
-#: to the base, and in the base band (Lithic < 10) Crystal 50 % and 10 %
-#: as well.  Measured on the 263-pixel figure, each keeps the same
-#: horizontal distance from that side on every row -- 61-62, 114 and
-#: 24 px of a 233-px base, so 26, 49 and 10 % -- which a ray from the
-#: lithic apex would not.  The dividers used to be such rays, putting
-#: the upper one at Crystal 12.5 % on the Lithic 50 line instead of 25.
-#: It used to be cited as Schmid (1981), whose tuffs are the three
-#: fields above.
-TUFF_FIELDS: dict = {
-    "Lithic\ntuff": [(100, 0, 0), (50, 50, 0), (50, 0, 50)],
-    "Lithic-\ncrystal tuff": [(50, 50, 0), (50, 25, 25), (25, 25, 50),
-                              (25, 75, 0)],
-    "Lithic-\nvitric tuff": [(50, 25, 25), (50, 0, 50), (25, 0, 75),
-                             (25, 25, 50)],
-    "Crystal-\nlithic tuff": [(25, 75, 0), (25, 25, 50), (10, 25, 65),
-                              (10, 90, 0)],
-    "Vitric-\nlithic tuff": [(25, 25, 50), (25, 0, 75), (10, 0, 90),
-                             (10, 25, 65)],
-    "Crystal\ntuff": [(10, 90, 0), (0, 100, 0), (0, 50, 50), (10, 50, 40)],
-    "Crystal-\nvitric tuff": [(10, 50, 40), (0, 50, 50), (0, 25, 75),
-                              (10, 25, 65)],
-    "Vitric-\ncrystal tuff": [(10, 25, 65), (0, 25, 75), (0, 10, 90),
-                              (10, 10, 80)],
-    "Vitric\ntuff": [(10, 10, 80), (0, 10, 90), (0, 0, 100), (10, 0, 90)],
+# ---------------------------------------------------------------------------
+# Pyroclastic rocks by fragment size — Fisher (1966)
+# ---------------------------------------------------------------------------
+#
+# Fisher, R. V. (1966) Rocks composed of volcanic fragments and their
+# classification.  Earth-Science Reviews 1, 287-298, Figure 1: "Mixture
+# terms and end-member terms used for pyroclastic fragments".  Blocks
+# and bombs (> 64 mm) at the top, lapilli (64-2 mm) left, ash (< 2 mm)
+# right; five names.
+#
+# Fisher prints no percentages: "Precise percentage boundaries for the
+# mixtures are not given, because they vary from perhaps as much as 40 %
+# to as little as 15 %, depending upon the prejudices of the individual"
+# (p. 293).  The lines of the figure are at thirds, and are used as
+# drawn.  Measured on the 1950 x 2850 scan of page 292, with the sides
+# fitted to within 1.6 px: the two horizontal lines at blocks 66.4 and
+# 33.0 %, the lapillistone divider at lapilli 66.9 % and the tuff
+# divider at ash 67.2 %, each parallel to its side to 0.01 in slope.
+# Schmid (1981), the IUGS version, puts the same names at 75 and 25 %
+# (from Le Maitre 2002; not re-read for this diagram).
+
+_THIRD = 100 / 3
+
+#: Fisher (1966) Figure 1, as ``(Blocks and bombs, Lapilli, Ash)`` %.
+FISHER_1966_FIELDS: dict = {
+    "pyroclastic breccia": [(100, 0, 0), (2 * _THIRD, _THIRD, 0),
+                            (2 * _THIRD, 0, _THIRD)],
+    "tuff-breccia": [(2 * _THIRD, _THIRD, 0), (_THIRD, 2 * _THIRD, 0),
+                     (_THIRD, 0, 2 * _THIRD), (2 * _THIRD, 0, _THIRD)],
+    "lapillistone": [(_THIRD, 2 * _THIRD, 0), (0, 100, 0),
+                     (0, 2 * _THIRD, _THIRD)],
+    "lapilli-tuff": [(_THIRD, 2 * _THIRD, 0), (0, 2 * _THIRD, _THIRD),
+                     (0, _THIRD, 2 * _THIRD), (_THIRD, 0, 2 * _THIRD)],
+    "tuff": [(_THIRD, 0, 2 * _THIRD), (0, _THIRD, 2 * _THIRD),
+             (0, 0, 100)],
 }
 
+_FISHER_LABELS = (
+    ("Pyroclastic\nbreccia", (80, 10, 10), None, "center"),
+    ("Tuff-breccia", (50, 25, 25), None, "center"),
+    ("Lapillistone", (10, 80, 10), None, "center"),
+    ("Lapilli-tuff", (15, 42.5, 42.5), None, "center"),
+    ("Tuff", (10, 10, 80), None, "center"),
+)
 
-class TuffCrystalVitricLithic(TernaryDiagram):
-    key = "tuff_crystal_vitric_lithic"
-    title = "Crystal – Vitric – Lithic — tuffs, banded scheme"
-    citation = ("A finer tuff scheme than the IUGS one, from the figure "
-                "in the project's reference material; its original "
-                "source is not identified. Lithic at the top with lines "
-                "at 50, 25 and 10 %; below Lithic 50 the line Crystal "
-                "25 % divides crystal- from vitric-rich, and the base "
-                "band is cut at Crystal 50, 25 and 10 %. For the IUGS "
-                "classification use Schmid (1981).")
+
+def _fragment_size_columns(df):
+    blocks = resolve_column(df, ("Blocks_bombs_pct", "Blocks_pct",
+                                 "Bombs_pct", "Block_bomb_pct", "Blocks"))
+    lapilli = resolve_column(df, ("Lapilli_pct", "Lapilli"))
+    ash = resolve_column(df, ("Ash_pct", "Ash"))
+    if blocks is None or lapilli is None or ash is None:
+        return None
+    return tuple(pd.to_numeric(df[c], errors="coerce")
+                 for c in (blocks, lapilli, ash))
+
+
+class PyroclasticFisher1966(TernaryDiagram):
+    key = "pyroclastic_fisher_1966"
+    title = "Blocks – Lapilli – Ash — pyroclastic rocks (Fisher 1966)"
+    citation = ("Fisher (1966) Earth-Sci. Rev. 1, 287-298, Figure 1: "
+                "pyroclastic rocks named by the size of their fragments — "
+                "blocks and bombs over 64 mm, lapilli 64-2 mm, ash under "
+                "2 mm. Fisher gives no percentages for the boundaries; "
+                "they are drawn, and taken here, at thirds. The IUGS "
+                "version (Schmid 1981) puts them at 75 and 25 %.")
 
     def _abc(self, df):
-        parts = _tuff_columns(df)
-        if parts is None:
-            return None
-        return parts["L"], parts["C"], parts["V"]
+        return _fragment_size_columns(df)
 
     def plot(self, figure, df, plot_style, options: PlotOptions):
         figure.clear()
         ax = figure.add_subplot(111)
-        draw_ternary_frame(ax, ("Lithic", "Crystal", "Vitric"),
+        draw_ternary_frame(ax, ("Blocks and bombs\n> 64 mm",
+                                "Lapilli\n64-2 mm", "Ash\n< 2 mm"),
                            options.x_axis)
-        _draw_fields(ax, TUFF_FIELDS)
-        for name, abc in TUFF_FIELDS.items():
-            a, b, c = zip(*abc)
-            x, y = ternary_to_xy(pd.Series(a), pd.Series(b), pd.Series(c))
-            ax.text(float(np.mean(x)), float(np.mean(y)), name,
-                    ha="center", va="center", fontsize=7, color="#333",
-                    zorder=3)
+        _draw_fields(ax, FISHER_1966_FIELDS)
+        _draw_labels(ax, _FISHER_LABELS, fontsize=8)
         self._scatter_samples(ax, df, plot_style)
         self._apply_legend(ax, options)
         figure.tight_layout()
