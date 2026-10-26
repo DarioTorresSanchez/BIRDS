@@ -7,7 +7,13 @@ from .base import Diagram, resolve_column
 
 
 # Plotting coordinates from the figure caption of Rollinson & Pease (2021,
-# Figure 3.3).
+# Figure 3.3), confirmed by Rickwood (1989) Table 1.  Read again in the
+# originals on 2026-10-26: MacDonald's (1968) Figure 1 dashes run from
+# SiO2 39.85, alkalis 0.32 to 65.58, 9.77; Kuno's (1966) Figure 2 line
+# between the alkali and high-alumina basalt series has this shape from
+# SiO2 46 to 76 and lies 0-0.35 above these points, as close as that
+# figure's own y axis -- out by 0.18 at its foot -- resolves.  Kuno's
+# second line, high-alumina basalt | tholeiite, is not drawn.
 _IRVINE_BARAGAR_1971 = [
     (39.2, 0.0), (40.0, 0.4), (43.2, 2.0), (45.0, 2.8), (48.0, 4.0),
     (50.0, 4.75), (53.7, 6.0), (55.0, 6.4), (60.0, 8.0), (65.0, 9.6),

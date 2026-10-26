@@ -29,6 +29,7 @@ from .templates.petrography import (
 )
 from .templates.tas import TASPlutonic, TASVolcanic
 from .templates.tectonic_bivariate import (
+    DefantDrummond1993YSrY,
     DefantDrummondYSrY,
     Pearce1984YbTa,
     Pearce1984YbTaRb,
@@ -87,7 +88,8 @@ _REGISTRY: Dict[str, object] = {
         Pearce2008ThYbNbYb, Pearce2008TiYbNbYb, PearceGale1977,
         Shervais1982TiV, PearceCann1973ZrTi,
         Saccani2015NbTh, Saccani2015DyYb, Saccani2015CeDyYb,
-        DefantDrummondYSrY, DrummondDefant1990LaYbN, DrummondDefant1990YSrY,
+        DefantDrummondYSrY, DefantDrummond1993YSrY, DrummondDefant1990LaYbN,
+        DrummondDefant1990YSrY,
         Martin1986LaYbN,
         Pearce1984YbTa, Pearce1984YNb, Pearce1984YbTaRb, Pearce1984YNbRb,
         Yang2019FCMS, Yang2019FCKANTMS,

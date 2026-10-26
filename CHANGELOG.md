@@ -18,6 +18,14 @@ including what is still unverified.
 
 ### Added
 
+- **Sr/Y vs Y — Defant & Drummond (1993), Figure 2**: the adakite,
+  island-arc andesite-dacite-rhyolite and Juan de Fuca Ridge fields,
+  drawn — the *Nature* paper of 1990 describes adakites but outlines
+  none. Each outline followed along its ink; where the figure leaves
+  one open, the frame closes it. The adakite field is widest at Y 18.7,
+  against the Y ≤ 18 ppm the 1990 paper states. Frame to Sr/Y 60, as
+  published; above it a sample is off the frame and not classified.
+
 - **Sr/Y vs Y — Drummond & Defant (1990, JGR), Figure 11.** High-Al
   TTD against the island-arc andesite-dacite-rhyolite fractionation
   suite, in the figure's own frame (Y 0–50, Sr/Y 0–500), with a
@@ -407,6 +415,18 @@ including what is still unverified.
 ### Fixed
 
 #### Diagrams measured or recomputed against their sources
+
+- **Five second-hand sources read in their originals.** MacDonald
+  (1968): his line runs 39.85, 0.32 to 65.58, 9.77, and `ib1971` has
+  39.8, 0.35 to 65.5, 9.7. Kuno (1966): the alkali | high-alumina line
+  has the shape drawn and lies 0–0.35 wt.% above it, as close as his
+  figure's own y axis resolves. Jensen (1976): his tholeiitic |
+  calc-alkalic curve passes within 1.2 cation % of every vertex taken
+  from Jensen & Pyke (1982). O'Connor (1965): confirms two of Barker's
+  (1979) points measured independently; the rest Barker changed.
+  Ishikawa et al. (1976): the alteration index is their formula, but
+  the "> 60: hydrothermal alteration" in its tooltip is not theirs — it
+  is gone; they report the index over 90 around the Fukasawa orebodies.
 
 - **KLB-1, KR4003 and MIX1G plot.** Printed as major oxides only, they
   showed on nothing but an axis of their own oxides: not against FeOt —

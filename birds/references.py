@@ -206,6 +206,11 @@ REFERENCES: List[Section] = [
          "*Nature*, *347*(6294), 662-665. "
          "https://doi.org/10.1038/347662a0",
          "Adakite Y-Sr/Y, and the Yb <= 1.9 ppm limit."),
+        ("Defant, M. J., & Drummond, M. S. (1993). Mount St. Helens: "
+         "Potential example of the partial melting of the subducted "
+         "lithosphere in a volcanic arc. *Geology*, *21*(6), 547-550. "
+         "https://doi.org/10.1130/0091-7613(1993)021<0547:MSHPEO>2.3.CO;2",
+         "Sr/Y-Y with the adakite field drawn (Figure 2)."),
         ("Drummond, M. S., & Defant, M. J. (1990). A model for "
          "trondhjemite-tonalite-dacite genesis and crustal growth via "
          "slab melting: Archean to modern comparisons. *Journal of "

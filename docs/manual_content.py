@@ -25,10 +25,10 @@ SECTIONS = [
         {"type": "p", "text":
          "B.I.R.D.S (Broad Igneous Rocks — Diagrams & Statistics) is a desktop "
          "application for plotting and analysing whole-rock geochemical "
-         "data of igneous rocks. It bundles 61 plotting templates, a "
+         "data of igneous rocks. It bundles 62 plotting templates, a "
          "spider-diagram engine with 28 published normalisers "
          "(REE chondrites and shales, multi-element references and "
-         "Ni-Cu-PGE metal references), a discrimination module with 41 "
+         "Ni-Cu-PGE metal references), a discrimination module with 42 "
          "tectonic diagrams, and a statistics dashboard with REE-anomaly "
          "indices, a correlation-matrix heat-map and 256 tectonic "
          "discrimination parameters. A map view plots every sample at "
@@ -216,7 +216,7 @@ SECTIONS = [
             "Frost and others, volcanic and plutonic.",
             "Bivariate diagrams — single and paired Harker-style plots.",
             "Spider diagrams — REE and multi-element patterns.",
-            "Tectonic diagrams — 41 discrimination diagrams.",
+            "Tectonic diagrams — 42 discrimination diagrams.",
             "Isotopes — Sr–Nd and Pb–Pb diagrams, and any isotope ratio, "
             "δ value or ε against SiO2.",
             "Statistics and Anomalies — descriptive statistics, REE "
@@ -533,7 +533,7 @@ SECTIONS = [
         {"type": "p", "text":
          "Open Tectonic diagrams → Volcanic or → Plutonic. Inside the "
          "window, choose the composition (Mafic, Intermediate or Acid) "
-         "and the specific discriminator from the second combo. 41 "
+         "and the specific discriminator from the second combo. 42 "
          "published discriminators are implemented, each with the "
          "boundaries of its own source. Each plot prints its citation "
          "as a subtitle, and the entry in the combo names the axes in "
@@ -588,6 +588,9 @@ SECTIONS = [
         {"type": "h2", "text": "Intermediate"},
         {"type": "bullet", "items": [
             "Defant & Drummond (1990) Sr/Y vs Y — adakite.",
+            "Defant & Drummond (1993) Sr/Y vs Y — the adakite, island-arc "
+            "ADR and Juan de Fuca Ridge fields drawn, measured on their "
+            "Figure 2 (frame to Sr/Y 60).",
             "Drummond & Defant (1990, JGR) (La/Yb)N vs YbN — Archean "
             "TTG, post-Archean granitic rocks and MORB, measured on "
             "their Figure 10 and normalised to Wakita et al. (1971), "

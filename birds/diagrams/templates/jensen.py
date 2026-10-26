@@ -12,7 +12,9 @@ from .base import (
 )
 
 # Boundary coordinates (Al, Fe+Ti, Mg) from Jensen & Pyke (1982) (corrected),
-# reproduced in Rollinson & Pease (2021) Fig. 3.8b. Sum to 100.
+# reproduced in Rollinson & Pease (2021) Fig. 3.8b. Sum to 100.  Jensen's
+# own curve (1976, Figure 1), followed along its ink, passes within 1.2
+# cation % of every vertex and within 0.3 % of the first five.
 _TH_CA_BOUNDARY = [
     (90, 10, 0), (53.5, 28.5, 18), (52.5, 29, 18.5), (51.5, 29, 19.5),
     (50.5, 27.5, 22), (50.3, 25, 24.7), (50.8, 20, 29.2), (51.5, 12.5, 36),

@@ -19,7 +19,7 @@ apply. This was the lesson of the Pb NHRL: the drawn line in the source
 figure sits 5–7 px off Hart's published equation, which is the
 redrawing's error, not the equation's.
 
-The catalogue holds **55 unique diagrams**. The menus list 92 entries,
+The catalogue holds **56 unique diagrams**. The menus list 93 entries,
 but all 30 plutonic tectonic-discrimination entries re-use volcanic keys.
 The six modal diagrams of the Petrography view are outside these
 counts; they have their own section at the end, *The Petrography
@@ -36,11 +36,11 @@ view*.
 | Verma's group, 2004–2008: functions and caption coordinates, checked against the authors' sheet | 3 | *Verma's group, 2004–2008* |
 | TAS, volcanic and plutonic, vertex by vertex | 2 | *Retracted findings*, *Middlemost (1994)* |
 | Rule, with the arithmetic under it checked | 1 | *Maniar & Piccoli (1989)* |
-| Drawn envelope, now measured, computed or read from printed coordinates | 23 | *Drawn envelope* to *Drummond & Defant (1990, JGR)* |
+| Drawn envelope, now measured, computed or read from printed coordinates | 24 | *Drawn envelope* to *Drummond & Defant (1990, JGR)* |
 | A plane computed from printed equations, with no fields to check | 1 | *Yang et al. (2019)* |
 | **Known wrong — fix first** | **0** | |
 | Still drawn by eye | **0** | *Still drawn by eye* |
-| **Total** | **55** | |
+| **Total** | **56** | |
 
 The Irvine & Baragar (1971) overlay on `afm`, the one curve this summary
 used to call unverified, is now Rickwood's (1989) measurement of their
@@ -385,6 +385,40 @@ the other two through misprints of his own that do not sum to 100
 `haplogranite` keeps one determination per pressure out of the twelve
 water-saturated rows in Table 3.10 — a curation choice, now documented.
 
+**Read in the originals, 2026-10-26.** The sources these lines were
+taken from second-hand, now on disk, measured on their own figures:
+
+* **MacDonald (1968)**, *GSA Memoir* 116, Figure 1: the dashed line,
+  17 dashes fitted to 1.8 px rms, runs from SiO₂ 39.85, alkalis 0.32
+  to 65.58, 9.77. `ib1971` has 39.8, 0.35 to 65.5, 9.7.
+* **Kuno (1966)**, *Bull. Volcanol.* 29, Figure 2, draws two lines:
+  alkali | high-alumina basalt and high-alumina | tholeiite. `ib1971`
+  carries the first, and follows its shape from SiO₂ 46 to 76, but sits
+  0.2–0.35 wt.% of alkalis below it on the tick calibration, or 0–0.17
+  if the axis line is taken as zero: the figure's own y axis is out by
+  0.18 at its foot, the zero of its ticks falling 13 px below the
+  drawn axis. That is as close as the original resolves, and the line
+  is left as Rickwood measured it. The second line is not drawn.
+* **Jensen (1976)**, *Ontario Division of Mines Misc. Paper* 66,
+  Figure 1: the tholeiitic | calc-alkalic curve, followed along its ink
+  (187 points), passes within 1.2 cation % of every `jensen` vertex
+  — taken from Jensen & Pyke (1982) — and within 0.3 % of the first
+  five. Its other boundaries (komatiitic field, high-Fe and high-Mg
+  tholeiite, the rock-type lines) are not drawn.
+* **O'Connor (1965)**, *USGS Prof. Paper* 525-B, Figure 2, is what
+  Barker (1979) redrew for `barker_anaborn`, and confirms two of
+  Barker's points measured independently: the trondhjemite | granite
+  line reaching the Ab–Or base at Or 30.0, and the junction near the
+  albite corner, An 18.5 Ab 55.8 Or 25.7 against Barker's 17.6, 58.1,
+  24.3. The rest Barker changed: O'Connor's tonalite | adamellite line
+  slopes from Or 19.8 to 25.7, where Barker has Or 20 throughout, and
+  meets the Ab–An edge at An 25 where Barker's does at An 30.
+* **Ishikawa et al. (1976)**, *Mining Geology* 26, footnote to Table 1:
+  the alteration index is 100·(MgO + K₂O)/(Na₂O + K₂O + CaO + MgO), as
+  computed. They give no threshold — the index is over 90 around the
+  Fukasawa orebodies — and the "> 60: hydrothermal alteration" its
+  tooltip quoted is not theirs; it is gone.
+
 **Corrected**:
 
 * **`k2o_sio2`** drew one of Rickwood's three bands, as a single line,
@@ -461,7 +495,7 @@ faded to say so.
 `Ti` was converted from TiO₂ with 5995 ppm per wt.% in four places;
 the mass ratio gives 5993.4. Now a named constant, shared.
 
-## Drawn envelope — 23 done, none blocked
+## Drawn envelope — 24 done, none blocked
 
 Twelve are in the three subsections below; Saccani, Defant & Drummond,
 Pearce & Gale, Cabanis & Lecolle, Harris, the two Vermeesch QDA
@@ -1150,6 +1184,34 @@ volcanic and plutonic.
 `tests/test_drummond_defant_1990_jgr.py` pins both frames, the
 chondrite, the fields, the MORB checks, the agreement with Martin and
 both classifications.
+
+## Defant & Drummond (1993) — the adakite field, drawn
+
+`Defant_Drummond_1993.pdf` — *Geology* **21**, 547–550, Figure 2. Key
+`defant_drummond_1993_YSrY`. Sr/Y against Y, 0–50 by 0–60, with three
+outlined fields: adakite and island-arc andesite-dacite-rhyolite, both
+credited to Defant & Drummond (1990), whose *Nature* paper describes
+adakites but draws no field, and Juan de Fuca Ridge basalt. Not drawn:
+the Mount St. Helens and Mount Adams data and the two model curves.
+
+Measured on the 2594 × 3400 scan of page 549: the axes on their inward
+ticks (16.855 px per unit of Y, residuals under 0.6 px; 9.371 px per
+unit of Sr/Y, under 1.5 px), each outline followed along its thin ink
+about every 4 px — the filled symbols masked out — then smoothed over
+three points and simplified to 2 px; the overlay on the scan follows
+all three. Where the figure leaves an outline open the frame closes
+it: the adakite loop runs off the top and its branches are carried to
+Sr/Y 60; the ADR arc stops short of the axis (Y 21.3) and of the right
+edge (Y 47.8), and both ends are carried on along their own direction.
+The Juan de Fuca box is exact, Y 23.4–46.6, Sr/Y 0–5.6.
+
+A check not designed in: the adakite field is widest at Y 18.7, against
+the Y ≤ 18 ppm the *Nature* paper gives in words. Samples above Sr/Y
+60 are off this frame and not classified; the *Nature* and JGR
+diagrams, to Sr/Y 500, take them.
+
+`tests/test_defant_drummond_1993.py` pins the frame, the three fields,
+their closures and the classification.
 
 ## Still drawn by eye — none
 

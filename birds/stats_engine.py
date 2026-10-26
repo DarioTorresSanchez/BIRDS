@@ -747,9 +747,12 @@ def compute_alteration_indices(df: pd.DataFrame) -> pd.DataFrame:
       granites ≈ 45-55, intense weathering → 100.
 
     * **AI_Ishikawa** (Ishikawa et al. 1976 alteration index):
-      ``100 · (K2O + MgO) / (K2O + MgO + Na2O + CaO)`` in wt.% —
-      the classic box-plot axis for hydrothermal sericite-chlorite
-      alteration.  Fresh volcanics ≈ 20-60; > 60 signals alteration.
+      ``100 · (K2O + MgO) / (K2O + MgO + Na2O + CaO)`` in wt.%, the
+      "変質強度" of the footnote to their Table 1 -- Na and Ca leached,
+      K and Mg added by hydrothermal sericite-chlorite alteration.
+      They give no threshold; around the Fukasawa kuroko orebodies it
+      is over 90.  The "fresh 20-60" often quoted with it is Large et
+      al.'s (2001), not theirs, and is not stated here.
 
     Missing input oxides simply omit the corresponding index column.
     """
@@ -831,8 +834,9 @@ ALTERATION_DESCRIPTIONS: Mapping[str, str] = {
            "K2O) molar, CaO* corrected for apatite (Nesbitt & Young "
            "1982). Fresh basalt ≈ 30-45, granite ≈ 45-55.",
     "AI_Ishikawa": "Alteration index, 100·(K2O+MgO)/(K2O+MgO+Na2O+CaO) "
-                   "wt % (Ishikawa et al. 1976). > 60: hydrothermal "
-                   "alteration.",
+                   "wt % (Ishikawa et al. 1976): rises as hydrothermal "
+                   "alteration leaches Na and Ca and adds K and Mg; over "
+                   "90 around the Fukasawa kuroko orebodies.",
 }
 
 

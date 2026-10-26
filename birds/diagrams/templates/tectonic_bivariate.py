@@ -655,6 +655,132 @@ class DefantDrummondYSrY(Diagram):
 
 
 # ---------------------------------------------------------------------------
+# Defant & Drummond (1993) — the adakite field, drawn
+# ---------------------------------------------------------------------------
+#
+# Defant, M. J. & Drummond, M. S. (1993) Mount St. Helens: potential
+# example of the partial melting of the subducted lithosphere in a
+# volcanic arc.  Geology 21, 547-550, Figure 2: Sr/Y against Y, Y 0-50,
+# Sr/Y 0-60, with three outlined fields -- adakite and island-arc
+# andesite-dacite-rhyolite, both credited to Defant & Drummond (1990),
+# and Juan de Fuca Ridge basalt (Karsten et al. 1990).  Not drawn: the
+# Mount St. Helens and Mount Adams data, the partial-melting curve 1
+# and the crystal-fractionation curve 2.
+#
+# This is the figure that draws the adakite field the Nature paper
+# only describes.  Measured on the 2594 x 3400 scan of page 549: the
+# axes on their inward ticks (16.855 px per unit of Y, residuals under
+# 0.6 px; 9.371 px per unit of Sr/Y, under 1.5 px).  Each outline was
+# followed along the thin ink -- filled symbols masked out -- about
+# every 4 px, smoothed over three points and simplified to 2 px.
+#
+# What the figure leaves open is closed by the frame: the adakite loop
+# runs off the top, so its two branches are carried up to Sr/Y 60, the
+# left one vertical, the right one on its slope (Y 14.3 -> 14.0); the
+# ADR arc ends short of the axis at Y 21.3 and short of the right edge
+# at Y 47.8, and both ends are carried on along their own direction, to
+# the axis at Y 22.8 and to the edge at Sr/Y 3.6.  The Juan de Fuca
+# box is exact: Y 23.4-46.6, Sr/Y 0-5.6.
+#
+# A check that was not designed in: the adakite field's right-hand edge
+# reaches Y 18.7 at its widest, against the Y <= 18 ppm the Nature
+# paper gives for adakites in words.
+
+#: Figure 2's frame.
+DD1993_X_RANGE = (0.0, 50.0)
+DD1993_Y_RANGE = (0.0, 60.0)
+
+#: Adakite field, (Y, Sr/Y), closed along the top of the frame.
+DD1993_ADAKITE = (
+    (3.4, 60.0), (3.4, 58.5), (3.5, 51.1), (4.4, 41.0), (5.4, 34.7),
+    (6.6, 29.3), (8.5, 23.6), (10.2, 20.0), (12.3, 17.3), (13.6, 16.4),
+    (14.7, 16.2), (16.2, 16.8), (17.0, 17.9), (17.5, 19.4), (18.3, 23.0),
+    (18.7, 29.2), (18.4, 34.6), (17.3, 43.2), (14.3, 58.6), (14.0, 60.0),
+)
+
+#: Island-arc andesite-dacite-rhyolite field, closed along the axis
+#: and the right-hand edge.
+DD1993_ADR = (
+    (22.8, 0.0), (21.3, 1.8), (18.2, 5.8), (16.1, 9.3), (14.4, 13.4),
+    (13.8, 15.4), (13.3, 18.3), (13.3, 20.1), (13.6, 22.2), (13.9, 23.3),
+    (15.4, 26.1), (17.7, 27.8), (19.3, 28.6), (22.9, 29.1), (26.8, 28.5),
+    (30.3, 27.1), (33.7, 25.0), (37.5, 21.9), (40.0, 19.3), (44.0, 14.2),
+    (47.4, 8.5), (47.8, 7.6), (50.0, 3.6), (50.0, 0.0),
+)
+
+#: Juan de Fuca Ridge basalt: Y from, Y to, Sr/Y from, Sr/Y to.
+DD1993_JUAN_DE_FUCA = (23.4, 46.6, 0.0, 5.6)
+
+DD1993_FIELDS = (
+    ("adakite", DD1993_ADAKITE),
+    ("island-arc ADR", DD1993_ADR),
+    ("Juan de Fuca Ridge basalt", (
+        (DD1993_JUAN_DE_FUCA[0], DD1993_JUAN_DE_FUCA[2]),
+        (DD1993_JUAN_DE_FUCA[0], DD1993_JUAN_DE_FUCA[3]),
+        (DD1993_JUAN_DE_FUCA[1], DD1993_JUAN_DE_FUCA[3]),
+        (DD1993_JUAN_DE_FUCA[1], DD1993_JUAN_DE_FUCA[2]))),
+)
+
+
+def classify_dd1993(y, sr_y) -> np.ndarray:
+    """The field of each point, "" outside them all; where two
+    overlap -- adakite and ADR at Y 13-19, ADR and Juan de Fuca along
+    the foot -- the point is named as both."""
+    from matplotlib.path import Path
+    pts = np.column_stack([np.asarray(y, float), np.asarray(sr_y, float)])
+    ok = np.isfinite(pts).all(axis=1)
+    safe = np.where(ok[:, None], pts, 0.0)
+    hits = [np.where(ok & Path(field).contains_points(safe), name, "")
+            for name, field in DD1993_FIELDS]
+    return np.array([" or ".join(n for n in names if n)
+                     for names in zip(*hits)], dtype=object)
+
+
+class DefantDrummond1993YSrY(Diagram):
+    key = "defant_drummond_1993_YSrY"
+    title = "Sr/Y vs Y — Defant & Drummond (1993)"
+    citation = ("Defant & Drummond (1993) Geology 21, 547-550, Figure 2: "
+                "the adakite and island-arc andesite-dacite-rhyolite "
+                "fields of Defant & Drummond (1990), and Juan de Fuca "
+                "Ridge basalt, all measured on the figure. Its frame "
+                "stops at Sr/Y 60 and so does the adakite field; a "
+                "sample above it is off the frame and not classified. "
+                "The melting and fractionation curves are not drawn.")
+    x_label = "Y (ppm)"
+    y_label = "Sr/Y"
+    x_range = DD1993_X_RANGE
+    y_range = DD1993_Y_RANGE
+
+    def _compute_xy(self, df):
+        sr = resolve_column(df, ["Sr"])
+        y = resolve_column(df, ["Y"])
+        if not (sr and y):
+            return None, None
+        y_s = pd.to_numeric(df[y], errors="coerce")
+        y_s = y_s.where(y_s > 0)
+        return y_s, pd.to_numeric(df[sr], errors="coerce") / y_s
+
+    def classify_frame(self, df: pd.DataFrame) -> pd.Series:
+        x, y = self._compute_xy(df)
+        if x is None:
+            return pd.Series("", index=df.index, dtype=object)
+        return pd.Series(classify_dd1993(x, y), index=df.index,
+                         dtype=object)
+
+    def _draw_background(self, ax, options):
+        from matplotlib.patches import Polygon
+        for _name, field in DD1993_FIELDS:
+            ax.add_patch(Polygon(field, closed=True, fill=False,
+                                 edgecolor="#333", linewidth=1.0, zorder=0))
+        text = dict(fontsize=8.5, color="#333", style="italic", zorder=1)
+        ax.text(10.0, 45.0, "Adakite", ha="center", va="center", **text)
+        ax.text(31.0, 20.0, "Island-arc\nandesite-dacite-rhyolite",
+                ha="center", va="center", **text)
+        ax.text(35.0, 2.8, "Juan de Fuca Ridge", ha="center", va="center",
+                fontsize=7.5, color="#333", style="italic", zorder=1)
+
+
+# ---------------------------------------------------------------------------
 # Pearce et al. (1984) — granitoid discriminants
 # ---------------------------------------------------------------------------
 

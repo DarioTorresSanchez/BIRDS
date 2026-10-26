@@ -22,6 +22,14 @@ masked off and the remaining network walked as a graph to recover the
 boundary segments and the two junctions where they meet near the
 albite corner.
 
+O'Connor's (1965) Figure 2, which Barker redrew, confirms two of these
+points measured independently: the trondhjemite/granite line meeting
+the base at Or 30.0, and the junction near the albite corner at An
+18.5, Ab 55.8, Or 25.7 against 17.6, 58.1, 24.3 here.  The rest Barker
+changed -- O'Connor's tonalite/adamellite line slopes from Or 19.8 to
+25.7 and meets the Ab-An edge at An 25, not 30 -- and Barker's is what
+is drawn.
+
 The boundaries are drawn as the finite segments the figure draws, not
 closed into polygons.  Closing them would mean inventing where each
 field ends against the upper edges, which the source deliberately
