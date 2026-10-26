@@ -1061,9 +1061,6 @@ including what is still unverified.
   the type to be fixed first, with SINCLAS or IgRoCS; fed a basalt, the
   intermediate-magma set answers arc at better than even odds with no
   warning.
-- **One reservoir has no source**: "Average peridotite (PM-like)". It
-  is close to McDonough & Sun's (1995) primitive mantle, rounded, which
-  is listed beside it.
 - **The La/10–Y/15–Nb/8 diagram misplaces reference MORB and OIB.** Not
   a fault in the code: Verma (2010) puts OIB + MORB at 29–62 %
   correctly classified, and Sun & McDonough's N-MORB duly falls in the
