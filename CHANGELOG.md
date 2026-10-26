@@ -23,8 +23,9 @@ including what is still unverified.
   with its desktop entry, session type and icons, each self-tested after
   the build. Run by hand from the Actions tab or by a version tag.
 - **pandas 2 and pandas 3 tested side by side** on Python 3.12, beside
-  Python 3.9 with pandas 2 on Linux, macOS and Windows; every job prints
-  the versions it ran.
+  Python 3.9 with pandas 2 on Linux and Windows; every job prints the
+  versions it ran. macOS is tested on the development Mac: GitHub's Mac
+  runners never picked the job up.
 
 - **Sr/Y vs Y — Defant & Drummond (1993), Figure 2**: the adakite,
   island-arc andesite-dacite-rhyolite and Juan de Fuca Ridge fields,

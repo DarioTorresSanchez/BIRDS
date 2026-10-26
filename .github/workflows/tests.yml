@@ -10,15 +10,16 @@ jobs:
   test:
     name: ${{ matrix.os }} · Python ${{ matrix.python-version }}${{ matrix.pandas != 'latest' && format(' · pandas {0}', matrix.pandas) || '' }}
     runs-on: ${{ matrix.os }}
-    # GitHub's Apple-silicon runners are short: jobs have been cancelled
-    # after a quarter of an hour unassigned ("not acquired by Runner ...
-    # capacity constraints").  macOS is tested on every change on the
-    # development Mac, so a missing macOS runner does not fail the run.
-    continue-on-error: ${{ startsWith(matrix.os, 'macos') }}
+    # No macOS here.  GitHub's Mac runners never picked the job up: every
+    # run it sat unassigned for a quarter of an hour ("not acquired by
+    # Runner ... capacity constraints") and was cancelled, and a cancelled
+    # job fails the run even with continue-on-error.  macOS is the
+    # development system -- the suite runs there before every commit and
+    # the Mac app is built there.
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
         python-version: ["3.9", "3.12"]
         pandas: ["latest"]
         # Python 3.9 gets pandas 2 and 3.12 gets pandas 3 by themselves;
@@ -31,10 +32,6 @@ jobs:
           - os: ubuntu-latest
             python-version: "3.12"
             pandas: "<3"
-        # One macOS job instead of two, so it waits for one runner.
-        exclude:
-          - os: macos-latest
-            python-version: "3.9"
 
     steps:
       - uses: actions/checkout@v5
