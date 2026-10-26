@@ -69,6 +69,37 @@ def qapp():
     return app
 
 
+# ---------------------------------------------------------------------------
+# Leaving
+# ---------------------------------------------------------------------------
+# The tests leave hundreds of windows alive.  On Python 3.12 the
+# interpreter then destroys them, and the QApplication, in an order Qt
+# does not survive: in CI every test passed and was reported -- "4000
+# passed" -- and the process still died with "Fatal Python error:
+# Aborted" and no Python frame, failing the run.  By the time pytest
+# unconfigures, every result has been written; leave with pytest's own
+# status and skip the teardown.  The application quits through its event
+# loop and is not affected.
+
+_EXIT_STATUS = 0
+
+
+def pytest_sessionfinish(session, exitstatus):
+    global _EXIT_STATUS
+    _EXIT_STATUS = int(exitstatus)
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_unconfigure(config):
+    if os.environ.get("BIRDS_TESTS_FULL_TEARDOWN"):
+        return                      # to debug the teardown itself
+    import sys
+    sys.stdout.flush()
+    sys.stderr.flush()
+    shutil.rmtree(_SANDBOX, ignore_errors=True)
+    os._exit(_EXIT_STATUS)
+
+
 @pytest.fixture
 def majors_df() -> pd.DataFrame:
     """Twelve realistic major-element analyses, closed to 100 wt %."""
