@@ -97,6 +97,14 @@ def pytest_unconfigure(config):
     sys.stdout.flush()
     sys.stderr.flush()
     shutil.rmtree(_SANDBOX, ignore_errors=True)
+    if sys.platform == "win32":
+        # os._exit still unloads the DLLs on Windows, and Qt's own
+        # clean-up then fails the same way ("access violation");
+        # TerminateProcess ends the process without running it.
+        import ctypes
+        kernel32 = ctypes.windll.kernel32
+        kernel32.TerminateProcess(kernel32.GetCurrentProcess(),
+                                  _EXIT_STATUS)
     os._exit(_EXIT_STATUS)
 
 
