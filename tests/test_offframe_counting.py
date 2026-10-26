@@ -166,14 +166,15 @@ class TestCoverage:
         27, `martin_1986_LaYbN`, the frame of Martin's Figure 1, and to
         28 when `defant_drummond_YbLaYb` took its frame back, this time
         from the figure it had been missing: Drummond & Defant (1990,
-        J. Geophys. Res.) Figure 10.
+        J. Geophys. Res.) Figure 10 -- and to 29 with that paper's
+        Figure 11, `drummond_defant_1990_YSrY`.
         """
         own = [k for k, d in _REGISTRY.items()
                if getattr(d, "x_range", None) or getattr(d, "y_range", None)]
         panelled = [k for k, d in _REGISTRY.items()
                     if getattr(d, "panels", None)
                     and getattr(d.panels[0], "x_range", None)]
-        assert len(own) == 28, f"{len(own)} templates carry their own frame"
+        assert len(own) == 29, f"{len(own)} templates carry their own frame"
         assert len(panelled) == 11, f"{len(panelled)} carry it on panels"
         assert "defant_drummond_YbLaYb" in own
         assert "yang_2019_fcms" in own

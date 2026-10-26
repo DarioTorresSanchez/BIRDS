@@ -180,3 +180,75 @@ def test_the_three_fields_and_the_line_are_drawn():
     assert any(np.allclose(ln.get_xdata(), dd.ADAKITE_YB_N_MAX)
                for ln in dotted)
     fig.clf()
+
+
+# ---------------------------------------------------------------------------
+# Figure 11 — Sr/Y against Y
+# ---------------------------------------------------------------------------
+
+FIG11 = "drummond_defant_1990_YSrY"
+
+
+def test_figure_11_frame():
+    d = get_diagram(FIG11)
+    assert tuple(d.x_range) == dd.FIG11_X_RANGE == (0.0, 50.0)
+    assert tuple(d.y_range) == dd.FIG11_Y_RANGE == (0.0, 500.0)
+    assert (d.x_label, d.y_label) == ("Y (ppm)", "Sr/Y")
+
+
+def test_the_adr_field_is_the_stipple_envelope():
+    """Rows of the stipple end at Y 26.9 (Sr/Y 30.1), 43.4 (14.9) and
+    48.8 (4.6); the envelope stands half a spacing out -- 0.6 in Y,
+    4.5 in Sr/Y -- and runs off the right-hand edge of the frame."""
+    field = dd.ADR_FIELD
+    assert (27.5, 34.6) in field and (44.0, 19.4) in field
+    assert (49.4, 9.1) in field
+    assert max(x for x, _ in field) == dd.FIG11_X_RANGE[1]
+    assert min(y for _, y in field) == 0.0
+    ys = [y for x, y in field if 0 < y]
+    assert max(ys) < 40                       # a low-Sr/Y field
+
+
+def test_the_adr_field_steps_down_to_the_right():
+    top = [(x, y) for x, y in dd.ADR_FIELD if y > 0 and x < 50]
+    top.sort()
+    assert [y for _, y in top][1:] == sorted([y for _, y in top][1:],
+                                             reverse=True)
+
+
+@pytest.mark.parametrize("sr, y, expected", [
+    (300.0, 30.0, dd.ADR),          # Sr/Y 10 at Y 30: arc ADR
+    (900.0, 9.0, ""),               # Sr/Y 100: high-Al TTD side
+    (400.0, 20.0, dd.ADR),          # Sr/Y 20 at Y 20
+    (150.0, 10.0, ""),              # low Y, left of the field
+])
+def test_figure_11_classifies(sr, y, expected):
+    df = pd.DataFrame({"Sr": [sr], "Y": [y]})
+    assert get_diagram(FIG11).classify_frame(df).iloc[0] == expected
+
+
+def test_figure_11_says_what_is_and_is_not_drawn():
+    c = get_diagram(FIG11).citation
+    assert "Figure 11" in c and "stipple" in c
+    assert "melting curves are not drawn" in c
+
+
+def test_figure_11_draws_its_field(qapp):
+    fig = Figure()
+    df = pd.DataFrame({"Sr": [900.0, 300.0], "Y": [9.0, 30.0]})
+    get_diagram(FIG11).plot(fig, df, PlotStyle(), PlotOptions())
+    ax = fig.axes[0]
+    patches = [p for p in ax.patches if isinstance(p, Polygon)]
+    assert len(patches) == 1 and patches[0].get_hatch() == ".."
+    assert "Island-arc ADR" in " ".join(t.get_text() for t in ax.texts)
+    fig.clf()
+
+
+def test_both_figures_are_where_martin_is():
+    """Volcanic and plutonic, intermediate and acid: high-Al TTD are
+    dacites and tonalites alike."""
+    from birds.diagrams.catalog import TECTONIC_PLUTONIC, TECTONIC_VOLCANIC
+    for catalogue in (TECTONIC_VOLCANIC, TECTONIC_PLUTONIC):
+        for family in ("Intermediate", "Acid"):
+            keys = [k for _label, k in catalogue[family]]
+            assert {KEY, FIG11, "martin_1986_LaYbN"} <= set(keys)

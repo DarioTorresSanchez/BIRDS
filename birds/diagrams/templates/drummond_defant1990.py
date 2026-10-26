@@ -187,3 +187,89 @@ class DrummondDefant1990LaYbN(Diagram):
         ax.text(14.5, 24, "Post-Archean\ngranitic rocks", ha="center",
                 **text)
         ax.text(16.4, 2.6, "MORB", ha="left", **text)
+
+
+# ---------------------------------------------------------------------------
+# Figure 11 — Sr/Y against Y
+# ---------------------------------------------------------------------------
+#
+# "Y (ppm) versus Sr/Y diagram with Archean and Cenozoic high-Al TTD
+# data displayed in conjunction with basalt partial melting curves".
+# Frame Y 0-50, Sr/Y 0-500.  It draws one field, the island-arc
+# andesite-dacite-rhyolite (ADR) fractionation suite, as a stipple of
+# crosses with no outline; the rest is data and four melting curves
+# (eclogite and 10 % garnet amphibolite restites, from an Archean mafic
+# composite and from MORB), which are model results and are not drawn,
+# as on Figure 10.
+#
+# Measured on the 2452 x 3386 scan of page 21,510: the axes on their
+# inward ticks, Y 5-50 (25.20 px per unit, residuals under 4.5 px) and
+# Sr/Y 0-500 (1.696 px per unit).  The crosses of the stipple were found
+# as connected components, 43 of them, and the field is their envelope
+# taken half a stipple spacing out -- 0.6 in Y, 4.5 in Sr/Y -- because
+# the pattern has no edge of its own.  Its rows end at Y 26.9 (Sr/Y 30),
+# 43.4 (15) and 48.8 (5): the field steps down to the right.  Good to
+# about 1 in Y and 5 in Sr/Y, which is the spacing of the stipple.
+
+#: Figure 11's frame.
+FIG11_X_RANGE = (0.0, 50.0)
+FIG11_Y_RANGE = (0.0, 500.0)
+
+#: Island-arc ADR fractionation suite, (Y, Sr/Y), the envelope of the
+#: stipple; it runs off the right-hand edge of the frame.
+ADR_FIELD = (
+    (16.8, 0.0), (16.8, 38.8), (27.5, 34.6), (44.0, 19.4), (49.4, 9.1),
+    (50.0, 9.1), (50.0, 0.0),
+)
+
+ADR = "island-arc ADR"
+
+
+def classify_fig11(y, sr_y) -> np.ndarray:
+    """"island-arc ADR" inside the field, "" elsewhere -- the figure
+    outlines nothing else."""
+    return np.where(_inside(ADR_FIELD, y, sr_y), ADR, "").astype(object)
+
+
+class DrummondDefant1990YSrY(Diagram):
+    key = "drummond_defant_1990_YSrY"
+    title = "Sr/Y vs Y — Drummond & Defant (1990)"
+    citation = ("Drummond & Defant (1990) J. Geophys. Res. 95, "
+                "21503-21521, Figure 11: high-Al trondhjemite-tonalite-"
+                "dacite against the island-arc andesite-dacite-rhyolite "
+                "fractionation suite. The ADR field is the envelope of "
+                "the stipple the figure draws it with, good to about 1 "
+                "in Y and 5 in Sr/Y; the melting curves are not drawn.")
+    x_label = "Y (ppm)"
+    y_label = "Sr/Y"
+    x_range = FIG11_X_RANGE
+    y_range = FIG11_Y_RANGE
+
+    def _compute_xy(self, df):
+        sr = resolve_column(df, ["Sr"])
+        y = resolve_column(df, ["Y"])
+        if not (sr and y):
+            return None, None
+        y_s = pd.to_numeric(df[y], errors="coerce")
+        y_s = y_s.where(y_s > 0)
+        return y_s, pd.to_numeric(df[sr], errors="coerce") / y_s
+
+    def classify_frame(self, df: pd.DataFrame) -> pd.Series:
+        x, y = self._compute_xy(df)
+        if x is None:
+            return pd.Series("", index=df.index, dtype=object)
+        return pd.Series(classify_fig11(x, y), index=df.index, dtype=object)
+
+    def _draw_background(self, ax, options):
+        from matplotlib.patches import Polygon
+        # A stipple, as the figure draws it, inside a dotted edge it does
+        # not have -- the envelope is ours.
+        ax.add_patch(Polygon(ADR_FIELD, closed=True, facecolor="none",
+                             edgecolor="#666", hatch="..", linewidth=0.8,
+                             linestyle=":", zorder=0))
+        ax.text(33.0, 45.0, "Island-arc ADR\nfractionation suite",
+                fontsize=8.5, color="#333", style="italic", ha="center",
+                va="bottom", zorder=1)
+        ax.text(3.0, 470.0, "High-Al TTD: high Sr/Y, low Y", fontsize=8.5,
+                color="#555", style="italic", ha="left", va="top",
+                zorder=1)

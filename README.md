@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-3878%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-3930%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -33,7 +33,7 @@ diagram is *accounted for* rather than silently dropped, below-detection
 values are handled explicitly instead of becoming blanks, and the figure you
 export is sized in millimetres for the journal you are submitting to.
 
-**60 diagram templates · 28 published normalisers · classical CIPW norm ·
+**61 diagram templates · 28 published normalisers · classical CIPW norm ·
 8-tab statistics dashboard**
 
 ---
@@ -151,10 +151,11 @@ structured:
 </details>
 
 <details>
-<summary><b>Tectonic discrimination — intermediate (6)</b></summary>
+<summary><b>Tectonic discrimination — intermediate (7)</b></summary>
 
 - Y vs Sr/Y (adakite) — Defant & Drummond 1990
 - Yb<sub>N</sub> vs (La/Yb)<sub>N</sub>, Archean TTG, post-Archean and MORB — Drummond & Defant 1990 (JGR)
+- Y vs Sr/Y, high-Al TTD vs island-arc ADR — Drummond & Defant 1990 (JGR)
 - Yb<sub>N</sub> vs (La/Yb)<sub>N</sub>, Archean TTG vs post-Archean granitoids — Martin 1986
 - Majors DF set, 5 panels — Verma & Verma 2013
 - Immobile majors + traces DF set, 5 panels — Verma & Verma 2013
@@ -163,10 +164,11 @@ structured:
 </details>
 
 <details>
-<summary><b>Tectonic discrimination — acid (10)</b></summary>
+<summary><b>Tectonic discrimination — acid (12)</b></summary>
 
 - Yb vs Ta, Y vs Nb, (Yb+Ta) vs Rb, (Y+Nb) vs Rb — Pearce et al. 1984
 - Hf–Rb/10–3Ta ternary — Harris et al. 1986
+- Yb<sub>N</sub> vs (La/Yb)<sub>N</sub> and Y vs Sr/Y — Drummond & Defant 1990 (JGR)
 - Yb<sub>N</sub> vs (La/Yb)<sub>N</sub>, Archean TTG vs post-Archean granitoids — Martin 1986
 - Majors DF set, 5 panels — Verma et al. 2012
 - Majors DF set, 5 panels — Verma et al. 2013
@@ -465,7 +467,7 @@ What the suite covers, and why those things and not others:
 |---|---|
 | **CIPW norm** | Mass balance against the oxide sum, Q/Ne mutual exclusion, no negative minerals, scale invariance, determinism, and that the silica-deficit flag quantifies its own error |
 | **Detection limits** | Every censored form parses, each policy substitutes correctly, an unknown policy raises rather than discarding data, and the policy round-trips losslessly |
-| **Diagrams** | All 60 templates render against ten dataset shapes — normal, NaN-riddled, majors-only, all-NaN, single-row, negative, zeros, 10¹², 10⁻¹² — and their sample tallies stay self-consistent |
+| **Diagrams** | All 61 templates render against ten dataset shapes — normal, NaN-riddled, majors-only, all-NaN, single-row, negative, zeros, 10¹², 10⁻¹² — and their sample tallies stay self-consistent |
 | **Normalisers** | Every reference resolves, all values are positive and finite, REE tables cover the lanthanides, and a name listed in two categories resolves to the richer table |
 | **GUI state** | Each test corresponds to a bug that actually shipped: stale data tables, selections outliving their dataset, tallies that ignored group visibility, misaligned below-detection masks |
 | **Sessions** | `.birds` and `.birdstyle` round-trips, including the detection limits that make the policy changeable after a reload |

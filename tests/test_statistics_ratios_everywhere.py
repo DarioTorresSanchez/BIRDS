@@ -224,3 +224,71 @@ def test_a_reservoir_check_the_primitive_mantle_is_the_tables():
     r = RESERVOIRS["Primitive mantle (McDonough & Sun 1995)"]
     assert (pm["Nb"], pm["U"], pm["Ce"], pm["Pb"]) == (
         r["Nb"], r["U"], r["Ce"], r["Pb"])
+
+
+# ---------------------------------------------------------------------------
+# The Plots tab and the saved report
+# ---------------------------------------------------------------------------
+
+def test_the_plots_tab_offers_them_after_a_separator(window):
+    st = window.statistics
+    combo = st._plots_var_combo
+    items = [combo.itemText(i) for i in range(combo.count())]
+    assert {"Nb/U", "Ce/Pb", "Eu/Eu*", "CIA"} <= set(items)
+    assert items.index("Nb/U") > items.index("La")
+    cats = [st._plots_cat_combo.itemText(i)
+            for i in range(st._plots_cat_combo.count())]
+    assert "Nb/U" not in cats and "Eu/Eu*" not in cats
+
+
+@pytest.mark.parametrize("kind", ["histogram", "box", "violin", "ecdf",
+                                  "qq"])
+@pytest.mark.parametrize("split", ["none", "overlay", "facet"])
+def test_every_plot_draws_a_calculated_variable(window, kind, split):
+    st = window.statistics
+    st._plots_split_combo.setCurrentIndex(st._plots_split_combo.findData(split))
+    st._plot_type_combo.setCurrentIndex(st._plot_type_combo.findData(kind))
+    st._plots_var_combo.setCurrentIndex(st._plots_var_combo.findData("Nb/U"))
+    st._render_stat_plot()
+    axes = st._plots_canvas.figure.axes
+    drawn = sum(len(a.patches) + len(a.lines) + len(a.collections)
+                for a in axes)
+    texts = " ".join(t.get_text() for a in axes for t in a.texts)
+    assert drawn > 0, (kind, split)
+    assert "No numeric" not in texts and "error" not in texts.lower()
+
+
+def test_the_report_exports_the_matrix_on_screen(window):
+    st = window.statistics
+    tops = {st.corr_tree.topLevelItem(i).text(0).split("  (")[0]:
+            st.corr_tree.topLevelItem(i)
+            for i in range(st.corr_tree.topLevelItemCount())}
+    tops[RATIOS_KIND].setCheckState(0, Qt.CheckState.Checked)
+    st.corr_method_combo.setCurrentIndex(
+        st.corr_method_combo.findData("spearman"))
+    st._update_correlation()
+    sections = st.correlation_sections()
+    assert [label for label, _ in sections] == [
+        "Correlation matrix (Spearman)"]
+    exported = sections[0][1]
+    pd.testing.assert_frame_equal(exported, st.correlation_frame)
+    assert "Nb/U" in exported.columns
+
+
+def test_one_sheet_per_group_when_the_screen_shows_one_per_group(window):
+    st = window.statistics
+    st.corr_group_combo.setCurrentIndex(
+        st.corr_group_combo.findData(st._CORR_FACET))
+    labels = [label for label, _ in st.correlation_sections()]
+    assert labels == ["Correlation 1 - mafic", "Correlation 2 - felsic"]
+
+
+def test_a_sheet_name_excel_refuses_is_cleaned(tmp_path):
+    from openpyxl import load_workbook
+    from birds.stats_engine import export_sections
+    frame = pd.DataFrame({"a": [1.0]})
+    path = tmp_path / "report.xlsx"
+    export_sections(path, {"Correlation 1 - basalt: [arc]*?": frame,
+                           "A/B\\C": frame}, "xlsx")
+    names = load_workbook(path).sheetnames
+    assert names == ["Correlation 1 - basalt_ _arc___", "A_B_C"]

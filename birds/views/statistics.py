@@ -594,9 +594,10 @@ class StatisticsView(QWidget):
                                                            anomalies)
         return pd.concat([df, extra], axis=1) if not extra.empty else df
 
-    def _correlation_source(self) -> Optional[pd.DataFrame]:
-        """The dataset as the correlation matrix reads it: its own
-        columns, then the calculated ones of the summary."""
+    def _with_calculated(self) -> Optional[pd.DataFrame]:
+        """The dataset as the correlation matrix and the Plots tab read
+        it: its own columns, then the trace ratios, alteration indices
+        and anomalies of the per-sample tabs."""
         df = self.data.df
         if df is None or df.empty:
             return df
@@ -1066,6 +1067,23 @@ class StatisticsView(QWidget):
     def correlation_frame(self) -> pd.DataFrame:
         return self._correlation
 
+    def correlation_sections(self) -> "list[tuple[str, pd.DataFrame]]":
+        """The correlation matrices as the tab shows them, for the saved
+        report: the columns ticked, the method and the samples chosen,
+        one ``(label, matrix)`` per panel.  Computed now if the view has
+        never been opened."""
+        if not getattr(self, "_correlations", None):
+            self.refresh()
+        method = (self.corr_method_combo.currentText().split(" ")[0]
+                  if hasattr(self, "corr_method_combo") else "Pearson")
+        panels = [(title, matrix) for title, matrix, _n
+                  in getattr(self, "_correlations", []) or []
+                  if matrix is not None and not matrix.empty]
+        if len(panels) == 1:
+            return [(f"Correlation matrix ({method})", panels[0][1])]
+        return [(f"Correlation {k} - {title}", matrix)
+                for k, (title, matrix) in enumerate(panels, start=1)]
+
     # ------------------------------------------------------------------
     # Plots tab — histogram / pie / box / violin / bar / ECDF / Q-Q
     # ------------------------------------------------------------------
@@ -1169,7 +1187,11 @@ class StatisticsView(QWidget):
         return wrap
 
     def _refresh_plots_selectors(self) -> None:
-        """Refill the variable / group combos from the current df."""
+        """Refill the variable / group combos from the current df.
+
+        The variables are the dataset's numeric columns and, after a
+        separator, its trace ratios, alteration indices and anomalies;
+        the categories come from the dataset alone."""
         df = self.data.df
         # Numeric columns for the variable selector
         self._plots_var_combo.blockSignals(True)
@@ -1202,6 +1224,15 @@ class StatisticsView(QWidget):
                 cat_cols.append(str(col))
         for c in numeric_cols:
             self._plots_var_combo.addItem(c, c)
+        full = self._with_calculated()
+        calculated = [str(c) for c in (full.columns if full is not None
+                                       else [])
+                      if c not in df.columns]
+        if calculated:
+            self._plots_var_combo.insertSeparator(
+                self._plots_var_combo.count())
+            for c in calculated:
+                self._plots_var_combo.addItem(c, c)
         for c in cat_cols:
             self._plots_cat_combo.addItem(c, c)
         self._plots_var_combo.blockSignals(False)
@@ -1246,7 +1277,7 @@ class StatisticsView(QWidget):
         Reuses ``get_groups`` so the colours, the draw order and the
         hidden-group flags match every other view in the application.
         """
-        df = self.data.df
+        df = self._with_calculated()
         try:
             from ..diagrams.templates.base import get_groups
             groups = get_groups(df, self.plot_style)
@@ -1271,6 +1302,7 @@ class StatisticsView(QWidget):
             ax.axis("off")
             canvas.draw()
             return
+        df = self._with_calculated()      # the ratios and anomalies too
 
         kind = self._plot_type_combo.currentData()
         mode = self._split_mode()
@@ -1330,7 +1362,8 @@ class StatisticsView(QWidget):
     # Stat-plot renderers
     # ------------------------------------------------------------------
     def _numeric_series(self, col: str) -> pd.Series:
-        return pd.to_numeric(self.data.df[col], errors="coerce").dropna()
+        return pd.to_numeric(self._with_calculated()[col],
+                             errors="coerce").dropna()
 
     @staticmethod
     def _group_colour(style, fallback: str = "#0e6cb6") -> str:
@@ -1342,7 +1375,7 @@ class StatisticsView(QWidget):
         col = self._plots_var_combo.currentData()
         if not col:
             return
-        frame = self.data.df if df is None else df
+        frame = self._with_calculated() if df is None else df
         values = pd.to_numeric(frame.get(col), errors="coerce").dropna() \
             if col in frame.columns else pd.Series(dtype=float)
         if values.empty:
@@ -1420,7 +1453,7 @@ class StatisticsView(QWidget):
         cat = self._plots_cat_combo.currentData()
         if not var:
             return
-        df = self.data.df
+        df = self._with_calculated()
         values = pd.to_numeric(df[var], errors="coerce")
         if cat and cat in df.columns:
             groups = df[cat].astype(str)
@@ -1488,7 +1521,7 @@ class StatisticsView(QWidget):
     def _subset_series(self, df: Optional[pd.DataFrame],
                        col: str) -> pd.Series:
         """Numeric values of *col*, from *df* or the whole dataset."""
-        frame = self.data.df if df is None else df
+        frame = self._with_calculated() if df is None else df
         if frame is None or col not in frame.columns:
             return pd.Series(dtype=float)
         return pd.to_numeric(frame[col], errors="coerce").dropna()
@@ -1620,7 +1653,7 @@ class StatisticsView(QWidget):
         # Repopulate the correlation-tree selector. Default: tick all
         # available numeric columns so the matrix is non-empty on first
         # open. The user can then narrow down via the tree.
-        self._populate_corr_tree(self._correlation_source())
+        self._populate_corr_tree(self._with_calculated())
         self._refresh_corr_group_combo()
         self._update_correlation()
 
@@ -1806,7 +1839,7 @@ class StatisticsView(QWidget):
 
     def _corr_subsets(self) -> "list[tuple[str, pd.DataFrame]]":
         """(title, rows) pairs the matrix should be computed over."""
-        df = self._correlation_source()
+        df = self._with_calculated()
         choice = (getattr(self, "corr_group_combo", None)
                   and self.corr_group_combo.currentData()) or self._CORR_ALL
         if choice == self._CORR_ALL:

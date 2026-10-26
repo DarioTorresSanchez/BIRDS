@@ -598,8 +598,9 @@ REFERENCES: List[Section] = [
          "Letters*, *50*, 139-155. "
          "https://doi.org/10.1016/0012-821X(80)90125-9",
          "CHUR, the reference for εNd."),
-        # Crossref dates the volume 1968; the article is cited as 1969.
-        ("Papanastassiou, D. A., & Wasserburg, G. J. (1969). Initial "
+        # 1968, as Crossref and the journal date volume 5; often cited
+        # as 1969.
+        ("Papanastassiou, D. A., & Wasserburg, G. J. (1968). Initial "
          "strontium isotopic abundances and the resolution of small time"
          " differences in the formation of planetary objects. *Earth and"
          " Planetary Science Letters*, *5*, 361-376. "

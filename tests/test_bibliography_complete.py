@@ -100,6 +100,7 @@ def test_every_index_description_source_is_in_the_bibliography():
     "10.1016/0012-8252(66)90010-9",         # Fisher 1966
     "10.1016/0012-821X(86)90038-5",         # Hofmann et al. 1986
     "10.1016/j.chemgeo.2011.08.011",        # Pourmand et al. 2012
+    "Wasserburg, G. J. (1968)",             # as Crossref and EPSL date it
 ])
 def test_corrected_citations_present(fragment):
     assert fragment in _BLOB

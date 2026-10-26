@@ -25,7 +25,7 @@ References
 - Hofmann, A.W. (2003). Sampling mantle heterogeneity through oceanic basalts. *Treatise on Geochemistry* 2, 61-101.
 - DePaolo, D.J. & Wasserburg, G.J. (1976). Nd isotopic variations and petrogenetic models. *GRL* 3, 249-252.
 - Jacobsen, S.B. & Wasserburg, G.J. (1980). Sm-Nd isotopic evolution of chondrites. *EPSL* 50, 139-155.
-- Papanastassiou, D.A. & Wasserburg, G.J. (1969). Initial strontium isotopic abundances and the resolution of small time differences in the formation of planetary objects. *EPSL* 5, 361-376.
+- Papanastassiou, D.A. & Wasserburg, G.J. (1968). Initial strontium isotopic abundances and the resolution of small time differences in the formation of planetary objects. *EPSL* 5, 361-376.
 - Steiger, R.H. & Jäger, E. (1977). Subcommission on geochronology: convention on the use of decay constants. *EPSL* 36, 359-362.
 """
 
@@ -88,7 +88,7 @@ ND_CHUR     = CHUR_ND_143_144       # Jacobsen & Wasserburg (1980)
 SM_ND_CHUR  = CHUR_SM_147_144
 
 # Basaltic achondrite best initial ⁸⁷Sr/⁸⁶Sr (Papanastassiou & Wasserburg
-# 1969) and the age of the Earth it is taken at.
+# 1968) and the age of the Earth it is taken at.
 BABI_SR_87_86 = 0.69899
 AGE_EARTH_YR  = 4.55e9
 

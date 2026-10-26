@@ -19,8 +19,8 @@ apply. This was the lesson of the Pb NHRL: the drawn line in the source
 figure sits 5–7 px off Hart's published equation, which is the
 redrawing's error, not the equation's.
 
-The catalogue holds **54 unique diagrams**. The menus list 85 entries,
-but all 26 plutonic tectonic-discrimination entries re-use volcanic keys.
+The catalogue holds **55 unique diagrams**. The menus list 92 entries,
+but all 30 plutonic tectonic-discrimination entries re-use volcanic keys.
 The six modal diagrams of the Petrography view are outside these
 counts; they have their own section at the end, *The Petrography
 view*.
@@ -36,11 +36,11 @@ view*.
 | Verma's group, 2004–2008: functions and caption coordinates, checked against the authors' sheet | 3 | *Verma's group, 2004–2008* |
 | TAS, volcanic and plutonic, vertex by vertex | 2 | *Retracted findings*, *Middlemost (1994)* |
 | Rule, with the arithmetic under it checked | 1 | *Maniar & Piccoli (1989)* |
-| Drawn envelope, now measured, computed or read from printed coordinates | 22 | *Drawn envelope* to *Drummond & Defant (1990, JGR)* |
+| Drawn envelope, now measured, computed or read from printed coordinates | 23 | *Drawn envelope* to *Drummond & Defant (1990, JGR)* |
 | A plane computed from printed equations, with no fields to check | 1 | *Yang et al. (2019)* |
 | **Known wrong — fix first** | **0** | |
 | Still drawn by eye | **0** | *Still drawn by eye* |
-| **Total** | **54** | |
+| **Total** | **55** | |
 
 The Irvine & Baragar (1971) overlay on `afm`, the one curve this summary
 used to call unverified, is now Rickwood's (1989) measurement of their
@@ -461,7 +461,7 @@ faded to say so.
 `Ti` was converted from TiO₂ with 5995 ppm per wt.% in four places;
 the mass ratio gives 5993.4. Now a named constant, shared.
 
-## Drawn envelope — 22 done, none blocked
+## Drawn envelope — 23 done, none blocked
 
 Twelve are in the three subsections below; Saccani, Defant & Drummond,
 Pearce & Gale, Cabanis & Lecolle, Harris, the two Vermeesch QDA
@@ -1089,7 +1089,7 @@ and that each segment starts where the last ended. Swapping two digits
 of any one control-point coordinate — 216 such typos — fails it every
 time.
 
-## Drummond & Defant (1990, JGR) — (La/Yb)N against YbN
+## Drummond & Defant (1990, JGR) — (La/Yb)N against YbN, and Sr/Y against Y
 
 `drummond_defant_1990.pdf` — *J. Geophys. Res.* **95**(B13),
 21503–21521, a scan with an OCR text layer. Key `defant_drummond_YbLaYb`,
@@ -1128,9 +1128,28 @@ Nature paper's Yb ≤ 1.9 ppm, as a dotted line at YbN 8.64 labelled with
 its source. It lands 0.29 to the right of the TTG field's right edge,
 which is 1.84 ppm — two papers, the same limit to 0.06 ppm.
 
-`tests/test_drummond_defant_1990_jgr.py` pins the frame, the chondrite,
-the fields, the MORB checks, the agreement with Martin and the
-classification.
+**Figure 11**, key `drummond_defant_1990_YSrY`, plots Sr/Y against Y,
+0–50 by 0–500, with high-Al TTD data, four melting curves and one
+field: the island-arc andesite-dacite-rhyolite fractionation suite,
+drawn as a stipple of crosses with no outline. Measured on the
+2452 × 3386 scan of page 21,510, the axes on their inward ticks (Y
+25.20 px per unit, residuals under 4.5 px; Sr/Y 1.696 px per unit),
+the crosses found as connected components — 43 of them — and the field
+taken as their envelope, half a stipple spacing out (0.6 in Y, 4.5 in
+Sr/Y), since the pattern has no edge of its own. Its rows end at Y 26.9
+(Sr/Y 30), 43.4 (15) and 48.8 (5), so the field steps down to the right
+and runs off the frame; it is good to about 1 in Y and 5 in Sr/Y. Left
+of Y ≈ 17 the stipple runs under the melting curves and cannot be
+resolved. The curves and the two source compositions they start from
+— an Archean mafic composite (Table 2: Sr 141, Y 21) and MORB — are
+not drawn, as on Figure 10.
+
+Both figures are offered where Martin (1986) is: Intermediate and Acid,
+volcanic and plutonic.
+
+`tests/test_drummond_defant_1990_jgr.py` pins both frames, the
+chondrite, the fields, the MORB checks, the agreement with Martin and
+both classifications.
 
 ## Still drawn by eye — none
 

@@ -18,6 +18,18 @@ including what is still unverified.
 
 ### Added
 
+- **Sr/Y vs Y — Drummond & Defant (1990, JGR), Figure 11.** High-Al
+  TTD against the island-arc andesite-dacite-rhyolite fractionation
+  suite, in the figure's own frame (Y 0–50, Sr/Y 0–500), with a
+  classification. The ADR field is drawn on the figure as a stipple of
+  crosses with no outline; it is their envelope, half a stipple spacing
+  out, good to about 1 in Y and 5 in Sr/Y. The melting curves are not
+  drawn. Both Drummond & Defant figures are now under Intermediate and
+  Acid, volcanic and plutonic, where Martin (1986) is.
+- **Statistics → Plots** offers the trace ratios, alteration indices
+  and anomalies as variables, after a separator: a histogram, box,
+  violin, ECDF or Q-Q of Eu/Eu* or Nb/U, split by group or not.
+
 - **Trace ratios and anomalies in every Statistics tab.** Descriptive
   and By group summarise them like any column; the Paper table and the
   Correlation matrix list them under their own headings — trace-element
@@ -82,6 +94,15 @@ including what is still unverified.
   from the picker inside the view.
 
 ### Changed
+
+- **The saved report carries the correlation matrix built on screen**
+  — the columns ticked, ratios and anomalies included, the method and
+  the samples chosen — one sheet per group when the tab shows one per
+  group. It used to export an automatic matrix of the first 30 data
+  columns, whatever the tab showed. Sheet names lose the characters
+  Excel refuses (a group named "basalt: arc" stopped the export).
+- **Papanastassiou & Wasserburg dated 1968**, as Crossref and the
+  journal date the volume, in the bibliography and the Isotopes view.
 
 - **Reservoirs read in their own papers.** Rudnick & Gao (2003)
   Table 11: the middle crust's Pb and Sc were 15.3 and 22, for 15.2 and

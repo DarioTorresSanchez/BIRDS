@@ -872,9 +872,12 @@ def export_sections(
     if fmt == "xlsx":
         with pd.ExcelWriter(path, engine="openpyxl") as writer:
             for label, frame in sections.items():
-                safe = (
-                    label[:31].replace("/", "_").replace("\\", "_").replace("?", "")
-                )
+                # Excel refuses a colon, either slash, ?, * and square
+                # brackets in a sheet name, and more than 31 characters.
+                safe = label
+                for ch in ':\\/?*[]':
+                    safe = safe.replace(ch, "_")
+                safe = safe[:31]
                 frame.to_excel(writer, sheet_name=safe, index=True)
     elif fmt == "csv":
         with open(path, "w", encoding="utf-8") as fh:

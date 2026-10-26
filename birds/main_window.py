@@ -43,7 +43,6 @@ from .cipw import compute_cipw
 from .plot_style import PlotStyle
 from .preprocess import pre_process
 from .stats_engine import (
-    compute_correlation_matrix,
     compute_descriptive_by_group,
     compute_descriptive_full,
     export_sections,
@@ -988,9 +987,10 @@ class BirdsMainWindow(QMainWindow):
             # The same table the Statistics view shows, following the
             # adjusted-majors switch.
             sections["Trace-element ratios"] = self.statistics.ratio_frame()
-            corr = compute_correlation_matrix(self.data.df)
-            if not corr.empty:
-                sections["Correlation matrix"] = corr
+            # The matrices built on screen -- the elements ticked, the
+            # method and the grouping chosen -- one sheet per matrix.
+            for label, corr in self.statistics.correlation_sections():
+                sections[label] = corr
         if sections_flags.get("tectonic"):
             # Read whatever the user has computed inside the Statistics
             # view's Tectonic-discrimination tab. If they haven't ticked
