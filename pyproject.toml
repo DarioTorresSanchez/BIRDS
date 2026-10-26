@@ -9,7 +9,7 @@ description = "Broad Igneous Rocks — Diagrams & Statistics: a desktop applicat
 readme = "README.md"
 requires-python = ">=3.9"
 license = { file = "LICENSE" }
-authors = [{ name = "Darío Torres" }]
+authors = [{ name = "Darío Torres Sánchez" }]
 keywords = [
     "igneous petrology",
     "geochemistry",

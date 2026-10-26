@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-3993%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-3999%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -573,8 +573,8 @@ each plot's subtitle and listed in full under
 `References → Show full bibliography (APA)`.
 
 ```bibtex
-@software{torres2026birds,
-  author  = {Torres, Darío},
+@software{torressanchez2026birds,
+  author  = {Torres Sánchez, Darío},
   title   = {B.I.R.D.S — Broad Igneous Rocks: Diagrams \& Statistics},
   version = {0.1.0},
   year    = {2026},
@@ -582,7 +582,7 @@ each plot's subtitle and listed in full under
 }
 ```
 
-> Torres, D. (2026). *B.I.R.D.S — Broad Igneous Rocks: Diagrams & Statistics*
+> Torres Sánchez, D. (2026). *B.I.R.D.S — Broad Igneous Rocks: Diagrams & Statistics*
 > (Version 0.1.0) [Computer software].
 
 ---

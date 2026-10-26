@@ -1476,7 +1476,10 @@ class StatisticsView(QWidget):
             for pc in parts["bodies"]:
                 pc.set_facecolor("#0e6cb6"); pc.set_alpha(0.55)
         else:
-            ax.boxplot(data, labels=labels, patch_artist=True,
+            # No labels= here: matplotlib 3.9 renamed it tick_labels and
+            # is dropping the old name; the ticks are set below instead,
+            # which every version takes.
+            ax.boxplot(data, patch_artist=True,
                        boxprops=dict(facecolor="#dceaf6",
                                      edgecolor="#0e6cb6"),
                        medianprops=dict(color="#b13a3a", linewidth=1.4),
@@ -1484,9 +1487,8 @@ class StatisticsView(QWidget):
                        flierprops=dict(marker="o", markersize=4,
                                        markerfacecolor="#b13a3a",
                                        markeredgecolor="none", alpha=0.7))
-        if violin:
-            ax.set_xticks(range(1, len(labels) + 1))
-            ax.set_xticklabels(labels, rotation=30, ha="right")
+        ax.set_xticks(range(1, len(labels) + 1))
+        ax.set_xticklabels(labels, rotation=30, ha="right")
         ax.set_ylabel(var)
         ax.set_title(f"{var}" + (f"  by  {cat}" if cat else ""))
         ax.grid(True, axis="y", alpha=0.3)

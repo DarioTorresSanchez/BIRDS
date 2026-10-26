@@ -7,7 +7,7 @@ message: >-
 type: software
 authors:
   - given-names: Darío
-    family-names: Torres
+    family-names: Torres Sánchez
 abstract: >-
   A desktop application for plotting, classifying and analysing
   whole-rock geochemical data of igneous rocks. Bundles 62 diagram

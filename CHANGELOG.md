@@ -103,6 +103,13 @@ including what is still unverified.
 
 ### Changed
 
+- **The author is Darío Torres Sánchez** in CITATION.cff, pyproject.toml,
+  LICENSE, the README's BibTeX and APA citations, the manual and the
+  Windows installer, the same everywhere.
+- **The CI publishes the tail of a failing test run as an annotation**,
+  readable without a GitHub login, and runs on the current
+  `actions/checkout` and `actions/setup-python`.
+
 - **The project's home is github.com/DarioTorresSanchez/BIRDS.** The
   README, INSTALL, pyproject.toml and CITATION.cff point there — the
   placeholders and a user that was not the project's are gone — and the
@@ -889,6 +896,13 @@ including what is still unverified.
   fails if a metal table holds a value tied to no page.
 
 #### Interface
+
+- **Statistics → Plots box plot** passed `labels=` to matplotlib's
+  `boxplot`, renamed `tick_labels` in 3.9 and on its way out: the
+  warning became an error under the test settings — the only three
+  failures the suite has run as CI runs it — and would have become one
+  in the app with the next matplotlib. The tick labels are now set the
+  way the violin plot sets them.
 
 - **An empty Rock_Type column hid every sample from Classification and
   Tectonic.** Blank cells are kept on both the volcanic and the plutonic

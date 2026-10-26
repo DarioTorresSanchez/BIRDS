@@ -50,8 +50,8 @@ SECTIONS = [
         {"type": "p", "text":
          "If you use B.I.R.D.S in a publication, please cite the "
          "underlying references printed in each plot's subtitle, plus "
-         "the software itself: Torres, D. (2026). B.I.R.D.S — Broad "
-         "Igneous Rocks: Diagrams & Statistics (v0.1.0)."},
+         "the software itself: Torres Sánchez, D. (2026). B.I.R.D.S — "
+         "Broad Igneous Rocks: Diagrams & Statistics (v0.1.0)."},
     ]),
 
     ("2. System requirements", [

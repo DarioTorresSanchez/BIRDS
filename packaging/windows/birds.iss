@@ -19,7 +19,7 @@
 AppId={{6C1B7D2E-3F4A-4B8C-9D0E-B1A2C3D4E5F6}
 AppName={#AppName}
 AppVersion={#AppVersion}
-AppPublisher=Darío Torres
+AppPublisher=Darío Torres Sánchez
 DefaultDirName={autopf}\BIRDS
 DefaultGroupName={#AppName}
 OutputDir=..\..\dist\installer
