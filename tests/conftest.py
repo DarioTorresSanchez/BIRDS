@@ -101,8 +101,17 @@ def pytest_unconfigure(config):
         # os._exit still unloads the DLLs on Windows, and Qt's own
         # clean-up then fails the same way ("access violation");
         # TerminateProcess ends the process without running it.
+        # The types have to be declared: undeclared, ctypes passed the
+        # current-process handle (-1) as a 32-bit int, which a 64-bit
+        # Windows reads as an invalid handle, and the call failed
+        # without a word.
         import ctypes
-        kernel32 = ctypes.windll.kernel32
+        from ctypes import wintypes
+        kernel32 = ctypes.WinDLL("kernel32")
+        kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+        kernel32.GetCurrentProcess.argtypes = []
+        kernel32.TerminateProcess.restype = wintypes.BOOL
+        kernel32.TerminateProcess.argtypes = [wintypes.HANDLE, wintypes.UINT]
         kernel32.TerminateProcess(kernel32.GetCurrentProcess(),
                                   _EXIT_STATUS)
     os._exit(_EXIT_STATUS)
