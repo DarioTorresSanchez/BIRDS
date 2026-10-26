@@ -433,8 +433,34 @@ def test_the_build_workflow_runs_only_when_asked():
     assert "workflow_dispatch:" in on
     assert 'tags: ["v*"]' in on
     assert "branches" not in on and "pull_request" not in on
-    jobs = re.findall(r"^  (\w+):\n    runs-on:", text, re.MULTILINE)
-    assert jobs == ["windows", "linux"]
+    jobs = re.findall(r"^  (\w+):\n", text.split("\njobs:\n", 1)[1],
+                      re.MULTILINE)
+    assert jobs == ["windows", "linux", "release"]
+
+
+def _job(name: str) -> str:
+    text = BUILD_FLOW.read_text(encoding="utf-8")
+    return re.search(rf"^  {name}:\n(.*?)(?=^  \w+:\n|\Z)", text,
+                     re.MULTILINE | re.DOTALL).group(1)
+
+
+def test_a_version_tag_files_the_builds_as_a_draft_release():
+    """Only a tag reaches the Releases page, only once both builds pass,
+    and only as a draft: publishing stays a decision taken by hand."""
+    job = _job("release")
+    assert "if: startsWith(github.ref, 'refs/tags/v')" in job
+    assert "needs: [windows, linux]" in job
+    assert "contents: write" in job
+    assert "gh release create" in job and "--draft" in job
+
+
+def test_the_release_refuses_a_tag_that_is_not_the_version():
+    """The installers are named after birds/__init__.py, so the check
+    reads the version the same way."""
+    job = _job("release")
+    assert "app_info.version()" in job
+    assert '"${GITHUB_REF_NAME#v}" != "$version"' in job
+    assert job.index("Check the tag") < job.index("gh release create")
 
 
 @pytest.mark.parametrize("path", [

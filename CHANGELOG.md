@@ -21,7 +21,9 @@ including what is still unverified.
 - **Installers built by GitHub Actions** (`.github/workflows/build.yml`):
   the Windows installer (PyInstaller, then Inno Setup) and a Linux bundle
   with its desktop entry, session type and icons, each self-tested after
-  the build. Run by hand from the Actions tab or by a version tag.
+  the build. Run by hand from the Actions tab or by a version tag; a tag
+  also files both as a draft on the Releases page, to be published by
+  hand, and refuses a tag that is not the version in `birds/__init__.py`.
 - **pandas 2 and pandas 3 tested side by side** on Python 3.12, beside
   Python 3.9 with pandas 2 on Linux and Windows; every job prints the
   versions it ran. macOS is tested on the development Mac: GitHub's Mac

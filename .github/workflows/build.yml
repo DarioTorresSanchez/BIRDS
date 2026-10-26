@@ -3,8 +3,8 @@ name: build
 # The Windows installer and the Linux bundle, built on their own systems
 # -- PyInstaller packages for the platform it runs on.  Run by hand from
 # the Actions tab, or by pushing a version tag; the results are the
-# run's artifacts.  The macOS app is built on a Mac with
-# packaging/update_mac_app.py.
+# run's artifacts, and a version tag also files them as a draft release.
+# The macOS app is built on a Mac with packaging/update_mac_app.py.
 
 on:
   workflow_dispatch:
@@ -46,7 +46,7 @@ jobs:
       - name: Build the installer
         run: iscc packaging\windows\birds.iss
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: BIRDS-windows-installer
           path: dist/installer/*.exe
@@ -95,8 +95,43 @@ jobs:
              packaging/icons/birds_document_256.png dist/pack/BIRDS-linux/
           tar -C dist/pack -czf "dist/BIRDS-${version}-linux-x86_64.tar.gz" BIRDS-linux
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: BIRDS-linux
           path: dist/BIRDS-*-linux-x86_64.tar.gz
           if-no-files-found: error
+
+  # Users find programs under Releases, not among a run's artifacts,
+  # which need a GitHub login and expire.  A version tag files both
+  # builds there as a draft: nothing is public until it is published by
+  # hand from the Releases page, where the macOS app is added too.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      # The files are named after birds/__init__.py; a tag saying
+      # otherwise would file them under the wrong version.
+      - name: Check the tag against the version
+        run: |
+          version=$(python3 -c "import sys; sys.path.insert(0, 'packaging'); import app_info; print(app_info.version())")
+          if [ "${GITHUB_REF_NAME#v}" != "$version" ]; then
+            echo "::error::The tag is $GITHUB_REF_NAME but birds/__init__.py says $version"
+            exit 1
+          fi
+
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: File the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* --draft --verify-tag \
+            --title "B.I.R.D.S $GITHUB_REF_NAME" --generate-notes
