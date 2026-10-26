@@ -63,6 +63,16 @@ def test_the_template_count_is_right(manual_text):
     assert _count_before(manual_text, "plotting templates") == len(_REGISTRY)
 
 
+def test_the_citation_file_and_readme_count_the_same_templates():
+    """CITATION.cff said 52 for months after there were 62."""
+    root = Path(__file__).resolve().parents[1]
+    cff = (root / "CITATION.cff").read_text(encoding="utf-8")
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    cff = " ".join(cff.split())
+    assert _count_before(cff, "diagram templates") == len(_REGISTRY)
+    assert _count_before(readme, "diagram templates") == len(_REGISTRY)
+
+
 def test_the_tectonic_diagram_count_is_right(manual_text):
     keys = {k for cat in (TECTONIC_VOLCANIC, TECTONIC_PLUTONIC)
             for section in cat.values() for _label, k in section}
