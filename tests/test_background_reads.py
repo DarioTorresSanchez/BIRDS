@@ -192,9 +192,9 @@ def test_every_file_read_of_the_window_goes_through_the_worker():
     """A new read added on the window's thread would bring the freeze
     back; each one named here must stay off it."""
     root = Path(__file__).resolve().parent.parent / "birds"
-    window = (root / "main_window.py").read_text()
+    window = (root / "main_window.py").read_text(encoding="utf-8")
     for call in ("load_session, path", "load_preset, path_str"):
         assert "run_in_background" in window and call in window, call
-    dialog = (root / "dialogs" / "import_dialog.py").read_text()
+    dialog = (root / "dialogs" / "import_dialog.py").read_text(encoding="utf-8")
     assert "self._read(list_excel_sheets" in dialog
     assert dialog.count("self._read(read_tabular") == 2

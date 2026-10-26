@@ -29,7 +29,7 @@ from birds.diagrams.registry import get_diagram
 from birds.diagrams.templates import tectonic_ternary as tt
 
 DATA = json.loads((Path(__file__).parent / "data"
-                   / "vermeesch2006_qda_figures.json").read_text())
+                   / "vermeesch2006_qda_figures.json").read_text(encoding="utf-8"))
 SPECS = {"NaNbSr": tt._QDA_NA_NB_SR, "SmTiV": tt._QDA_TI_V_SM}
 CLASSES = ("IAB", "MORB", "OIB")
 

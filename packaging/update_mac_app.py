@@ -73,7 +73,7 @@ def run_tests() -> bool:
 def build() -> bool:
     """Run PyInstaller, its chatter going to the log."""
     LOG.parent.mkdir(exist_ok=True)
-    with open(LOG, "w") as log:
+    with open(LOG, "w", encoding="utf-8") as log:
         done = subprocess.run(
             [sys.executable, "-m", "PyInstaller", str(SPEC), "--noconfirm"],
             cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)

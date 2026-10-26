@@ -557,7 +557,7 @@ def test_the_esri_ascii_grid_is_written_north_first(tmp_path):
     values = np.array([[1.0, 2.0],      # south row
                        [3.0, 4.0]])     # north row
     path = write_esri_ascii(tmp_path / "g.asc", g, values)
-    lines = path.read_text().splitlines()
+    lines = path.read_text(encoding="utf-8").splitlines()
     assert lines[0].split() == ["ncols", "2"]
     assert lines[5].split()[0] == "NODATA_value"
     assert [float(v) for v in lines[6].split()] == [3.0, 4.0]
@@ -567,7 +567,7 @@ def test_the_esri_ascii_grid_is_written_north_first(tmp_path):
 def test_the_projection_file_declares_wgs84(tmp_path):
     g = make_grid(0.0, 1.0, 0.0, 1.0, cells_across=2)
     path = write_esri_ascii(tmp_path / "g.asc", g, np.zeros((2, 2)))
-    prj = path.with_suffix(".prj").read_text()
+    prj = path.with_suffix(".prj").read_text(encoding="utf-8")
     assert prj == WGS84_PRJ
     assert "6378137.0,298.257223563" in prj
 

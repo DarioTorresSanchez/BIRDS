@@ -8,13 +8,24 @@ on:
 
 jobs:
   test:
-    name: ${{ matrix.os }} · Python ${{ matrix.python-version }}
+    name: ${{ matrix.os }} · Python ${{ matrix.python-version }}${{ matrix.pandas != 'latest' && format(' · pandas {0}', matrix.pandas) || '' }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.9", "3.12"]
+        pandas: ["latest"]
+        # Python 3.9 gets pandas 2 and 3.12 gets pandas 3 by themselves;
+        # this one holds pandas 2 on the newer Python, so both pandas
+        # are tested side by side.  pandas 3 changed how missing text is
+        # stored, which once emptied every Classification diagram.  (A
+        # different value of an existing key makes it a job of its own
+        # rather than merging into ubuntu / 3.12.)
+        include:
+          - os: ubuntu-latest
+            python-version: "3.12"
+            pandas: "<3"
 
     steps:
       - uses: actions/checkout@v5
@@ -40,6 +51,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e ".[test]"
+
+      - name: Hold pandas back
+        if: matrix.pandas != 'latest'
+        shell: bash
+        run: python -m pip install "pandas${{ matrix.pandas }}"
+
+      - name: Report the versions tested
+        shell: bash
+        run: python -c "import sys, pandas, numpy, matplotlib, PySide6; print(sys.version.split()[0], 'pandas', pandas.__version__, 'numpy', numpy.__version__, 'matplotlib', matplotlib.__version__, 'PySide6', PySide6.__version__)"
 
       # The job log needs a GitHub login to read; an annotation does not.
       # On failure the tail of pytest's output -- the failures, or the

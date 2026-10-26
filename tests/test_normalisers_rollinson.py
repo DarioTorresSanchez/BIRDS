@@ -22,7 +22,7 @@ import pytest
 from birds import normalizations as N
 
 BOOK = json.loads((Path(__file__).parent / "data"
-                   / "rollinson_pease_2021_tables.json").read_text())["tables"]
+                   / "rollinson_pease_2021_tables.json").read_text(encoding="utf-8"))["tables"]
 
 #: (group, name) -> (table, column) where the book prints it.
 CHECKED = {

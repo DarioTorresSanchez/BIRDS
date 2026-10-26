@@ -1,0 +1,102 @@
+name: build
+
+# The Windows installer and the Linux bundle, built on their own systems
+# -- PyInstaller packages for the platform it runs on.  Run by hand from
+# the Actions tab, or by pushing a version tag; the results are the
+# run's artifacts.  The macOS app is built on a Mac with
+# packaging/update_mac_app.py.
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install B.I.R.D.S, the map extras and PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[map]" pyinstaller
+
+      - name: Build the application
+        run: pyinstaller packaging\birds.spec --noconfirm
+
+      # Puts a diagram, the kriging, UTM and MGRS, the CIPW norm, a
+      # session and an Excel file through the packaged code.
+      - name: Self-test the build
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          $p = Start-Process -FilePath dist\BIRDS\BIRDS.exe `
+               -ArgumentList "--self-test" -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { throw "self-test failed ($($p.ExitCode))" }
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Build the installer
+        run: iscc packaging\windows\birds.iss
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BIRDS-windows-installer
+          path: dist/installer/*.exe
+          if-no-files-found: error
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Qt system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1 libegl1 libxkbcommon-x11-0 libdbus-1-3 libxcb-cursor0 \
+            libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+            libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
+
+      - name: Install B.I.R.D.S, the map extras and PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[map]" pyinstaller
+
+      - name: Build the application
+        run: pyinstaller packaging/birds.spec --noconfirm
+
+      - name: Self-test the build
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: dist/BIRDS/BIRDS --self-test
+
+      # The program with what registers .birds sessions on the desktop:
+      # see "Linux" in packaging/README.md.
+      - name: Pack the bundle
+        run: |
+          version=$(python -c "import sys; sys.path.insert(0, 'packaging'); import app_info; print(app_info.version())")
+          mkdir -p dist/pack/BIRDS-linux
+          cp -r dist/BIRDS dist/pack/BIRDS-linux/
+          cp packaging/linux/* dist/pack/BIRDS-linux/
+          cp packaging/icons/birds_app_256.png \
+             packaging/icons/birds_document_256.png dist/pack/BIRDS-linux/
+          tar -C dist/pack -czf "dist/BIRDS-${version}-linux-x86_64.tar.gz" BIRDS-linux
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BIRDS-linux
+          path: dist/BIRDS-*-linux-x86_64.tar.gz
+          if-no-files-found: error

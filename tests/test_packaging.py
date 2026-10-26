@@ -188,8 +188,8 @@ def test_the_windows_installer_registers_the_session_type():
 
 
 def test_the_linux_mime_type_matches_the_desktop_entry():
-    mime = (PACKAGING / "linux" / "birds-session.xml").read_text()
-    desktop = (PACKAGING / "linux" / "birds.desktop").read_text()
+    mime = (PACKAGING / "linux" / "birds-session.xml").read_text(encoding="utf-8")
+    desktop = (PACKAGING / "linux" / "birds.desktop").read_text(encoding="utf-8")
     assert f'type="{app_info.SESSION_MIME}"' in mime
     assert f'<glob pattern="*.{app_info.SESSION_EXTENSION}"/>' in mime
     assert f"MimeType={app_info.SESSION_MIME};" in desktop
@@ -197,7 +197,7 @@ def test_the_linux_mime_type_matches_the_desktop_entry():
 
 
 def test_the_spec_bundles_the_document_icon_and_the_logo():
-    spec = (PACKAGING / "birds.spec").read_text()
+    spec = (PACKAGING / "birds.spec").read_text(encoding="utf-8")
     assert "app_info.info_plist()" in spec
     assert "DOCUMENT_ICON" in spec and "birds\" / \"resources\"" in spec
 
@@ -252,7 +252,7 @@ def test_a_missing_compiled_library_costs_mgrs_not_the_program(monkeypatch):
 
 
 def test_the_spec_bundles_the_mgrs_library():
-    spec = (PACKAGING / "birds.spec").read_text()
+    spec = (PACKAGING / "birds.spec").read_text(encoding="utf-8")
     assert 'glob("libmgrs*")' in spec and "binaries=binaries" in spec
 
 
@@ -270,7 +270,7 @@ def _fake_app(folder, marker, identifier=app_info.BUNDLE_ID):
 
 
 def _marker(app):
-    return updater.executable(app).read_text()
+    return updater.executable(app).read_text(encoding="utf-8")
 
 
 macos_only = pytest.mark.skipif(sys.platform != "darwin",
@@ -416,3 +416,33 @@ def test_a_stop_is_reported_not_raised(pipeline, tmp_path, capsys):
     pipeline.self_test = False
     assert updater.main(["--dest", str(tmp_path)]) == 1
     assert "Stopped:" in capsys.readouterr().err
+
+
+# ---------------------------------------------------------------------------
+# The build workflow (.github/workflows/build.yml)
+# ---------------------------------------------------------------------------
+
+BUILD_FLOW = ROOT / ".github" / "workflows" / "build.yml"
+
+
+def test_the_build_workflow_runs_only_when_asked():
+    """Building installers takes a quarter of an hour on two systems:
+    by hand, or for a version tag -- never on every push."""
+    text = BUILD_FLOW.read_text(encoding="utf-8")
+    on = text.split("\non:\n", 1)[1].split("\njobs:", 1)[0]
+    assert "workflow_dispatch:" in on
+    assert 'tags: ["v*"]' in on
+    assert "branches" not in on and "pull_request" not in on
+    jobs = re.findall(r"^  (\w+):\n    runs-on:", text, re.MULTILINE)
+    assert jobs == ["windows", "linux"]
+
+
+@pytest.mark.parametrize("path", [
+    "packaging/birds.spec", "packaging/windows/birds.iss",
+    "packaging/icons/birds_app_256.png",
+    "packaging/icons/birds_document_256.png",
+])
+def test_what_the_build_workflow_uses_is_in_the_repository(path):
+    text = BUILD_FLOW.read_text(encoding="utf-8")
+    assert (ROOT / path).exists()
+    assert path.replace("/", "\\") in text or path in text

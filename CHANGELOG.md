@@ -18,6 +18,14 @@ including what is still unverified.
 
 ### Added
 
+- **Installers built by GitHub Actions** (`.github/workflows/build.yml`):
+  the Windows installer (PyInstaller, then Inno Setup) and a Linux bundle
+  with its desktop entry, session type and icons, each self-tested after
+  the build. Run by hand from the Actions tab or by a version tag.
+- **pandas 2 and pandas 3 tested side by side** on Python 3.12, beside
+  Python 3.9 with pandas 2 on Linux, macOS and Windows; every job prints
+  the versions it ran.
+
 - **Sr/Y vs Y — Defant & Drummond (1993), Figure 2**: the adakite,
   island-arc andesite-dacite-rhyolite and Juan de Fuca Ridge fields,
   drawn — the *Nature* paper of 1990 describes adakites but outlines
@@ -896,6 +904,14 @@ including what is still unverified.
   fails if a metal table holds a value tied to no page.
 
 #### Interface
+
+- **Expressions on Python 3.14.** The expression evaluator behind
+  derived axes, Mg# and the reservoir overlays still checked for
+  `ast.Num`, deprecated in Python 3.12 and removed in 3.14, where every
+  such axis would have stopped working; `ast.Constant` alone is used.
+  Found by the first CI runs, as were two Windows-only faults in the
+  tests: files read without saying UTF-8, and a home folder taken from
+  `USERPROFILE`, which the suite's sandbox did not set.
 
 - **Statistics → Plots box plot** passed `labels=` to matplotlib's
   `boxplot`, renamed `tick_labels` in 3.9 and on its way out: the

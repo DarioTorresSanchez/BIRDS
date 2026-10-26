@@ -72,7 +72,7 @@ def test_main_logs_native_crashes(tmp_path, monkeypatch):
     try:
         main._install_faulthandler()
         assert faulthandler.is_enabled()
-        assert "SESSION START" in (tmp_path / "crash.log").read_text()
+        assert "SESSION START" in (tmp_path / "crash.log").read_text(encoding="utf-8")
     finally:
         faulthandler.disable()
         if main._FAULT_FILE is not None:

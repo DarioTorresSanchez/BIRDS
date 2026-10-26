@@ -29,6 +29,8 @@ matplotlib.get_configdir()
 matplotlib.get_cachedir()
 _SANDBOX = tempfile.mkdtemp(prefix="birds-tests-")
 os.environ["HOME"] = _SANDBOX
+# Windows takes the home folder from USERPROFILE and ignores HOME.
+os.environ["USERPROFILE"] = _SANDBOX
 atexit.register(shutil.rmtree, _SANDBOX, ignore_errors=True)
 
 from PySide6.QtCore import QSettings  # noqa: E402

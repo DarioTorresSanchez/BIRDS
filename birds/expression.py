@@ -220,9 +220,6 @@ def _eval_node(node: ast.AST, *, df_source: Optional[pd.DataFrame] = None,
             raise ExpressionError(f"Unsupported literal: {node.value!r}")
         return float(node.value)
 
-    if isinstance(node, ast.Num):  # legacy alias (Python < 3.8)
-        return float(node.n)
-
     # Identifiers ---------------------------------------------------------
     if isinstance(node, ast.Name):
         name = _TOKEN_NAMES.get(node.id, node.id)

@@ -26,7 +26,7 @@ from birds import verma_probability as VP
 from birds.diagrams.templates import verma_coefficients as V
 
 SHEET = json.loads((Path(__file__).parent / "data"
-                    / "verma_statistica_sheet.json").read_text())
+                    / "verma_statistica_sheet.json").read_text(encoding="utf-8"))
 TABLES = list(SHEET["functions"])
 
 #: Values a paper prints that are neither the sheet's value rounded nor

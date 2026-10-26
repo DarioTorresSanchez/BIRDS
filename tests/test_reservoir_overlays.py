@@ -105,8 +105,11 @@ def bivariate(qapp, full_df):
     df["FeOt"] = np.abs(df["FeO"]) + 0.8998 * np.abs(df["Fe2O3"])
     w.data.df = df
     w.on_dataset_replaced()
+    # The page on screen draws at once (see views/deferral.py); no event
+    # loop is needed, and running one here delivers late events of
+    # windows other tests have already let go -- on Windows, into a
+    # deleted canvas.
     w.stack.setCurrentWidget(w.bivariate)
-    qapp.processEvents()
     ind = w.bivariate._individual
     tree = ind.reservoirs_grp.tree
     for i in range(tree.topLevelItemCount()):
@@ -123,7 +126,6 @@ def _stars(w, qapp, x, y):
     ind.y_combo.setCurrentText(y)
     assert (ind.x_combo.currentText(), ind.y_combo.currentText()) == (x, y)
     w.bivariate.update_plot()
-    qapp.processEvents()
     ax = w.bivariate.canvas.figure.axes[0]
     return sorted(tuple(c.get_offsets()[0]) for c in ax.collections
                   if len(c.get_offsets()) == 1)

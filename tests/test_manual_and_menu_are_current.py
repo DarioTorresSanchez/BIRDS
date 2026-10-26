@@ -108,7 +108,7 @@ def test_the_statistics_tab_count_is_right(manual_text):
     plot tabs were added."""
     from birds.views import statistics
 
-    source = Path(statistics.__file__).read_text()
+    source = Path(statistics.__file__).read_text(encoding="utf-8")
     tabs = re.findall(r"self\._add_tab\(", source)
     words = {5: "Five", 6: "Six", 7: "Seven", 8: "Eight", 9: "Nine"}
     assert f"{words[len(tabs)]} tabs" in manual_text

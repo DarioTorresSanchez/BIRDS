@@ -88,7 +88,7 @@ def program_counts() -> dict:
         "reservoirs": len(RESERVOIRS),
         "parameters": len(DISCRIMINATORS),
         "statistics_tabs": len(re.findall(
-            r"self\._add_tab\(", Path(statistics.__file__).read_text())),
+            r"self\._add_tab\(", Path(statistics.__file__).read_text(encoding="utf-8"))),
         "petrography": len(_PETROGRAPHY_CATALOG),
     }
 
