@@ -90,7 +90,8 @@ def replace_app(built: Path, installed: Path) -> None:
     The copy is made beside the old app and swapped in by renaming, so
     whatever fails, a working app is left at ``installed``.
     """
-    if installed.exists() and bundle_id(installed) != app_info.BUNDLE_ID:
+    ours = (app_info.BUNDLE_ID, *app_info.PREVIOUS_BUNDLE_IDS)
+    if installed.exists() and bundle_id(installed) not in ours:
         raise Stop(f"{installed} is not B.I.R.D.S "
                    f"(it is {bundle_id(installed) or 'unidentified'}); "
                    f"left alone.")

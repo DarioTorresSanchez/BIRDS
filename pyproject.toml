@@ -50,8 +50,8 @@ test = ["pytest>=7.0"]
 dev = ["pytest>=7.0", "ruff>=0.4"]
 
 [project.urls]
-Homepage = "https://github.com/dariotorres/BIRDS"
-Issues = "https://github.com/dariotorres/BIRDS/issues"
+Homepage = "https://github.com/DarioTorresSanchez/BIRDS"
+Issues = "https://github.com/DarioTorresSanchez/BIRDS/issues"
 
 [project.gui-scripts]
 birds = "main:main"

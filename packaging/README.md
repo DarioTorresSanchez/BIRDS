@@ -105,8 +105,10 @@ with `dist/BIRDS/BIRDS` on the `PATH` as `BIRDS`.
 
 ## Before the first public release
 
-`BUNDLE_ID` in `app_info.py` (now `io.github.dariotorres.birds`) is how
-macOS remembers which app owns `.birds` files. Settle it before the
-first release: after it, a different identifier is a different app for
-every installed copy. The same goes for the installer's `AppId` in
+`BUNDLE_ID` in `app_info.py` is `io.github.dariotorressanchez.birds`,
+after the project's GitHub account, settled on 2026-10-26 before the
+first release. It is how macOS remembers which app owns `.birds`
+files: after a release, a different identifier is a different app for
+every installed copy. `PREVIOUS_BUNDLE_IDS` lists the one used before,
+so `update_mac_app.py` still recognises an older install as B.I.R.D.S. The same goes for the installer's `AppId` in
 `windows/birds.iss`.

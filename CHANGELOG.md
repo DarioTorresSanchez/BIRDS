@@ -103,6 +103,13 @@ including what is still unverified.
 
 ### Changed
 
+- **The project's home is github.com/DarioTorresSanchez/BIRDS.** The
+  README, INSTALL, pyproject.toml and CITATION.cff point there — the
+  placeholders and a user that was not the project's are gone — and the
+  macOS bundle identifier, settled before the first release, is
+  `io.github.dariotorressanchez.birds`; the updater still recognises a
+  copy installed under the old one.
+
 - **The saved report carries the correlation matrix built on screen**
   — the columns ticked, ratios and anomalies included, the method and
   the samples chosen — one sheet per group when the tab shows one per

@@ -79,7 +79,7 @@ brew install python@3.11
 If you have `git`:
 
 ```bash
-git clone https://github.com/<your-username>/BIRDS.git
+git clone https://github.com/DarioTorresSanchez/BIRDS.git
 ```
 
 Otherwise download the ZIP from the repository page (green **Code** button →
@@ -167,7 +167,7 @@ box ticked, or use `py --version` instead of `python --version` throughout.
 If you have [Git for Windows](https://git-scm.com/download/win):
 
 ```powershell
-git clone https://github.com/<your-username>/BIRDS.git
+git clone https://github.com/DarioTorresSanchez/BIRDS.git
 ```
 
 Otherwise download the ZIP from the repository page (green **Code** button →
@@ -260,7 +260,7 @@ Python 3.9 or later is required.
 ### 3. Download B.I.R.D.S
 
 ```bash
-git clone https://github.com/<your-username>/BIRDS.git
+git clone https://github.com/DarioTorresSanchez/BIRDS.git
 ```
 
 ### 4. Enter the project folder

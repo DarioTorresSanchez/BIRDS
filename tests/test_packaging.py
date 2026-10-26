@@ -297,6 +297,18 @@ def test_a_first_install_needs_no_old_copy(tmp_path):
     assert _marker(installed) == "new"
 
 
+@macos_only
+def test_an_install_under_the_previous_identifier_is_still_ours(tmp_path):
+    """The identifier moved to the project's GitHub account on
+    2026-10-26; the copy already installed carries the old one."""
+    assert app_info.BUNDLE_ID == "io.github.dariotorressanchez.birds"
+    built = _fake_app(tmp_path / "dist", "new")
+    installed = _fake_app(tmp_path / "Applications", "old",
+                          identifier=app_info.PREVIOUS_BUNDLE_IDS[0])
+    updater.replace_app(built, installed)
+    assert _marker(installed) == "new"
+
+
 def test_another_app_with_the_name_is_left_alone(tmp_path):
     built = _fake_app(tmp_path / "dist", "new")
     other = _fake_app(tmp_path / "Applications", "theirs",

@@ -19,7 +19,11 @@ ICONS = Path(__file__).resolve().parent / "icons"
 
 APP_NAME = "BIRDS"                      # file names: BIRDS.app, BIRDS.exe
 DISPLAY_NAME = "B.I.R.D.S"
-BUNDLE_ID = "io.github.dariotorres.birds"
+BUNDLE_ID = "io.github.dariotorressanchez.birds"
+
+#: Identifiers B.I.R.D.S was built under before, so that an installed
+#: copy carrying one is still recognised as B.I.R.D.S and replaced.
+PREVIOUS_BUNDLE_IDS = ("io.github.dariotorres.birds",)
 
 SESSION_EXTENSION = "birds"             # birds.session.SESSION_EXT, no dot
 SESSION_UTI = f"{BUNDLE_ID}.session"

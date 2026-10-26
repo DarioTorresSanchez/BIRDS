@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-3980%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-3993%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -381,7 +381,7 @@ Full step-by-step instructions for **macOS, Windows and Linux** are in
 The short version, once Python 3.9+ is available:
 
 ```bash
-git clone https://github.com/<your-username>/BIRDS.git
+git clone https://github.com/DarioTorresSanchez/BIRDS.git
 ```
 
 ```bash
@@ -578,7 +578,7 @@ each plot's subtitle and listed in full under
   title   = {B.I.R.D.S — Broad Igneous Rocks: Diagrams \& Statistics},
   version = {0.1.0},
   year    = {2026},
-  url     = {https://github.com/<your-username>/BIRDS}
+  url     = {https://github.com/DarioTorresSanchez/BIRDS}
 }
 ```
 
