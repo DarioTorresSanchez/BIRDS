@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QToolBar,
 )
 
+from . import __version__
 from .data_manager import DataManager
 from .session import (
     SESSION_EXT,
@@ -1107,7 +1108,7 @@ class BirdsMainWindow(QMainWindow):
                 "multidimensional tectonic discrimination diagrams from "
                 "Rollinson &amp; Pease (2021), Pearce (2008), Verma and "
                 "co-authors (2006-2017) and Yang et al. (2019).</p>"
-                "<p><i>Version 0.1.0 (alpha)</i></p>"
+                f"<p><i>Version {__version__}</i></p>"
             ),
         )
 

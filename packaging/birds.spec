@@ -79,6 +79,6 @@ if MAC:
         name=f"{app_info.APP_NAME}.app",
         icon=icon,
         bundle_identifier=app_info.BUNDLE_ID,
-        version=app_info.version(),
+        version=app_info.bundle_version(),
         info_plist=app_info.info_plist(),
     )

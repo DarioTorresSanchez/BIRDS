@@ -41,6 +41,17 @@ def version() -> str:
     return match.group(1) if match else "0.0.0"
 
 
+def bundle_version() -> str:
+    """The version as macOS takes it: numbers and dots only, so a beta
+    such as 0.1.0b1 is declared as 0.1.0."""
+    return re.match(r"\d+(?:\.\d+)*", version()).group(0)
+
+
+#: The bundled Qt needs macOS 13 (its frameworks are built for it); an
+#: older Mac is told so by Finder instead of watching the app crash.
+MINIMUM_MACOS = "13.0"
+
+
 def info_plist() -> dict:
     """The keys macOS reads from BIRDS.app/Contents/Info.plist.
 
@@ -53,11 +64,11 @@ def info_plist() -> dict:
         "CFBundleName": APP_NAME,
         "CFBundleDisplayName": DISPLAY_NAME,
         "CFBundleIdentifier": BUNDLE_ID,
-        "CFBundleShortVersionString": version(),
-        "CFBundleVersion": version(),
+        "CFBundleShortVersionString": bundle_version(),
+        "CFBundleVersion": bundle_version(),
         "NSHighResolutionCapable": True,
         "NSHumanReadableCopyright": "MIT License",
-        "LSMinimumSystemVersion": "11.0",
+        "LSMinimumSystemVersion": MINIMUM_MACOS,
         "CFBundleDocumentTypes": [{
             "CFBundleTypeName": SESSION_DESCRIPTION,
             "CFBundleTypeRole": "Editor",

@@ -6,9 +6,17 @@ keep a single source of truth here.
 
 from __future__ import annotations
 
+import re
+from pathlib import Path
+
+# The program's own version, read without importing it (and Qt with it).
+VERSION = re.search(
+    r'__version__\s*=\s*"([^"]+)"',
+    (Path(__file__).resolve().parent.parent / "birds" / "__init__.py")
+    .read_text(encoding="utf-8")).group(1)
 
 TITLE = "B.I.R.D.S — User Manual"
-SUBTITLE = "Broad Igneous Rocks — Diagrams & Statistics · Version 0.1.0"
+SUBTITLE = f"Broad Igneous Rocks — Diagrams & Statistics · Version {VERSION}"
 
 
 # Each section is a tuple: (title, list of paragraphs / structured blocks)
@@ -51,13 +59,15 @@ SECTIONS = [
          "If you use B.I.R.D.S in a publication, please cite the "
          "underlying references printed in each plot's subtitle, plus "
          "the software itself: Torres Sánchez, D. (2026). B.I.R.D.S — "
-         "Broad Igneous Rocks: Diagrams & Statistics (v0.1.0)."},
+         f"Broad Igneous Rocks: Diagrams & Statistics (v{VERSION})."},
     ]),
 
     ("2. System requirements", [
         {"type": "bullet", "items": [
-            "Operating system: Windows 10 or later, macOS 11 (Big Sur) "
-            "or later, or any modern Linux distribution.",
+            "Operating system, to run from the source: Windows 10 or "
+            "later, macOS 11 (Big Sur) or later, or any modern Linux "
+            "distribution. The ready-made application needs a little "
+            "more; see below.",
             "Memory: at least 4 GB RAM (8 GB recommended for large "
             "datasets).",
             "Disk space: ~500 MB including Python + libraries.",
@@ -68,6 +78,26 @@ SECTIONS = [
             "Installed as an application — BIRDS.app on macOS, or "
             "through the Windows installer — B.I.R.D.S needs no Python "
             "at all, and about 400 MB of disk.",
+        ]},
+        {"type": "h2", "text": "The ready-made application"},
+        {"type": "p", "text":
+         "Each release puts the application, ready to run, on the "
+         "Releases page: https://github.com/DarioTorresSanchez/BIRDS/"
+         "releases — under Assets, the file for your system. It needs:"},
+        {"type": "bullet", "items": [
+            "Windows: Windows 10 or 11, 64-bit — BIRDS-<version>-setup.exe "
+            "(section 3.5).",
+            "macOS: macOS 13 (Ventura) or later on an Apple-silicon Mac "
+            "(M1 or newer) — BIRDS-<version>-macOS-arm64.zip (section "
+            "4.5). On an Intel Mac, run it from the source.",
+            "Linux: x86-64, Ubuntu 24.04, Debian 13, Fedora 40 or newer, "
+            "or a distribution based on one of them — "
+            "BIRDS-<version>-linux-x86_64.tar.gz. Unpack it and run "
+            "BIRDS-linux/install.sh: it installs for your user only, "
+            "with no administrator password, adds B.I.R.D.S to the "
+            "applications menu and makes .birds files open with a "
+            "double-click. BIRDS-linux/install.sh --uninstall removes "
+            "it.",
         ]},
     ]),
 
@@ -115,13 +145,20 @@ SECTIONS = [
          "and name it B.I.R.D.S."},
         {"type": "h2", "text": "3.5  The installer"},
         {"type": "p", "text":
-         "B.I.R.D.S can also be packaged as a Windows installer. The "
-         "installed program needs no Python, has a Start-menu entry, "
-         "and registers .birds sessions: they carry the session icon "
-         "and open with a double-click. The installer is built on a "
-         "Windows computer from the source, with PyInstaller and Inno "
-         "Setup 6, following packaging/README.md; check the built "
-         "program with BIRDS.exe --self-test before sharing it."},
+         "Instead of sections 3.1–3.4, B.I.R.D.S can be installed as a "
+         "program of its own. Download BIRDS-<version>-setup.exe from "
+         "the Releases page (section 2) and run it. The installed "
+         "program needs no Python, has a Start-menu entry, and "
+         "registers .birds sessions: they carry the session icon and "
+         "open with a double-click."},
+        {"type": "note", "text":
+         "The installer is not signed with a paid code-signing "
+         "certificate, so the first time Windows shows “Windows "
+         "protected your PC”. Click More info, then Run anyway."},
+        {"type": "p", "text":
+         "The installer is built from the source with PyInstaller and "
+         "Inno Setup 6, following packaging/README.md; check a build "
+         "of your own with BIRDS.exe --self-test before sharing it."},
     ]),
 
     ("4. Installation — macOS", [
@@ -161,11 +198,15 @@ SECTIONS = [
          "knows its sessions: every .birds file carries the session "
          "icon and opens in B.I.R.D.S with a double-click."},
         {"type": "bullet", "items": [
-            "If you received BIRDS.app: drag it into Applications. The "
-            "first time, right-click it and choose Open, then Open "
-            "again — the app is not signed with an Apple developer "
-            "certificate, so macOS asks once. After that it opens "
-            "normally.",
+            "Download BIRDS-<version>-macOS-arm64.zip from the Releases "
+            "page (section 2), open it, and drag BIRDS into "
+            "Applications. It needs macOS 13 or later on an "
+            "Apple-silicon Mac.",
+            "The first time, macOS says it could not verify the app — "
+            "it is not signed with a paid Apple developer certificate. "
+            "Click Done, open System Settings → Privacy & Security, "
+            "scroll down to the message about BIRDS and click Open "
+            "Anyway. After that it opens normally.",
             "To build it yourself, with the libraries of section 4.3 "
             "installed, add PyInstaller once and run the updater from "
             "the BIRDS folder:",

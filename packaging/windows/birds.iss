@@ -12,7 +12,7 @@
 
 #define AppName "B.I.R.D.S"
 #define AppExe "BIRDS.exe"
-#define AppVersion "0.1.0"
+#define AppVersion "0.1.0b1"
 #define ProgId "BIRDS.Session"
 
 [Setup]

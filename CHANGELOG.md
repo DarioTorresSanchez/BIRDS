@@ -5,10 +5,9 @@ All notable changes to **B.I.R.D.S.** are recorded here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project aims at [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-Nothing has been released or tagged yet: `pyproject.toml` carries
-`0.1.0`, and everything below the `Unreleased` heading is work done on
-top of the initial commit. The first tagged release is the point to
-archive for a DOI.
+0.1.0b1 is the first published build, a beta: its installers have yet
+to be tried on Windows and Linux computers. Version 0.1.0 is kept for
+the release archived for a DOI.
 
 Where a change touches a diagram, it says which published source it was
 checked against. `docs/DIAGRAM_PROVENANCE.md` carries the full record,
@@ -16,8 +15,22 @@ including what is still unverified.
 
 ## [Unreleased]
 
+## [0.1.0b1] – 2026-10-27
+
+The first public build, a beta, with the application ready to run on
+Windows, macOS and Linux. Everything in it is work done since the
+initial commit, 0.1.0-alpha.
+
 ### Added
 
+- **The application, ready to run, on the Releases page**: the Windows
+  installer, the Mac app (macOS 13 or later, Apple silicon) and the
+  Linux bundle, none of which needs Python. The README's *Ready-made
+  application* and sections 2, 3.5 and 4.5 of the manual say which file
+  is for which system and how to get past the first-launch warning of
+  an unsigned app. The Linux bundle carries `install.sh`, which installs
+  for the user alone — menu entry, `BIRDS` command, `.birds` type and
+  icons — and `--uninstall` removes it.
 - **Installers built by GitHub Actions** (`.github/workflows/build.yml`):
   the Windows installer (PyInstaller, then Inno Setup) and a Linux bundle
   with its desktop entry, session type and icons, each self-tested after
@@ -438,6 +451,20 @@ including what is still unverified.
   sets — are now registered.
 
 ### Fixed
+
+#### The application and its packaging
+
+- **The Mac app declared macOS 11 as its minimum**, but the Qt inside
+  it is built for macOS 13: on 11 or 12 it would not have started. It
+  declares 13 now, so Finder says why. A beta's version, 0.1.0b1, is
+  not one macOS takes, so the app declares the numbers alone (0.1.0).
+- **The Linux bundle was built on `ubuntu-latest`**, which is moving to
+  Ubuntu 26.04, and a bundle runs only where the C library is at least
+  as new as the one it was built against. It is built on 24.04 now.
+- **The About box said "0.1.0 (alpha)", typed in.** It and the manual
+  now read the program's version, and a test fails while the README,
+  `pyproject.toml`, `CITATION.cff` and the Windows installer disagree
+  with it.
 
 #### Diagrams measured or recomputed against their sources
 

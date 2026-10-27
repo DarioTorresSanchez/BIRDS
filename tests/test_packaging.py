@@ -147,6 +147,54 @@ def test_the_version_is_the_programs():
     assert f'#define AppVersion "{birds.__version__}"' in iss
 
 
+def test_every_mention_of_the_version_is_the_programs():
+    """A release is filed under one version; the files that name it are
+    set by hand and drift apart unnoticed (the About box said
+    "0.1.0 (alpha)" long after the alpha)."""
+    import birds
+    v = birds.__version__
+
+    def read(path):
+        return (ROOT / path).read_text(encoding="utf-8")
+
+    assert re.search(r'^version = "([^"]+)"$', read("pyproject.toml"),
+                     re.MULTILINE).group(1) == v
+    assert re.search(r"^version: (\S+)$", read("CITATION.cff"),
+                     re.MULTILINE).group(1) == v
+    readme = read("README.md")
+    assert re.search(r"badge/version-([^-%]+)", readme).group(1) == v
+    assert re.search(r"\*\*Version (\S+) \(", readme).group(1) == v
+    assert re.search(r"version = \{([^}]+)\}", readme).group(1) == v
+    assert re.search(r"\(Version (\S+)\) \[Computer software\]",
+                     readme).group(1) == v
+    assert f"The current version, {v}," in readme
+    # The About box and the manual read it rather than repeat it.
+    assert "Version {__version__}" in read("birds/main_window.py")
+    sys.path.insert(0, str(ROOT / "docs"))
+    import manual_content
+    assert manual_content.VERSION == v
+    assert manual_content.SUBTITLE.endswith(f"Version {v}")
+
+
+@pytest.mark.parametrize("version, numbers", [
+    ("0.1.0", "0.1.0"), ("0.1.0b1", "0.1.0"), ("1.2.3rc2", "1.2.3"),
+    ("0.2.0a1", "0.2.0"), ("2.0", "2.0"),
+])
+def test_macos_is_given_the_version_as_numbers_only(monkeypatch, version,
+                                                     numbers):
+    monkeypatch.setattr(app_info, "version", lambda: version)
+    assert app_info.bundle_version() == numbers
+    plist = app_info.info_plist()
+    assert plist["CFBundleShortVersionString"] == numbers
+    assert plist["CFBundleVersion"] == numbers
+
+
+def test_the_app_declares_the_macos_its_qt_needs():
+    assert app_info.info_plist()["LSMinimumSystemVersion"] == "13.0"
+    spec = (PACKAGING / "birds.spec").read_text(encoding="utf-8")
+    assert "version=app_info.bundle_version()" in spec
+
+
 def test_info_plist_ties_the_extension_to_the_document_icon():
     plist = app_info.info_plist()
     exported = plist["UTExportedTypeDeclarations"][0]
@@ -194,6 +242,113 @@ def test_the_linux_mime_type_matches_the_desktop_entry():
     assert f'<glob pattern="*.{app_info.SESSION_EXTENSION}"/>' in mime
     assert f"MimeType={app_info.SESSION_MIME};" in desktop
     assert re.search(r"^Exec=.* %f$", desktop, re.MULTILINE)
+
+
+# ---------------------------------------------------------------------------
+# Linux: install.sh, run from the unpacked bundle
+# ---------------------------------------------------------------------------
+
+INSTALL_SH = PACKAGING / "linux" / "install.sh"
+posix_only = pytest.mark.skipif(sys.platform == "win32",
+                                reason="a POSIX shell script")
+
+
+@pytest.fixture
+def linux_bundle(tmp_path):
+    """BIRDS-linux/ as the build workflow packs it, with a stand-in
+    program, and an empty home to install into."""
+    import shutil
+    bundle = tmp_path / "BIRDS-linux"
+    program = bundle / "BIRDS"
+    program.mkdir(parents=True)
+    (program / "BIRDS").write_text("#!/bin/sh\necho birds\n")
+    (program / "BIRDS").chmod(0o755)
+    (program / "_internal").mkdir()
+    (program / "_internal" / "lib.so").write_bytes(b"x")
+    for item in (PACKAGING / "linux").iterdir():
+        shutil.copy(item, bundle)
+    for name in ("birds_app_256.png", "birds_document_256.png"):
+        shutil.copy(PACKAGING / "icons" / name, bundle)
+    home = tmp_path / "home"
+    home.mkdir()
+    # Only the system's own commands: no desktop tools, which are
+    # optional, and none of the user's.
+    env = {"HOME": str(home), "PATH": "/usr/bin:/bin"}
+
+    def run(*args):
+        return subprocess.run(["sh", str(bundle / "install.sh"), *args],
+                              env=env, capture_output=True, text=True)
+    return SimpleNamespace(bundle=bundle, home=home, run=run)
+
+
+def test_install_sh_is_executable_in_the_repository():
+    """The bundle is packed from a checkout, and the mode comes from git."""
+    out = subprocess.run(["git", "ls-files", "-s", "packaging/linux/install.sh"],
+                         cwd=ROOT, capture_output=True, text=True)
+    if out.returncode or not out.stdout:
+        pytest.skip("not a git checkout")
+    assert out.stdout.startswith("100755")
+
+
+@posix_only
+def test_install_sh_installs_for_the_user(linux_bundle):
+    result = linux_bundle.run()
+    assert result.returncode == 0, result.stderr
+    share = linux_bundle.home / ".local" / "share"
+    prefix = share / "BIRDS"
+    assert (prefix / "BIRDS").stat().st_mode & 0o111
+    assert (prefix / "_internal" / "lib.so").exists()
+    command = linux_bundle.home / ".local" / "bin" / "BIRDS"
+    assert command.is_symlink() and command.resolve() == (prefix / "BIRDS").resolve()
+    entry = (share / "applications" / "birds.desktop").read_text()
+    assert f'Exec="{prefix}/BIRDS" %f' in entry
+    assert "MimeType=application/x-birds-session;" in entry
+    assert (share / "mime" / "packages" / "birds-session.xml").exists()
+    assert (share / "icons" / "hicolor" / "256x256" / "apps" / "birds.png").exists()
+    assert (share / "icons" / "hicolor" / "256x256" / "mimetypes"
+            / "application-x-birds-session.png").exists()
+    assert "is installed" in result.stdout
+
+
+@posix_only
+def test_install_sh_replaces_an_earlier_copy(linux_bundle):
+    assert linux_bundle.run().returncode == 0
+    stale = linux_bundle.home / ".local" / "share" / "BIRDS" / "_internal" / "old.so"
+    stale.write_bytes(b"old")
+    assert linux_bundle.run().returncode == 0
+    assert not stale.exists()
+
+
+@posix_only
+def test_install_sh_uninstalls_what_it_installed(linux_bundle):
+    assert linux_bundle.run().returncode == 0
+    result = linux_bundle.run("--uninstall")
+    assert result.returncode == 0, result.stderr
+    share = linux_bundle.home / ".local" / "share"
+    assert not (share / "BIRDS").exists()
+    assert not (share / "applications" / "birds.desktop").exists()
+    assert not (share / "mime" / "packages" / "birds-session.xml").exists()
+    assert not list((share / "icons").rglob("*.png"))
+    assert not (linux_bundle.home / ".local" / "bin" / "BIRDS").exists()
+
+
+@posix_only
+def test_install_sh_leaves_a_birds_command_it_did_not_make(linux_bundle):
+    bin_dir = linux_bundle.home / ".local" / "bin"
+    bin_dir.mkdir(parents=True)
+    (bin_dir / "BIRDS").write_text("someone else's\n")
+    assert linux_bundle.run("--uninstall").returncode == 0
+    assert (bin_dir / "BIRDS").read_text() == "someone else's\n"
+
+
+@posix_only
+def test_install_sh_refuses_to_run_outside_the_bundle(linux_bundle):
+    import shutil
+    shutil.rmtree(linux_bundle.bundle / "BIRDS")
+    result = linux_bundle.run()
+    assert result.returncode == 1
+    assert "unpacked bundle" in result.stderr
+    assert not (linux_bundle.home / ".local" / "share" / "BIRDS").exists()
 
 
 def test_the_spec_bundles_the_document_icon_and_the_logo():
@@ -461,6 +616,22 @@ def test_the_release_refuses_a_tag_that_is_not_the_version():
     assert "app_info.version()" in job
     assert '"${GITHUB_REF_NAME#v}" != "$version"' in job
     assert job.index("Check the tag") < job.index("gh release create")
+
+
+@pytest.mark.parametrize("tag, pre", [
+    ("v0.1.0b1", True), ("v0.2.0rc1", True), ("v0.2.0a3", True),
+    ("v0.1.0", False), ("v1.0.0", False),
+])
+def test_a_beta_is_filed_as_a_pre_release(tag, pre):
+    job = _job("release")
+    pattern = re.search(r'=~ (\S+) \]\]', job).group(1)
+    assert "--prerelease" in job
+    assert bool(re.search(pattern, tag)) is pre
+
+
+def test_the_linux_bundle_is_built_on_a_settled_ubuntu():
+    """The bundle needs a C library at least as new as the build's."""
+    assert "runs-on: ubuntu-24.04" in _job("linux")
 
 
 @pytest.mark.parametrize("path", [

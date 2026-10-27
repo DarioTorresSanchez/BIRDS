@@ -53,7 +53,10 @@ jobs:
           if-no-files-found: error
 
   linux:
-    runs-on: ubuntu-latest
+    # A bundle runs only where the C library is at least as new as the
+    # one it was built against, so it is built on a settled release
+    # rather than on whatever ubuntu-latest has just moved to.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
 
@@ -129,9 +132,15 @@ jobs:
           path: dist
           merge-multiple: true
 
+      # A beta or release candidate (v0.1.0b1, v0.2.0rc1) is marked as
+      # a pre-release, which GitHub does not offer as the latest version.
       - name: File the draft release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/* --draft --verify-tag \
-            --title "B.I.R.D.S $GITHUB_REF_NAME" --generate-notes
+          pre=""
+          if [[ "$GITHUB_REF_NAME" =~ (a|b|rc)[0-9]+$ ]]; then
+            pre="--prerelease"
+          fi
+          gh release create "$GITHUB_REF_NAME" dist/* --draft $pre \
+            --verify-tag --title "B.I.R.D.S $GITHUB_REF_NAME" --generate-notes

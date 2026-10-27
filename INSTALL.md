@@ -5,6 +5,12 @@ Step-by-step instructions for **macOS**, **Windows** and **Linux**.
 No programming experience is needed. You will type a handful of commands into
 a terminal; each one is shown on its own line so it can be copied directly.
 
+> **Just want to use it?** A ready-made application, with no Python to
+> install, is on the
+> [Releases page](https://github.com/DarioTorresSanchez/BIRDS/releases) —
+> see [*Ready-made application*](README.md#ready-made-application--no-python-needed)
+> in the README. This guide is for running B.I.R.D.S from its source.
+
 ---
 
 ## Contents
