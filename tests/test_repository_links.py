@@ -50,6 +50,18 @@ def test_the_author_is_named_the_same_everywhere(name, expected):
     assert expected in (ROOT / name).read_text(encoding="utf-8")
 
 
+def test_the_licence_file_is_the_mit_text_alone():
+    """GitHub names a licence only when LICENSE matches its text; a note
+    appended after it made GitHub report "Other".  The note on citing
+    the diagrams' authors lives in the README."""
+    text = (ROOT / "LICENSE").read_text(encoding="utf-8")
+    assert text.startswith("MIT License\n")
+    assert text.endswith("OTHER DEALINGS IN THE\nSOFTWARE.\n")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    licence = readme.split("\n## License\n", 1)[1]
+    assert "belong to their original authors" in licence
+
+
 def test_the_citation_file_author():
     text = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
     assert "given-names: Darío" in text

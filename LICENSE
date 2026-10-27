@@ -19,15 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----------------------------------------------------------------------------
-Note on the scientific content
----------------------------------------------------------------------------
-
-The MIT licence above covers the B.I.R.D.S source code. It does not, and
-cannot, extend to the published classification and discrimination schemes
-the software implements. Those diagrams — their field boundaries and
-discriminant functions — belong to their original authors and are cited in
-each plot's subtitle and in the full bibliography (References → Show full
-bibliography). Users are expected to cite those primary sources alongside
-this software in any publication.

@@ -15,6 +15,14 @@ including what is still unverified.
 
 ## [Unreleased]
 
+### Fixed
+
+- **GitHub did not recognise the licence**: a note on citing the
+  diagrams' authors followed the MIT text in `LICENSE`, so GitHub
+  reported "Other" and showed no licence. `LICENSE` is the MIT text
+  alone now; the note, unchanged in substance, is in the README's
+  *License* section.
+
 ## [0.1.0b1] – 2026-10-27
 
 The first public build, a beta, with the application ready to run on

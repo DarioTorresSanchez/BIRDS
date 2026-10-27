@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0b1%20beta-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-4025%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-4026%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -619,9 +619,13 @@ each plot's subtitle and listed in full under
 
 Released under the [MIT License](LICENSE).
 
-The licence covers the source code. The classification and discrimination
-schemes the software implements belong to their original authors and must be
-cited independently.
+The licence covers the B.I.R.D.S source code. It does not, and cannot,
+extend to the published classification and discrimination schemes the
+software implements: those diagrams — their field boundaries and
+discriminant functions — belong to their original authors, and are cited
+in each plot's subtitle and in the full bibliography
+(`References → Show full bibliography (APA)`). Cite those primary sources
+alongside this software in any publication.
 
 ---
 
