@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
 from ..composition import filter_by_rock_type
 from ..diagrams.catalog import CLASSIFICATION_PLUTONIC, CLASSIFICATION_VOLCANIC
 from ..diagrams.registry import get_diagram
+from .base import header_html
 from ..diagrams.templates.base import AxisStyle, LegendStyle, PlotOptions
 from .annotation_controller import AnnotationController, nearest_sample
 from .plot_canvas import PlotCanvas
@@ -103,6 +104,8 @@ class ClassificationView(QWidget):
         self.subtitle_label = QLabel("")
         self.subtitle_label.setStyleSheet("color: #5b6478;")
         self.subtitle_label.setWordWrap(True)
+        for label in (self.title_label, self.subtitle_label):
+            label.setTextFormat(Qt.TextFormat.RichText)
         right_layout.addWidget(self.title_label)
         right_layout.addWidget(self.subtitle_label)
         sep = QFrame()
@@ -401,11 +404,11 @@ class ClassificationView(QWidget):
         self._diagram_key = self.diagram_combo.currentData()
         diagram = get_diagram(self._diagram_key)
         if diagram is None:
-            self.title_label.setText(self._diagram_key)
+            self.title_label.setText(header_html(self._diagram_key))
             self.subtitle_label.setText("(template not implemented yet)")
         else:
-            self.title_label.setText(diagram.title)
-            self.subtitle_label.setText(diagram.citation)
+            self.title_label.setText(header_html(diagram.title))
+            self.subtitle_label.setText(header_html(diagram.citation))
             self.x_label_edit.setPlaceholderText(self._plain(diagram.x_label))
             self.y_label_edit.setPlaceholderText(self._plain(diagram.y_label))
         self.x_label_edit.setText("")

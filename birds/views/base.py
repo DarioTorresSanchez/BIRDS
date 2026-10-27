@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import html
+import re
+
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QFrame,
@@ -13,6 +16,31 @@ from PySide6.QtWidgets import (
 
 from ._export_helpers import ask_export_path, save_figure
 from .plot_canvas import PlotCanvas
+
+
+_MATHTEXT = re.compile(r"\$([^$]*)\$")
+_SUB_SUP = re.compile(r"([_^])(?:\{([^}]*)\}|(\w))")
+
+
+def header_html(text: str) -> str:
+    """A diagram's title or citation, written for matplotlib, as rich
+    text for the header above the plot: "Yb$_N$" becomes Yb<sub>N</sub>.
+
+    The figure renders the mathtext itself, but a QLabel showed it as
+    typed -- "Yb$_N$ vs Dy$_N$".  Everything else is escaped, so an "&"
+    or a "Ti/V < 20" stays text.
+    """
+    # split() alternates plain text and the inside of $...$
+    parts = _MATHTEXT.split(text or "")
+    return "".join(_math_html(p) if i % 2 else html.escape(p)
+                   for i, p in enumerate(parts))
+
+
+def _math_html(math: str) -> str:
+    def script(m: re.Match) -> str:
+        tag = "sub" if m.group(1) == "_" else "sup"
+        return f"<{tag}>{m.group(2) or m.group(3)}</{tag}>"
+    return _SUB_SUP.sub(script, html.escape(math))
 
 
 class DiagramView(QWidget):

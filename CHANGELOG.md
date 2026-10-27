@@ -17,6 +17,19 @@ including what is still unverified.
 
 ### Fixed
 
+- **Ten diagram titles showed their mathtext above the plot**, as in
+  "Yb$_N$ vs Dy$_N$ — Saccani (2015)" or "K$_2$O vs SiO$_2$": the figure
+  renders it, the header label did not. The header of the
+  Classification, Tectonic and Petrography views now shows real
+  subscripts (`header_html` in `views/base.py`), with every other
+  character escaped.
+- **The Petrography control panel was cut off at its right edge.** The
+  list of diagrams sized itself to its longest name ("Gabbroic rocks —
+  Plagioclase / Pyroxene / Olivine …") and pushed the panel 35 px past
+  its column, which has no sideways scroll, clipping the list, the
+  legend fields and the annotation buttons. The list now takes the
+  width it is given and still shows the full names when open; a test
+  checks every view's panel against its column.
 - **GitHub did not recognise the licence**: a note on citing the
   diagrams' authors followed the MIT text in `LICENSE`, so GitHub
   reported "Other" and showed no licence. `LICENSE` is the MIT text

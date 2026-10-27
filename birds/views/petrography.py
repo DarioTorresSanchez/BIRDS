@@ -39,6 +39,7 @@ from PySide6.QtWidgets import (
 )
 
 from ..diagrams.registry import get_diagram
+from .base import header_html
 from ..diagrams.templates.base import AxisStyle, PlotOptions
 from .annotation_controller import AnnotationController
 from .plot_canvas import PlotCanvas
@@ -135,6 +136,8 @@ class PetrographyView(QWidget):
         self.subtitle_label = QLabel("")
         self.subtitle_label.setStyleSheet("color: #5b6478;")
         self.subtitle_label.setWordWrap(True)
+        for label in (self.title_label, self.subtitle_label):
+            label.setTextFormat(Qt.TextFormat.RichText)
         right_layout.addWidget(self.title_label)
         right_layout.addWidget(self.subtitle_label)
         sep = QFrame(); sep.setFrameShape(QFrame.Shape.HLine)
@@ -177,6 +180,14 @@ class PetrographyView(QWidget):
             QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow
         )
         self.diagram_combo = QComboBox()
+        # The longest name ("Gabbroic rocks — Plagioclase / Pyroxene /
+        # Olivine …") would widen the panel past its column, which has no
+        # horizontal scroll bar, and cut off its right edge.  The box
+        # takes the width it is given; the open list still shows the
+        # names in full.
+        self.diagram_combo.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.diagram_combo.setMinimumContentsLength(24)
         for label, key in _PETROGRAPHY_CATALOG:
             self.diagram_combo.addItem(label, key)
         self.diagram_combo.currentIndexChanged.connect(self._on_diagram_changed)
@@ -272,11 +283,11 @@ class PetrographyView(QWidget):
         self._diagram_key = self.diagram_combo.currentData()
         diagram = get_diagram(self._diagram_key)
         if diagram is None:
-            self.title_label.setText(self._diagram_key)
+            self.title_label.setText(header_html(self._diagram_key))
             self.subtitle_label.setText("(template not implemented yet)")
         else:
-            self.title_label.setText(diagram.title)
-            self.subtitle_label.setText(diagram.citation)
+            self.title_label.setText(header_html(diagram.title))
+            self.subtitle_label.setText(header_html(diagram.citation))
         self.update_plot()
 
     def _empty_canvas(self, message: str) -> None:
