@@ -15,8 +15,21 @@ including what is still unverified.
 
 ## [Unreleased]
 
+### Added
+
+- **Screenshots in the README** (*The interface*): the Tectonic menu
+  open, TAS, the Na/100–25Nb–Sr ternary of Vermeesch (2006) and the
+  bibliography, taken on macOS with no data loaded, in
+  `docs/screenshots/`. A test checks every picture the README shows
+  exists and stays light, and that the caption's count of schemes is
+  the menu's.
+
 ### Fixed
 
+- **Names with an "&" lost it in the menus**: Qt takes "&" as the mark
+  of a shortcut letter and does not draw it, so the Tectonic menu read
+  "Pearce  Gale 1977", "Butler  Woronow", "Verma  Agrawal 2011". The
+  menus now double it.
 - **Ten diagram titles showed their mathtext above the plot**, as in
   "Yb$_N$ vs Dy$_N$ — Saccani (2015)" or "K$_2$O vs SiO$_2$": the figure
   renders it, the header label did not. The header of the

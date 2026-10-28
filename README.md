@@ -13,7 +13,7 @@ geochemical data of igneous rocks.
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
 [![Version](https://img.shields.io/badge/version-0.1.0b1%20beta-orange.svg)](#status)
-[![Tests](https://img.shields.io/badge/tests-4100%20passing-brightgreen.svg)](#development-and-testing)
+[![Tests](https://img.shields.io/badge/tests-4116%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
 
@@ -74,7 +74,35 @@ export is sized in millimetres for the journal you are submitting to.
 ## The interface
 
 A single window with a menu bar across the top and one stacked view per
-diagram family. Data flows through the application like this:
+diagram family: the controls on the left, the diagram on the right, and
+its title and sources above it.
+
+<div align="center">
+<img src="docs/screenshots/tectonic_menu.png" alt="The Tectonic diagrams menu open on Volcanic, then Mafic, listing its discrimination diagrams over the Th/Yb–Nb/Yb diagram of Pearce (2008)" width="880">
+<br>
+<sub>The <b>Tectonic diagrams</b> menu: 25 schemes for mafic volcanic rocks alone. Behind it, Th/Yb–Nb/Yb of Pearce (2008).</sub>
+</div>
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/tas.png" alt="The volcanic TAS diagram with its fields and the Irvine and Baragar alkaline line"></td>
+<td width="50%"><img src="docs/screenshots/vermeesch_na_nb_sr.png" alt="The Na/100–25Nb–Sr ternary of Vermeesch (2006) with its curved boundaries"></td>
+</tr>
+<tr>
+<td align="center"><sub>TAS — Le Bas et al. (1986) and Le Maitre (2002), with the alkaline boundary of Irvine &amp; Baragar (1971)</sub></td>
+<td align="center"><sub>Na/100–25Nb–Sr — Vermeesch (2006): curved boundaries read from the paper's vector figure</sub></td>
+</tr>
+</table>
+
+<div align="center">
+<img src="docs/screenshots/references.png" alt="The References dialog listing the bibliography in APA style with DOIs" width="640">
+<br>
+<sub><b>References → Show full bibliography</b>: every diagram, normaliser and method, in APA 7th edition with its DOI.</sub>
+</div>
+
+<sub>Screenshots taken on macOS with no data loaded.</sub>
+
+Data flows through the application like this:
 
 <div align="center">
 <img src="docs/birds_flowchart.png" alt="B.I.R.D.S data flow" width="720">
@@ -547,7 +575,7 @@ BIRDS/
 │   └── resources/              Logo and icons
 ├── templates/                  Data-entry templates
 ├── packaging/                  App bundle, installer, icons (.birds files)
-└── docs/                       User manual (PDF/DOCX), flow chart, method notes
+└── docs/                       User manual (PDF/DOCX), flow chart, screenshots, method notes
 ```
 
 ---

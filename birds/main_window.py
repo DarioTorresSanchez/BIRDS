@@ -292,7 +292,7 @@ class BirdsMainWindow(QMainWindow):
              "pyroclastic_fisher_1966"),
         )
         for label, key in entries:
-            act = QAction(label + "…", self)
+            act = QAction(label.replace("&", "&&") + "…", self)
             act.triggered.connect(
                 lambda _checked=False, k=key: self._open_petrography(k))
             menu.addAction(act)
@@ -556,11 +556,13 @@ class BirdsMainWindow(QMainWindow):
     def _build_tectonic_menu(self, bar: QMenuBar) -> None:
         menu = bar.addMenu("&Tectonic diagrams")
 
+        # In a menu "&" marks the shortcut letter and is not shown, so
+        # "Pearce & Gale 1977" read "Pearce  Gale 1977"; "&&" is an "&".
         vol_menu = menu.addMenu("Volcanic")
         for composition, entries in TECTONIC_VOLCANIC.items():
             sub = vol_menu.addMenu(composition)
             for label, key in entries:
-                act = QAction(label, self)
+                act = QAction(label.replace("&", "&&"), self)
                 act.triggered.connect(
                     lambda _checked=False, k=key, c=composition: self._open_tectonic(
                         k, "volcanic", c
@@ -572,7 +574,7 @@ class BirdsMainWindow(QMainWindow):
         for composition, entries in TECTONIC_PLUTONIC.items():
             sub = plu_menu.addMenu(composition)
             for label, key in entries:
-                act = QAction(label, self)
+                act = QAction(label.replace("&", "&&"), self)
                 act.triggered.connect(
                     lambda _checked=False, k=key, c=composition: self._open_tectonic(
                         k, "plutonic", c
