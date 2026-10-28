@@ -5,8 +5,9 @@ All notable changes to **B.I.R.D.S.** are recorded here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project aims at [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-0.1.0b1 was the first published build and 0.1.0b2 the second, both
-betas: their installers have yet to be tried on Windows and Linux
+0.1.0b3 is the published beta. The first two, 0.1.0b1 and 0.1.0b2,
+were withdrawn: their installers could export a plot only as PNG or
+JPEG. The installers have yet to be tried on Windows and Linux
 computers. Version 0.1.0 is kept for the release archived for a DOI.
 
 Where a change touches a diagram, it says which published source it was
@@ -14,6 +15,12 @@ checked against. `docs/DIAGRAM_PROVENANCE.md` carries the full record,
 including what is still unverified.
 
 ## [Unreleased]
+
+## [0.1.0b3] – 2026-10-28
+
+The third beta, replacing the first two: the installed application can
+export PDF, SVG and EPS again, and the groups' shaded hulls are drawn
+on every diagram.
 
 ### Fixed
 

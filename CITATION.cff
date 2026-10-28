@@ -28,7 +28,7 @@ keywords:
   - Ni-Cu-PGE
   - platinum-group elements
   - PySide6
-version: 0.1.0b2
+version: 0.1.0b3
 license: MIT
 repository-code: "https://github.com/DarioTorresSanchez/BIRDS"
 url: "https://github.com/DarioTorresSanchez/BIRDS"
