@@ -295,8 +295,10 @@ class SpiderView(QWidget):
         self._scroll = QScrollArea()
         self._scroll.setWidgetResizable(True)
         self._scroll.setFrameShape(QFrame.Shape.NoFrame)
+        # Sideways only when a control cannot fit -- with larger fonts,
+        # as on Windows -- rather than cutting it off out of reach.
         self._scroll.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
         )
 
         # Sticky Update button shared across both modes

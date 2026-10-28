@@ -315,8 +315,10 @@ class BivariateView(QWidget):
         scroll.setWidget(self.controls_stack)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         # The content wraps naturally; never show a horizontal scrollbar.
+        # Sideways only when a control cannot fit -- with larger fonts,
+        # as on Windows -- rather than cutting it off out of reach.
         scroll.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
         )
 
         # Sticky action bar: the Update button lives OUTSIDE the

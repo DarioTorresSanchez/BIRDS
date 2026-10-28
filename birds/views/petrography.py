@@ -94,8 +94,10 @@ class PetrographyView(QWidget):
         scroll.setWidgetResizable(True)
         scroll.setWidget(controls)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
+        # Sideways only when a control cannot fit -- with larger fonts,
+        # as on Windows -- rather than cutting it off out of reach.
         scroll.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
         )
         self._build_controls(controls)
 

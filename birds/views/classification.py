@@ -62,8 +62,10 @@ class ClassificationView(QWidget):
         controls_scroll.setWidgetResizable(True)
         controls_scroll.setWidget(self._controls)
         controls_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        # Sideways only when a control cannot fit -- with larger fonts,
+        # as on Windows -- rather than cutting it off out of reach.
         controls_scroll.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
         )
         self._build_controls()
 

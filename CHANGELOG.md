@@ -28,8 +28,14 @@ including what is still unverified.
   Plagioclase / Pyroxene / Olivine …") and pushed the panel 35 px past
   its column, which has no sideways scroll, clipping the list, the
   legend fields and the annotation buttons. The list now takes the
-  width it is given and still shows the full names when open; a test
-  checks every view's panel against its column.
+  width it is given and still shows the full names when open.
+- **On Windows six control panels were wider than their column**, with
+  no way to reach what was cut off: the CI's Windows runs, whose fonts
+  run wider, found the Classification panel 88 px too wide and the Map
+  panel 228 px — long check boxes and lists such as "Auto-filter by
+  Rock_Type (Volcanic / Plutonic)". Every panel now scrolls sideways
+  when, and only when, its controls cannot fit; on the Mac they fit and
+  nothing changes. A test checks every view.
 - **GitHub did not recognise the licence**: a note on citing the
   diagrams' authors followed the MIT text in `LICENSE`, so GitHub
   reported "Other" and showed no licence. `LICENSE` is the MIT text

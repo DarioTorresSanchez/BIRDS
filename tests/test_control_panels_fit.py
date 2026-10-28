@@ -1,17 +1,22 @@
-"""Every view's control panel fits the column it sits in.
+"""No control in a view's panel is out of reach.
 
-The panels scroll vertically and never sideways, so a control wider than
-the column is cut off at the right edge with no way to reach it.  The
-Petrography panel was: its list of diagrams sized itself to the longest
-name and pushed the panel 35 px past its column, clipping the list, the
-legend fields and the annotation buttons.
+The control panels scrolled up and down but never sideways, so a control
+wider than its column was cut off at the right edge with no way to reach
+it.  On the Mac the Petrography panel was: its list of diagrams sized
+itself to the longest name and pushed the panel 35 px past its column.
+On Windows, whose fonts run wider, CI found six panels too wide -- the
+Classification one by 88 px, the Map one by 228.  The panels now scroll
+sideways when, and only when, their controls cannot fit.
 """
 
 from __future__ import annotations
 
 import pytest
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QScrollArea
+from PySide6.QtWidgets import QScrollArea, QWidget
+
+VIEWS = {"ClassificationView", "BivariateView", "SpiderView", "TectonicView",
+         "MapView", "IsotopesView", "NormView", "PetrographyView"}
 
 
 @pytest.fixture
@@ -35,16 +40,13 @@ def _panels(window, qapp):
         window.stack.setCurrentWidget(view)
         qapp.processEvents()
         for scroll in view.findChildren(QScrollArea):
-            if (scroll.widget() is not None
-                    and scroll.horizontalScrollBarPolicy()
-                    == Qt.ScrollBarPolicy.ScrollBarAlwaysOff):
+            if scroll.widget() is not None and scroll.widgetResizable():
                 yield type(view).__name__, scroll
 
 
 def _widest(panel, limit):
     """The visible controls that need most of the width, to say which one
     a failure is about (fonts and styles differ between systems)."""
-    from PySide6.QtWidgets import QWidget
     rows = []
     for w in panel.findChildren(QWidget):
         if not w.isVisibleTo(panel) or w.minimumSizeHint().width() < limit:
@@ -58,23 +60,34 @@ def _widest(panel, limit):
     return sorted(rows, key=lambda r: -int(r.split()[0]))[:6]
 
 
-def test_every_control_panel_fits_its_column(window, qapp):
+def test_a_panel_too_wide_for_its_column_scrolls_sideways(window, qapp):
     panels = list(_panels(window, qapp))
-    assert {name for name, _ in panels} >= {
-        "ClassificationView", "BivariateView", "SpiderView", "TectonicView",
-        "MapView", "IsotopesView", "NormView", "PetrographyView"}
-    too_wide = []
+    assert {name for name, _ in panels} >= VIEWS
+    out_of_reach = []
     for name, scroll in panels:
         needed = scroll.widget().minimumSizeHint().width()
         room = scroll.viewport().width()
-        if needed > room:
-            too_wide.append(f"{name}: needs {needed}, has {room}; widest: "
-                            + "; ".join(_widest(scroll.widget(), room - 80)))
-    assert not too_wide, "\n".join(too_wide)
+        if (needed > room and scroll.horizontalScrollBarPolicy()
+                == Qt.ScrollBarPolicy.ScrollBarAlwaysOff):
+            out_of_reach.append(
+                f"{name}: needs {needed}, has {room}; widest: "
+                + "; ".join(_widest(scroll.widget(), room - 80)))
+    assert not out_of_reach, "\n".join(out_of_reach)
 
 
-def test_the_petrography_list_still_offers_the_full_names(window):
+def test_no_control_panel_turns_sideways_scrolling_off(window, qapp):
+    """Whether the controls fit depends on the system's fonts, so the
+    panels must not count on it."""
+    for name, scroll in _panels(window, qapp):
+        if name in VIEWS:
+            assert (scroll.horizontalScrollBarPolicy()
+                    == Qt.ScrollBarPolicy.ScrollBarAsNeeded), name
+
+
+def test_the_petrography_list_takes_the_width_it_is_given(window):
     combo = window.petrography.diagram_combo
+    assert (combo.sizeAdjustPolicy() == combo.SizeAdjustPolicy
+            .AdjustToMinimumContentsLengthWithIcon)
     labels = [combo.itemText(i) for i in range(combo.count())]
     assert ("Gabbroic rocks — Plagioclase / Pyroxene / Olivine "
             "(Streckeisen 1976)") in labels
