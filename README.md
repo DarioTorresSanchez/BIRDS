@@ -12,7 +12,7 @@ geochemical data of igneous rocks.
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41cd52.svg)](https://doc.qt.io/qtforpython/)
-[![Version](https://img.shields.io/badge/version-0.1.0b1%20beta-orange.svg)](#status)
+[![Version](https://img.shields.io/badge/version-0.1.0b2%20beta-orange.svg)](#status)
 [![Tests](https://img.shields.io/badge/tests-4116%20passing-brightgreen.svg)](#development-and-testing)
 
 </div>
@@ -416,7 +416,7 @@ under *Assets*, take the file for your system.
 | Linux x86-64: Ubuntu 24.04, Debian 13, Fedora 40 or newer | `BIRDS-<version>-linux-x86_64.tar.gz` | Unpack it and run `BIRDS-linux/install.sh` (for your user only; `--uninstall` removes it). |
 
 On every system the app opens `.birds` sessions with a double-click.
-The current version, 0.1.0b1, is a **beta**.
+The current version, 0.1.0b2, is a **beta**.
 
 The builds are not signed with a paid developer certificate, so the
 system asks once before the first launch:
@@ -582,7 +582,7 @@ BIRDS/
 
 ## Status
 
-**Version 0.1.0b1 (beta).** The application is in active development and
+**Version 0.1.0b2 (beta).** The application is in active development and
 under testing. [`CHANGELOG.md`](CHANGELOG.md) records what has changed
 and against which published source each diagram was checked;
 [`docs/DIAGRAM_PROVENANCE.md`](docs/DIAGRAM_PROVENANCE.md) carries the
@@ -632,14 +632,14 @@ each plot's subtitle and listed in full under
 @software{torressanchez2026birds,
   author  = {Torres Sánchez, Darío},
   title   = {B.I.R.D.S — Broad Igneous Rocks: Diagrams \& Statistics},
-  version = {0.1.0b1},
+  version = {0.1.0b2},
   year    = {2026},
   url     = {https://github.com/DarioTorresSanchez/BIRDS}
 }
 ```
 
 > Torres Sánchez, D. (2026). *B.I.R.D.S — Broad Igneous Rocks: Diagrams & Statistics*
-> (Version 0.1.0b1) [Computer software].
+> (Version 0.1.0b2) [Computer software].
 
 ---
 

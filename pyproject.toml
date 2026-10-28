@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "birds-geochem"
-version = "0.1.0b1"
+version = "0.1.0b2"
 description = "Broad Igneous Rocks — Diagrams & Statistics: a desktop application for whole-rock igneous geochemistry"
 readme = "README.md"
 requires-python = ">=3.9"

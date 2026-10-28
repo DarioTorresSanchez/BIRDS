@@ -5,15 +5,22 @@ All notable changes to **B.I.R.D.S.** are recorded here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project aims at [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-0.1.0b1 is the first published build, a beta: its installers have yet
-to be tried on Windows and Linux computers. Version 0.1.0 is kept for
-the release archived for a DOI.
+0.1.0b1 was the first published build and 0.1.0b2 the second, both
+betas: their installers have yet to be tried on Windows and Linux
+computers. Version 0.1.0 is kept for the release archived for a DOI.
 
 Where a change touches a diagram, it says which published source it was
 checked against. `docs/DIAGRAM_PROVENANCE.md` carries the full record,
 including what is still unverified.
 
 ## [Unreleased]
+
+## [0.1.0b2] – 2026-10-28
+
+The second beta: what was found after the first one was published —
+control panels cut off on Windows, diagram names losing their "&" in
+the menus, titles showing their mathtext — and the README's
+screenshots.
 
 ### Added
 
