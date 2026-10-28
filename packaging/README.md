@@ -24,11 +24,14 @@ Windows installer and the Linux bundle (`.github/workflows/build.yml`);
 see [Releasing](#releasing).
 
 **After every build, run the self-test** of the built program. It puts a
-diagram, the kriging, a UTM and an MGRS conversion, the CIPW norm, a
-session and an Excel file through the packaged code, and exits with 0
-when all seven pass. PyInstaller can leave out a library a package
-loads in an unusual way — the first build left out `mgrs`'s, and the app
-would not start — and this finds it before anyone else does.
+diagram, its export to every format Export plot offers, the kriging, a
+UTM and an MGRS conversion, the CIPW norm, a session and an Excel file
+through the packaged code, and exits with 0 when all eight pass.
+PyInstaller can leave out a library a package loads in an unusual way —
+the first build left out `mgrs`'s, and the app would not start; the
+first betas left out matplotlib's PDF, SVG and EPS writers, which it
+imports only on saving (`EXPORT_BACKENDS` in `app_info.py`) — and this
+finds it before anyone else does.
 
 ```bash
 dist/BIRDS.app/Contents/MacOS/BIRDS --self-test      # macOS

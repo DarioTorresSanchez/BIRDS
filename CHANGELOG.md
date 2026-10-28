@@ -17,6 +17,17 @@ including what is still unverified.
 
 ### Fixed
 
+- **The installed application exported only PNG and JPEG** (reported
+  by Darío: "No module named 'matplotlib.backends.backend_svg'"). PDF,
+  SVG and EPS failed on every platform in 0.1.0b1 and 0.1.0b2, while
+  running from the source worked: matplotlib imports the writer of each
+  format only when a file is saved, so PyInstaller, which follows the
+  imports it can read, left them out — and fontTools, which the PDF and
+  EPS writers embed fonts with. `EXPORT_BACKENDS` in
+  `packaging/app_info.py` names a writer for every format Export plot
+  offers, the spec hands them to PyInstaller, a test checks no offered
+  format is missing, and the self-test that every build runs now writes
+  each format from inside the packaged app.
 - **The groups' shaded hulls (Edit plot → Hull) were missing from many
   diagrams and too faint on the rest** (reported by Darío on the
   plutonic classification diagrams). Frost, every ternary — Barker, the

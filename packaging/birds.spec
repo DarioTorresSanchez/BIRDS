@@ -15,6 +15,7 @@ ROOT = SPEC_DIR.parent
 sys.path.insert(0, str(SPEC_DIR))
 
 import app_info  # noqa: E402
+from PyInstaller.utils.hooks import collect_submodules  # noqa: E402
 
 ICONS = app_info.ICONS
 MAC = sys.platform == "darwin"
@@ -45,7 +46,14 @@ a = Analysis(                                   # noqa: F821
     pathex=[str(ROOT)],
     binaries=binaries,
     datas=datas,
-    hiddenimports=["matplotlib.backends.backend_qtagg"],
+    hiddenimports=[
+        "matplotlib.backends.backend_qtagg",
+        # Export plot: one backend per format, imported only on saving.
+        *sorted(set(app_info.EXPORT_BACKENDS.values())),
+        # The PDF and EPS backends embed fonts with fontTools, which
+        # loads each font table's module by name.
+        *collect_submodules("fontTools.ttLib.tables"),
+    ],
     # Used only to build the manual, never by the application.
     excludes=["docx", "reportlab", "pytest", "tkinter"],
     noarchive=False,

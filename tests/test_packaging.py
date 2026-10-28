@@ -357,6 +357,40 @@ def test_the_spec_bundles_the_document_icon_and_the_logo():
     assert "DOCUMENT_ICON" in spec and "birds\" / \"resources\"" in spec
 
 
+def _offered_formats():
+    from birds.dialogs.export_plot_dialog import FORMATS
+    from birds.views._export_helpers import _FILTER_TO_EXT
+    return ({fmt for _label, fmt in FORMATS}
+            | {ext.lstrip(".") for ext in _FILTER_TO_EXT.values()})
+
+
+def test_every_export_format_has_its_backend_declared():
+    """matplotlib imports the writer of a format only when a file is
+    saved, so PyInstaller does not see it: the first betas exported PNG
+    and JPEG and failed on the rest with "No module named
+    'matplotlib.backends.backend_svg'"."""
+    import importlib
+    offered = _offered_formats()
+    assert offered == set(app_info.EXPORT_BACKENDS)
+    for fmt in offered:
+        module = importlib.import_module(app_info.EXPORT_BACKENDS[fmt])
+        assert hasattr(module, "FigureCanvas"), fmt
+
+
+def test_the_spec_hands_the_export_backends_to_pyinstaller():
+    spec = (PACKAGING / "birds.spec").read_text(encoding="utf-8")
+    assert "app_info.EXPORT_BACKENDS.values()" in spec
+    assert 'collect_submodules("fontTools.ttLib.tables")' in spec
+
+
+def test_the_self_test_writes_every_format(qapp):
+    from birds import selftest
+    names = [name for name, _check in selftest.CHECKS]
+    assert "plot export" in names
+    written = selftest._plot_export().split()
+    assert set(written) == _offered_formats()
+
+
 # ---------------------------------------------------------------------------
 # The self-test a packaged build runs, and an optional library gone wrong
 # ---------------------------------------------------------------------------

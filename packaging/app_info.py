@@ -33,6 +33,21 @@ SESSION_MIME = "application/x-birds-session"
 APP_ICON = "birds_app"
 DOCUMENT_ICON = "birds_document"
 
+#: The matplotlib backend that writes each format Export plot offers.
+#: matplotlib imports them only when a file is saved, so PyInstaller,
+#: which follows the imports it can read, left them out: the packaged
+#: app exported PNG and JPEG and nothing else ("No module named
+#: 'matplotlib.backends.backend_svg'").  The spec names them;
+#: tests/test_packaging.py checks every offered format is here, and the
+#: self-test writes each one.
+EXPORT_BACKENDS = {
+    "pdf": "matplotlib.backends.backend_pdf",
+    "png": "matplotlib.backends.backend_agg",
+    "jpg": "matplotlib.backends.backend_agg",
+    "svg": "matplotlib.backends.backend_svg",
+    "eps": "matplotlib.backends.backend_ps",
+}
+
 
 def version() -> str:
     """The version in birds/__init__.py, read without importing Qt."""

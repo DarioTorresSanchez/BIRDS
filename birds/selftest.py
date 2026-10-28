@@ -1,10 +1,11 @@
 """A quick check that an installed B.I.R.D.S has everything it needs.
 
 ``BIRDS --self-test`` (or ``python3 main.py --self-test``) runs one small
-job through each part that leans on a compiled library -- a diagram,
-the kriging, a UTM and an MGRS conversion, the CIPW norm, a session
-round trip, an Excel file, the main window -- prints a line for each,
-and exits with 0 when all pass.
+job through each part that leans on a compiled or late-loaded library
+-- a diagram, its export to every format Export plot offers, the
+kriging, a UTM and an MGRS conversion, the CIPW norm, a session round
+trip, an Excel file, the main window -- prints a line for each, and
+exits with 0 when all pass.
 
 It exists for the packaged application: PyInstaller can leave out a
 library a package loads in an unusual way, and the program then fails
@@ -36,6 +37,38 @@ def _diagram() -> str:
     get_diagram("tas_volcanic").plot(fig, df, PlotStyle(), PlotOptions())
     fig.canvas.draw()
     return "TAS drawn"
+
+
+#: How each exported format begins, to tell a real file from an empty
+#: or mislabelled one.
+_SIGNATURES = {"pdf": b"%PDF", "png": b"\x89PNG", "jpg": b"\xff\xd8",
+               "svg": b"<?xml", "eps": b"%!PS"}
+
+
+def _plot_export() -> str:
+    """Every format Export plot offers.  matplotlib imports the writer
+    for each only when a file is saved, and the first packaged app had
+    none but PNG's and JPEG's."""
+    from matplotlib.figure import Figure
+
+    from .diagrams.registry import get_diagram
+    from .diagrams.templates.base import PlotOptions
+    from .dialogs.export_plot_dialog import FORMATS
+    from .plot_style import PlotStyle
+
+    df = pd.DataFrame({"SiO2": [49.0, 58.0, 71.0], "Na2O": [2.8, 3.9, 4.1],
+                       "K2O": [0.6, 1.8, 4.3]})
+    fig = Figure()
+    get_diagram("tas_volcanic").plot(fig, df, PlotStyle(), PlotOptions())
+    written = []
+    with tempfile.TemporaryDirectory() as tmp:
+        for _label, fmt in FORMATS:
+            path = Path(tmp) / f"check.{fmt}"
+            fig.savefig(path, dpi=72, bbox_inches="tight")
+            if not path.read_bytes().startswith(_SIGNATURES[fmt]):
+                raise ValueError(f"{fmt}: not a {fmt.upper()} file")
+            written.append(fmt)
+    return " ".join(written)
 
 
 def _kriging() -> str:
@@ -114,6 +147,7 @@ def _window() -> str:
 
 CHECKS: List[Tuple[str, Callable[[], str]]] = [
     ("diagram", _diagram),
+    ("plot export", _plot_export),
     ("kriging", _kriging),
     ("utm", _utm),
     ("mgrs", _mgrs),
