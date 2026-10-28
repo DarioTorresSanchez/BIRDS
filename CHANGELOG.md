@@ -15,6 +15,22 @@ including what is still unverified.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The groups' shaded hulls (Edit plot → Hull) were missing from many
+  diagrams and too faint on the rest** (reported by Darío on the
+  plutonic classification diagrams). Frost, every ternary — Barker, the
+  haplogranite system, AFM, Jensen and the tectonic ternaries — and the
+  Petrography diagrams drew their samples by code of their own that
+  ignored the option; the ternaries also ignored *show markers*. Where
+  the hull was drawn, at 12 % opacity with no outline, it was hard to
+  see. Every diagram, and the Bivariate view, now draws its samples
+  through one function, `draw_group`: the hull at 22 % (35 % without
+  the symbols) with an outline in the group's colour. On a logarithmic
+  axis it is taken on the logarithms, so it encloses the points as they
+  are drawn — taken on the values, it left points of the Nb–Y diagram
+  outside their own shading. A test sweeps every diagram.
+
 ## [0.1.0b2] – 2026-10-28
 
 The second beta: what was found after the first one was published —

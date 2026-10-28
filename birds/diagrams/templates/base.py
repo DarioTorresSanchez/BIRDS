@@ -283,6 +283,80 @@ def _should_shade(gs: object, options: "PlotOptions") -> bool:
     return bool(getattr(options, "shaded_ranges", False))
 
 
+#: Opacity of a group's hull: under its symbols, and standing in for them
+#: when they are hidden.  The edge is drawn stronger, so the outline
+#: reads even where groups overlap.
+HULL_ALPHA = 0.22
+HULL_ALPHA_ALONE = 0.35
+HULL_EDGE_ALPHA = 0.8
+
+
+def hull_vertices(x, y, *, log_x: bool = False, log_y: bool = False):
+    """The corners of the convex hull of (*x*, *y*) as the axes show them.
+
+    On a logarithmic axis the hull is taken on the logarithms: a hull
+    taken on the values has straight edges in value space, which a log
+    axis bends, so points inside it were drawn outside the shading.
+    Returns ``None`` when there is no area to shade -- fewer than three
+    distinct points, or all of them on one line.
+    """
+    from scipy.spatial import ConvexHull
+    from scipy.spatial import QhullError
+
+    px = np.asarray(x, dtype=float)
+    py = np.asarray(y, dtype=float)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        if log_x:
+            px = np.log10(px)
+        if log_y:
+            py = np.log10(py)
+    pts = np.column_stack([px, py])
+    pts = np.unique(pts[np.isfinite(pts).all(axis=1)], axis=0)
+    if len(pts) < 3:
+        return None
+    try:
+        corners = pts[ConvexHull(pts).vertices]
+    except QhullError:                      # collinear: no area
+        return None
+    if log_x:
+        corners[:, 0] = 10.0 ** corners[:, 0]
+    if log_y:
+        corners[:, 1] = 10.0 ** corners[:, 1]
+    return corners
+
+
+def draw_group(ax, x, y, label, gs, plot_style, options=None, *,
+               log_x: bool = False, log_y: bool = False,
+               zorder: float = 4) -> None:
+    """One group's samples as its style asks: its symbols, its shaded
+    hull, or both.
+
+    Every template draws its samples through here.  The hull used to be
+    drawn by four copies of this code and was missing from Frost, every
+    ternary and the Petrography diagrams, which ignored the group's
+    "Hull" and "show markers" settings.
+    """
+    from matplotlib.colors import to_rgba
+
+    color = gs.color if gs else "#1f77b4"
+    show_markers = getattr(gs, "show_markers", True) if gs else True
+    if show_markers:
+        ax.scatter(x, y, s=plot_style.point_size ** 2,
+                   alpha=plot_style.alpha, c=color,
+                   marker=gs.marker if gs else "o", label=label,
+                   edgecolors="black", linewidths=0.4, zorder=zorder)
+    if not _should_shade(gs, options):
+        return
+    corners = hull_vertices(x, y, log_x=log_x, log_y=log_y)
+    if corners is None:
+        return
+    ax.fill(corners[:, 0], corners[:, 1],
+            facecolor=to_rgba(color, HULL_ALPHA if show_markers
+                              else HULL_ALPHA_ALONE),
+            edgecolor=to_rgba(color, HULL_EDGE_ALPHA), linewidth=0.9,
+            label=None if show_markers else label, zorder=zorder - 1)
+
+
 def inverse_logratio(x, y):
     """``(ln(B/A), ln(C/A))`` back to ternary ``(A, B, C)`` summing to 1.
 
@@ -434,33 +508,8 @@ class Diagram:
             ys = pd.Series(ys)[mask]
             if xs.empty:
                 continue
-            color = gs.color if gs else "#1f77b4"
-            marker = gs.marker if gs else "o"
-            show_markers = getattr(gs, "show_markers", True) if gs else True
-            shade = _should_shade(gs, options)
-            # If the user turned the symbols off we still want the group
-            # to appear in the legend — let the hull fill carry the label
-            # instead of the scatter.
-            scatter_label = label if show_markers else None
-            fill_label = label if (shade and not show_markers) else None
-            if show_markers:
-                ax.scatter(xs, ys,
-                           s=(plot_style.point_size ** 2),
-                           alpha=plot_style.alpha,
-                           c=color, marker=marker,
-                           label=scatter_label, edgecolors="black",
-                           linewidths=0.4, zorder=4)
-            if shade and len(xs) >= 3:
-                try:
-                    from scipy.spatial import ConvexHull
-                    pts = np.column_stack([xs.to_numpy(), ys.to_numpy()])
-                    hull = ConvexHull(pts)
-                    hull_pts = pts[hull.vertices]
-                    ax.fill(hull_pts[:, 0], hull_pts[:, 1],
-                            color=color, alpha=0.18 if not show_markers else 0.12,
-                            label=fill_label, zorder=3)
-                except Exception:
-                    pass
+            draw_group(ax, xs, ys, label, gs, plot_style, options,
+                       log_x=self.log_x, log_y=self.log_y)
 
     @staticmethod
     def _mark_offframe(ax) -> None:
@@ -595,9 +644,9 @@ def ternary_xy(abc) -> Tuple[Optional[pd.Series], Optional[pd.Series]]:
 
 
 def scatter_groups(ax, df: Optional[pd.DataFrame], plot_style,
-                   xy_fn) -> None:
-    """Scatter each group of *df* where ``xy_fn(group)`` puts it,
-    leaving off the samples it returns as NaN."""
+                   xy_fn, options=None) -> None:
+    """Draw each group of *df* where ``xy_fn(group)`` puts it, leaving
+    off the samples it returns as NaN."""
     if df is None or df.empty:
         return
     for label, sub, gs in get_groups(df, plot_style):
@@ -607,12 +656,7 @@ def scatter_groups(ax, df: Optional[pd.DataFrame], plot_style,
         keep = x.notna() & y.notna()
         if not keep.any():
             continue
-        ax.scatter(x[keep], y[keep], s=plot_style.point_size ** 2,
-                   alpha=plot_style.alpha,
-                   c=gs.color if gs else "#1f77b4",
-                   marker=gs.marker if gs else "o",
-                   label=label, edgecolors="black", linewidths=0.4,
-                   zorder=4)
+        draw_group(ax, x[keep], y[keep], label, gs, plot_style, options)
 
 
 class TernaryDiagram(Diagram):
@@ -898,31 +942,8 @@ class MultiPanelDiagram(Diagram):
             ys = pd.Series(ys)[mask]
             if xs.empty:
                 continue
-            color = gs.color if gs else "#1f77b4"
-            marker = gs.marker if gs else "o"
-            show_markers = getattr(gs, "show_markers", True) if gs else True
-            shade = _should_shade(gs, options)
-            scatter_label = label if show_markers else None
-            fill_label = label if (shade and not show_markers) else None
-            if show_markers:
-                ax.scatter(xs, ys,
-                           s=(plot_style.point_size ** 2),
-                           alpha=plot_style.alpha,
-                           c=color, marker=marker,
-                           label=scatter_label, edgecolors="black",
-                           linewidths=0.4, zorder=4)
-            if shade and len(xs) >= 3:
-                try:
-                    from scipy.spatial import ConvexHull
-                    pts = np.column_stack([xs.to_numpy(), ys.to_numpy()])
-                    hull = ConvexHull(pts)
-                    hull_pts = pts[hull.vertices]
-                    ax.fill(hull_pts[:, 0], hull_pts[:, 1],
-                            color=color,
-                            alpha=0.18 if not show_markers else 0.12,
-                            label=fill_label, zorder=3)
-                except Exception:
-                    pass
+            draw_group(ax, xs, ys, label, gs, plot_style, options,
+                       log_x=panel.log_x, log_y=panel.log_y)
 
     def _apply_panel_axes(self, ax, panel: PanelSpec,
                           options: PlotOptions) -> None:

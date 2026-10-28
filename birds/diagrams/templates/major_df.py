@@ -38,7 +38,8 @@ import numpy as np
 import pandas as pd
 
 from ...normalizations import TIO2_WT_TO_TI_PPM
-from .base import Diagram, PlotOptions, get_groups, resolve_column
+from .base import (Diagram, PlotOptions, draw_group, get_groups,
+                   resolve_column)
 
 
 # ---------------------------------------------------------------------------
@@ -205,13 +206,8 @@ class _DFBinary(Diagram):
                     mask = xs.notna() & ys.notna()
                     if not mask.any():
                         continue
-                    ax.scatter(xs[mask], ys[mask],
-                               s=plot_style.point_size ** 2,
-                               alpha=plot_style.alpha,
-                               c=gs.color if gs else "#1f77b4",
-                               marker=gs.marker if gs else "o",
-                               label=label, edgecolors="black",
-                               linewidths=0.4, zorder=5)
+                    draw_group(ax, xs[mask], ys[mask], label, gs,
+                               plot_style, options, zorder=5)
         ax.set_title(self.title, fontsize=11, fontweight="bold", pad=8)
         self._fit_axes(ax, df)
         self._apply_axes(ax, options)

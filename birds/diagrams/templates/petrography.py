@@ -65,6 +65,7 @@ from .base import (
     Diagram,
     PlotOptions,
     TernaryDiagram,
+    draw_group,
     draw_note,
     draw_ternary_frame,
     get_groups,
@@ -348,11 +349,8 @@ class _QAPFDiagram(Diagram):
                 keep = x.notna() & y.notna()
                 if not keep.any():
                     continue
-                ax.scatter(x[keep], y[keep], s=plot_style.point_size ** 2,
-                           alpha=plot_style.alpha,
-                           c=gs.color if gs else "#1f77b4",
-                           marker=gs.marker if gs else "o", label=label,
-                           edgecolors="black", linewidths=0.4, zorder=4)
+                draw_group(ax, x[keep], y[keep], label, gs, plot_style,
+                           options)
             modes = self._modes(df)
             if modes is not None:
                 both = int(((modes["Q"] > 0) & (modes["F"] > 0)).sum())

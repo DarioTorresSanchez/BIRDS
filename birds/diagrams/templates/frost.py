@@ -44,6 +44,7 @@ from ...plot_style import legend_columns
 from .base import (
     Diagram,
     PlotOptions,
+    draw_group,
     draw_note,
     get_groups,
     normative,
@@ -279,18 +280,14 @@ class Frost(Diagram):
         panel_axes = (ax_fe, ax_mali, ax_asi, ax_ai)
         if df is not None and not df.empty:
             for label, sub, gs in get_groups(df, plot_style):
-                kwargs = dict(s=plot_style.point_size ** 2,
-                              alpha=plot_style.alpha,
-                              c=gs.color if gs else "#1f77b4",
-                              marker=gs.marker if gs else "o", label=label,
-                              edgecolors="black", linewidths=0.4)
                 for ax, (x, y, _xf, _yf) in zip(panel_axes,
                                                  self._panels_xy(sub)):
                     if x is None or y is None:
                         continue
                     keep = x.notna() & y.notna()
                     if keep.any():
-                        ax.scatter(x[keep], y[keep], **kwargs)
+                        draw_group(ax, x[keep], y[keep], label, gs,
+                                   plot_style, options)
 
         # Axis decoration
         ax_fe.set_xlabel("SiO$_2$ (wt.%)", **options.x_axis.label_kwargs())

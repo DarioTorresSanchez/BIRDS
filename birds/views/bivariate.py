@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
 from ..plot_style import legend_columns
 from .. import annotations as _ann
 from ..diagrams.templates.base import (
+    draw_group,
     get_groups,
 )
 from ..derived import DESCRIPTIONS as _DERIVED_DESCRIPTIONS
@@ -880,7 +881,7 @@ class BivariateView(QWidget):
             for i, (label, sub, gs) in enumerate(groups_data):
                 ax = axes[i // ncols][i % ncols]
                 self._plot_group(ax, sub, label, gs, x_col, y_col,
-                                  shaded=getattr(gs, "shaded", False))
+                                  ctrl)
                 ax.set_title(label, fontsize=ctrl.axis_grp.font_size.value() - 2)
                 # Per-panel regression on the group only
                 if ctrl.regression_grp.show.isChecked():
@@ -910,7 +911,7 @@ class BivariateView(QWidget):
             ax = fig.add_subplot(111)
             for label, sub, gs in groups_data:
                 self._plot_group(ax, sub, label, gs, x_col, y_col,
-                                  shaded=getattr(gs, "shaded", False))
+                                  ctrl)
             if ctrl.regression_grp.show.isChecked():
                 self._draw_regression(ax, df, x_col, y_col, ctrl.regression_grp)
             ax.set_xlabel(x_style.label, **x_style.label_kwargs())
@@ -1034,8 +1035,7 @@ class BivariateView(QWidget):
             m = x_all.notna() & y_all.notna()
             fit_and_plot(x_all[m], y_all[m], "#222222", "OLS")
 
-    def _plot_group(self, ax, sub, label, gs, x_col, y_col,
-                    shaded: bool = False) -> None:
+    def _plot_group(self, ax, sub, label, gs, x_col, y_col, ctrl) -> None:
         # Master visibility switch — Grouping checkbox in the side panel.
         if gs is not None and not getattr(gs, "visible", True):
             return
@@ -1050,29 +1050,11 @@ class BivariateView(QWidget):
         x, y = x[mask], y[mask]
         if x.empty:
             return
-        color = gs.color if gs else "#1f77b4"
-        marker = gs.marker if gs else "o"
-        show_markers = getattr(gs, "show_markers", True) if gs else True
-        # When markers are hidden, hand the legend label over to the hull
-        # patch instead so the group still shows up in the legend.
-        scatter_label = label if show_markers else None
-        fill_label = label if (shaded and not show_markers) else None
-        if show_markers:
-            ax.scatter(x, y, s=self.plot_style.point_size ** 2,
-                       alpha=self.plot_style.alpha, c=color, marker=marker,
-                       label=scatter_label,
-                       edgecolors="black", linewidths=0.4, zorder=3)
-        if shaded and len(x) >= 3:
-            try:
-                from scipy.spatial import ConvexHull
-                pts = np.column_stack([x.to_numpy(), y.to_numpy()])
-                hull = ConvexHull(pts)
-                hull_pts = pts[hull.vertices]
-                ax.fill(hull_pts[:, 0], hull_pts[:, 1], color=color,
-                        alpha=0.18 if not show_markers else 0.12,
-                        label=fill_label, zorder=2)
-            except Exception:
-                pass
+        # The scales are set once the samples are drawn, but the hull
+        # needs them now: on a log axis it is taken on the logarithms.
+        draw_group(ax, x, y, label, gs, self.plot_style,
+                   log_x=ctrl.axis_grp.log_x.isChecked(),
+                   log_y=ctrl.axis_grp.log_y.isChecked(), zorder=3)
 
     # ----------------------------------------------------------- paired
     @staticmethod
@@ -1161,7 +1143,7 @@ class BivariateView(QWidget):
             ax = axes[i][j]
             for label, sub, gs in groups_data:
                 self._plot_group(ax, sub, label, gs, x_col, y_col,
-                                  shaded=getattr(gs, "shaded", False))
+                                  ctrl)
             if show_reg:
                 self._draw_regression(ax, df, x_col, y_col,
                                       ctrl.regression_grp)
@@ -1228,7 +1210,7 @@ class BivariateView(QWidget):
                 ax = axes[i][j]
                 for label, sub, gs in groups_data:
                     self._plot_group(ax, sub, label, gs, x_col, y_col,
-                                      shaded=getattr(gs, "shaded", False))
+                                      ctrl)
                 if show_reg:
                     self._draw_regression(ax, df, x_col, y_col,
                                           ctrl.regression_grp)
