@@ -403,8 +403,9 @@ def build_isotope_columns() -> List[Column]:
     # ---- Nd ------------------------------------------------------------
     cols += [
         Column("143Nd/144Nd", "Iso-Nd", "",
-               "Measured ¹⁴³Nd/¹⁴⁴Nd ratio. CHUR = 0.512638 (Bouvier "
-               "et al. 2008).", "0.51285"),
+               "Measured ¹⁴³Nd/¹⁴⁴Nd ratio. CHUR = 0.512638 (Jacobsen "
+               "& Wasserburg 1980; Bouvier et al. 2008 give 0.512630).",
+               "0.51285"),
         Column("143Nd/144Nd_2σ", "Iso-Nd", "",
                "Analytical 2σ uncertainty.", "0.000007"),
         Column("147Sm/144Nd", "Iso-Nd", "",

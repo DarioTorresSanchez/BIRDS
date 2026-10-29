@@ -42,7 +42,7 @@ class TestReferenceLines:
         assert CHUR_ND_143_144 == pytest.approx(0.5126357, abs=PX_ND)
 
     def test_chur_matches_the_published_value(self):
-        assert CHUR_ND_143_144 == 0.512638          # Bouvier et al. 2008
+        assert CHUR_ND_143_144 == 0.512638     # Jacobsen & Wasserburg 1980
 
     def test_the_vertical_line_measured_where_it_is_set(self):
         assert BSE_SR_87_86 == pytest.approx(0.705126, abs=2 * PX_SR)

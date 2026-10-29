@@ -17,6 +17,16 @@ including what is still unverified.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The data template still credited CHUR to Bouvier *et al.* (2008).**
+  The ¹⁴³Nd/¹⁴⁴Nd column of the Isotopes sheet (and its line in the
+  Reference sheet) read "CHUR = 0.512638 (Bouvier et al. 2008)";
+  0.512638 is Jacobsen & Wasserburg's (1980), the value the program
+  uses since 0.1.0b1, and Bouvier *et al.* give 0.512630. The text now
+  says so; the templates are regenerated. Found while writing the
+  MagmaModeler manual.
+
 ## [0.1.0b3] – 2026-10-28
 
 The third beta, superseding the first two: the installed application
