@@ -5,7 +5,7 @@ All notable changes to **B.I.R.D.S.** are recorded here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project aims at [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-0.1.0b3 is the current beta. The first two, 0.1.0b1 and 0.1.0b2, stay
+0.1.0b4 is the current beta. The first two, 0.1.0b1 and 0.1.0b2, stay
 on the Releases page as a record but should not be used: their
 installers could export a plot only as PNG or JPEG. The installers have
 yet to be tried on Windows and Linux computers. Version 0.1.0 is kept
@@ -16,6 +16,11 @@ checked against. `docs/DIAGRAM_PROVENANCE.md` carries the full record,
 including what is still unverified.
 
 ## [Unreleased]
+
+## [0.1.0b4] – 2026-10-30
+
+The fourth beta: a symbol size for each group, the anomalies as
+Bivariate axes, and a data-entry template without a row of units.
 
 ### Added
 

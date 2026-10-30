@@ -318,7 +318,7 @@ SECTIONS = [
          "Each sheet has the column names in row 1 and your samples "
          "from row 2 down. The unit of every column — wt % for the "
          "oxides, ppm for the trace elements — is in the Reference "
-         "sheet. Templates before version 0.1.0b3 had a row of units "
+         "sheet. Templates up to version 0.1.0b3 had a row of units "
          "under the names; a file filled in with one still imports, as "
          "that row is recognised and skipped."},
         {"type": "h2", "text": "6.3  Import dialog"},
