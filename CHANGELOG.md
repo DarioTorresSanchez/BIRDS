@@ -17,8 +17,39 @@ including what is still unverified.
 
 ## [Unreleased]
 
+### Added
+
+- **A symbol size for each group** (requested by Darío, to make one
+  group stand out): Edit plot has a Size column beside each group's
+  symbol; Auto follows the Point size. Sessions and style presets keep
+  it, and one saved before follows the Point size. Every diagram, the
+  Bivariate and Isotopes views and the spider patterns draw it, and the
+  map in proportion to its own Size. A test sweeps every diagram.
+- **The anomalies as Bivariate axes**, in Individual and in Paired
+  (requested by Darío): Eu/Eu*, Ce/Ce*, Nb/Nb*, Ti/Ti*, (La/Yb)N and
+  the rest of what Statistics reports, listed in purple after the
+  elements. They are the values Statistics and the data table show —
+  the same function, the majors the adjusted switch selects, and the
+  chondrite chosen there, whose change redraws the plot. Nothing is
+  written into the dataset; a column of the user's own with the same
+  name wins.
+- The Isotopes view's plots draw their samples through `draw_group`
+  too, so they follow the group's Hull and Sym settings.
+
+### Changed
+
+- **The data-entry template has no row of units** (requested by Darío):
+  the Data, Isotopes and Petrography sheets take samples from row 2;
+  every column's unit stays in the Reference sheet.
+
 ### Fixed
 
+- **A file filled in with the old template imported wrong**: its row
+  of units became a nameless sample, and with a handful of samples it
+  turned the number columns to text — two samples gave three rows and
+  SiO2 as `['wt%', 50.2, 55.8]`. The importer now drops a first row
+  that holds units and nothing else; a row with a name or a number is
+  never taken for one.
 - **The data template still credited CHUR to Bouvier *et al.* (2008).**
   The ¹⁴³Nd/¹⁴⁴Nd column of the Isotopes sheet (and its line in the
   Reference sheet) read "CHUR = 0.512638 (Bouvier et al. 2008)";

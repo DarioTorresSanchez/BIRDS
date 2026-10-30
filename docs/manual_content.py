@@ -314,6 +314,13 @@ SECTIONS = [
          "kept, except that a blank Sample_Label or Group fills in from "
          "Isotopes. Age is read with its Age_Unit (Ma, ka, Ga or yr) "
          "for the initial-ratio correction."},
+        {"type": "p", "text":
+         "Each sheet has the column names in row 1 and your samples "
+         "from row 2 down. The unit of every column — wt % for the "
+         "oxides, ppm for the trace elements — is in the Reference "
+         "sheet. Templates before version 0.1.0b3 had a row of units "
+         "under the names; a file filled in with one still imports, as "
+         "that row is recognised and skipped."},
         {"type": "h2", "text": "6.3  Import dialog"},
         {"type": "bullet", "items": [
             "Click Data → Import data (.xls / .csv)…",
@@ -332,6 +339,12 @@ SECTIONS = [
             "and no two with the same colour and symbol. You can edit each "
             "name, colour and symbol. With many groups, set the legend "
             "to Outside so it does not cover the plot.",
+            "Size sets a group's own symbol size, in points, to make it "
+            "stand out from the rest; Auto follows the Point size at the "
+            "top of the dialog. The map draws it in proportion to its "
+            "own Size control.",
+            "Hull shades the convex hull of the group's samples on every "
+            "diagram; untick Sym to keep only the shading.",
             "Click OK. From now on every plot will respect those group "
             "styles.",
         ]},
@@ -498,6 +511,18 @@ SECTIONS = [
          "and they can be used inside an expression too, such as "
          "Mg#_FeOt/100. A column of your own named Mg# takes "
          "precedence over the computed one."},
+        {"type": "h2", "text": "Anomalies"},
+        {"type": "p", "text":
+         "After the elements, in purple, come the anomalies the "
+         "Statistics view reports — Eu/Eu*, Ce/Ce*, Nb/Nb*, Ti/Ti*, "
+         "(La/Yb)N and the rest — in Individual and in Paired alike. "
+         "They are worked out sample by sample, from the majors the "
+         "adjusted switch selects, against the chondrite chosen in "
+         "Statistics and in the data table, so a value on an axis is "
+         "the value those views show; changing the chondrite there "
+         "redraws the plot. Nothing is added to your dataset, and a "
+         "column of your own with the same name takes precedence. "
+         "Hover over an anomaly for its definition."},
         {"type": "h2", "text": "Optional overlays"},
         {"type": "bullet", "items": [
             "Linear regression line per group or overall, with optional "

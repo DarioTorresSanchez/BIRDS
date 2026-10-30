@@ -55,7 +55,7 @@ from PySide6.QtWidgets import (
 )
 
 from ..plot_style import legend_columns
-from ..diagrams.templates.base import get_groups, resolve_column
+from ..diagrams.templates.base import draw_group, get_groups, resolve_column
 from ..isotope_fields import (
     BSE_SR_87_86,
     CHUR_ND_143_144,
@@ -897,13 +897,7 @@ class IsotopesView(QWidget):
             xs, ys = xs[mask], ys[mask]
             if xs.empty:
                 continue
-            color = gs.color if gs else "#1f77b4"
-            marker = gs.marker if gs else "o"
-            ax.scatter(xs, ys,
-                       s=(self.plot_style.point_size ** 2),
-                       alpha=self.plot_style.alpha,
-                       c=color, marker=marker, label=label,
-                       edgecolors="black", linewidths=0.5, zorder=5)
+            draw_group(ax, xs, ys, label, gs, self.plot_style, zorder=5)
             any_data = True
 
         self._draw_sr_nd_background(ax)
@@ -1085,13 +1079,7 @@ class IsotopesView(QWidget):
             xs, ys = xs[mask], ys[mask]
             if xs.empty:
                 continue
-            ax.scatter(xs, ys,
-                       s=(self.plot_style.point_size ** 2),
-                       alpha=self.plot_style.alpha,
-                       c=gs.color if gs else "#1f77b4",
-                       marker=gs.marker if gs else "o",
-                       label=label, edgecolors="black",
-                       linewidths=0.5, zorder=5)
+            draw_group(ax, xs, ys, label, gs, self.plot_style, zorder=5)
             any_data = True
 
         # Pb ratios span a narrow range, and nothing fixed is drawn here
@@ -1164,11 +1152,8 @@ class IsotopesView(QWidget):
             keep = xs.notna() & ys.notna()
             if not keep.any():
                 continue
-            ax.scatter(xs[keep], ys[keep], s=self.plot_style.point_size ** 2,
-                       alpha=self.plot_style.alpha,
-                       c=gs.color if gs else "#1f77b4",
-                       marker=gs.marker if gs else "o", label=group,
-                       edgecolors="black", linewidths=0.5, zorder=5)
+            draw_group(ax, xs[keep], ys[keep], group, gs, self.plot_style,
+                       zorder=5)
             plotted += int(keep.sum())
         if ref is not None and self.sio2_ref_chk.isChecked():
             names = {SR_UR_87_86: "BSE", ND_CHUR: "CHUR"}

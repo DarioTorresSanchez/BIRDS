@@ -717,19 +717,16 @@ def _style_header(cell, fill_hex: str) -> None:
     cell.border = _BORDER
 
 
-def _style_unit(cell, fill_hex: str) -> None:
-    cell.font = Font(name="Calibri", size=9, italic=True, color="5B6478")
-    cell.fill = PatternFill("solid", fgColor=fill_hex)
-    cell.alignment = Alignment(horizontal="center", vertical="center")
-    cell.border = _BORDER
-
-
 def _build_table_sheet(ws: Worksheet, columns: List[Column], *,
-                       title: str, freeze: str = "E3",
+                       title: str, freeze: str = "E2",
                        text_cats: set | None = None,
                        wide_columns: set | None = None) -> None:
-    """Generic data-entry sheet: row 1 = column name, row 2 = unit, then
-    200 empty rows with dropdowns applied to validated columns.
+    """Generic data-entry sheet: row 1 = column name, then 200 empty
+    rows with dropdowns applied to validated columns.
+
+    The units are in the Reference sheet, not in a second header row:
+    read as data, that row became a sample, and with a handful of
+    samples it turned every number column to text.
     """
     ws.title = title
     ws.freeze_panes = freeze
@@ -742,13 +739,11 @@ def _build_table_sheet(ws: Worksheet, columns: List[Column], *,
                         "Lithology", "Mineral_Assemblage", "Notes",
                         "Iso_Notes", "Iso_Laboratory"}
 
-    # Row 1: column name; Row 2: unit
+    # Row 1: column name; the data start on row 2
     for c_idx, col in enumerate(columns, start=1):
         fill = CATEGORY_FILL.get(col.category, "EFEFEF")
         h = ws.cell(row=1, column=c_idx, value=col.name)
         _style_header(h, fill)
-        u = ws.cell(row=2, column=c_idx, value=col.unit)
-        _style_unit(u, fill)
 
     # Column widths (heuristic: longer for text columns, shorter for elements)
     for c_idx, col in enumerate(columns, start=1):
@@ -764,17 +759,16 @@ def _build_table_sheet(ws: Worksheet, columns: List[Column], *,
             ws.column_dimensions[get_column_letter(c_idx)].width = 22
 
     ws.row_dimensions[1].height = 32
-    ws.row_dimensions[2].height = 16
 
     # 200 empty data rows so dropdowns can be applied to a stable range
-    for r in range(3, 203):
+    for r in range(2, 202):
         ws.row_dimensions[r].height = 16
 
     # Dropdown validations
     for c_idx, col in enumerate(columns, start=1):
         if not col.options:
             continue
-        rng = f"{get_column_letter(c_idx)}3:{get_column_letter(c_idx)}1002"
+        rng = f"{get_column_letter(c_idx)}2:{get_column_letter(c_idx)}1001"
         # Excel allows up to 255 chars in inline lists -- our vocabs fit
         formula = '"' + ",".join(col.options) + '"'
         dv = DataValidation(type="list", formula1=formula, allow_blank=True,
@@ -787,17 +781,17 @@ def _build_table_sheet(ws: Worksheet, columns: List[Column], *,
 
 
 def _build_data_sheet(ws: Worksheet, columns: List[Column]) -> None:
-    _build_table_sheet(ws, columns, title="Data", freeze="E3")
+    _build_table_sheet(ws, columns, title="Data", freeze="E2")
 
 
 def _build_isotopes_sheet(ws: Worksheet, columns: List[Column]) -> None:
     # Same identity columns as the Data sheet, frozen the same way
-    _build_table_sheet(ws, columns, title="Isotopes", freeze="E3")
+    _build_table_sheet(ws, columns, title="Isotopes", freeze="E2")
 
 
 def _build_petrography_sheet(ws: Worksheet, columns: List[Column]) -> None:
     # Same layout as the Isotopes sheet: freeze Sample_Name + headers
-    _build_table_sheet(ws, columns, title="Petrography", freeze="B3")
+    _build_table_sheet(ws, columns, title="Petrography", freeze="B2")
 
 
 def _build_reference_sheet(ws: Worksheet,

@@ -41,6 +41,7 @@ from .dialogs.import_dialog import ImportDialog
 from .dialogs.preprocess_dialog import PreprocessDialog
 from .dialogs.save_file_dialog import SaveStatisticsDialog
 from .cipw import compute_cipw
+from .per_sample import default_normaliser
 from .plot_style import PlotStyle
 from .preprocess import pre_process
 from .stats_engine import (
@@ -206,6 +207,12 @@ class BirdsMainWindow(QMainWindow):
             source.currentIndexChanged.connect(sync)
         follow(table, stats)
         follow(stats, table)
+        # The Bivariate view plots the same anomalies, so it reads the
+        # same chondrite and redraws when it changes.
+        self.bivariate.anomaly_reference = (
+            lambda: stats.currentData() or default_normaliser())
+        stats.currentIndexChanged.connect(
+            lambda *_args: self.bivariate.update_plot())
 
     # ----------------------------------------------------------------- toolbar
     def _build_toolbar(self) -> None:

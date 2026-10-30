@@ -35,6 +35,8 @@ from ..plot_style import (
 )
 
 MAX_GROUPING_COLUMNS = 3
+#: Width of the per-group Size box and of its column header.
+SIZE_COLUMN_WIDTH = 64
 
 
 MARKER_CHOICES: tuple[tuple[str, str], ...] = (
@@ -118,6 +120,7 @@ class GroupRow(QWidget):
         visible: bool = True,
         show_markers: bool = True,
         shaded: bool = False,
+        size: Optional[float] = None,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
@@ -172,6 +175,21 @@ class GroupRow(QWidget):
                 break
         layout.addWidget(self.marker_combo, stretch=1)
 
+        # The group's own symbol size, to make it stand out; "Auto" (0)
+        # follows the Point size above.
+        self.size_spin = QDoubleSpinBox()
+        self.size_spin.setRange(0.0, 40.0)
+        self.size_spin.setSingleStep(1.0)
+        self.size_spin.setDecimals(1)
+        self.size_spin.setSpecialValueText("Auto")
+        self.size_spin.setValue(size or 0.0)
+        self.size_spin.setToolTip(
+            "This group's symbol size, in points — larger to make the "
+            "group stand out. Auto follows the Point size above."
+        )
+        self.size_spin.setFixedWidth(SIZE_COLUMN_WIDTH)
+        layout.addWidget(self.size_spin)
+
         # Independent toggle for the symbol scatter
         self.show_markers_chk = QCheckBox()
         self.show_markers_chk.setChecked(show_markers)
@@ -214,6 +232,7 @@ class GroupRow(QWidget):
             visible=self.visible_chk.isChecked(),
             show_markers=self.show_markers_chk.isChecked(),
             shaded=self.shaded_chk.isChecked(),
+            size=self.size_spin.value() or None,
         )
 
 
@@ -232,7 +251,7 @@ class EditPlotDialog(QDialog):
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle("Edit plot style")
-        self.resize(720, 660)
+        self.resize(800, 660)
 
         self._df = dataframe if isinstance(dataframe, pd.DataFrame) else None
         column_names: list[str] = (
@@ -342,6 +361,11 @@ class EditPlotDialog(QDialog):
         h_color.setFixedWidth(56)
         h_color.setAlignment(Qt.AlignmentFlag.AlignCenter)
         h_marker = QLabel("Symbol")
+        h_size = QLabel("Size")
+        h_size.setFixedWidth(SIZE_COLUMN_WIDTH)
+        h_size.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        h_size.setToolTip(
+            "Each group's symbol size; Auto follows the Point size above")
         h_show_sym = QLabel("Sym")
         h_show_sym.setFixedWidth(28)
         h_show_sym.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -351,7 +375,7 @@ class EditPlotDialog(QDialog):
         h_shaded.setAlignment(Qt.AlignmentFlag.AlignCenter)
         h_shaded.setToolTip("Shade this group with a translucent convex hull")
         for w in (h_idx, h_order, h_visible, h_name, h_color, h_marker,
-                  h_show_sym, h_shaded):
+                  h_size, h_show_sym, h_shaded):
             w.setStyleSheet("color: #5b6478; font-weight: 600;")
         header.addWidget(h_idx)
         header.addWidget(h_order)
@@ -359,6 +383,7 @@ class EditPlotDialog(QDialog):
         header.addWidget(h_name, stretch=2)
         header.addWidget(h_color)
         header.addWidget(h_marker, stretch=1)
+        header.addWidget(h_size)
         header.addWidget(h_show_sym)
         header.addWidget(h_shaded)
         groups_layout.addLayout(header)
@@ -498,14 +523,15 @@ class EditPlotDialog(QDialog):
         names: Optional[list[str]] = None,
     ) -> None:
         # Capture existing row data (name, color, marker, visible,
-        # show_markers, shaded).  The tuple lets us survive a spin-box
-        # bump without losing checkbox state.
+        # show_markers, shaded, size).  The tuple lets us survive a
+        # spin-box bump without losing the row's settings.
         current = [
             (row.name_edit.text(), row.color_btn.color,
              row.marker_combo.currentData(),
              row.visible_chk.isChecked(),
              row.show_markers_chk.isChecked(),
-             row.shaded_chk.isChecked())
+             row.shaded_chk.isChecked(),
+             row.size_spin.value() or None)
             for row in self._group_rows
         ]
         while self.rows_container.count():
@@ -531,20 +557,22 @@ class EditPlotDialog(QDialog):
 
             if i < len(current):
                 color, marker = current[i][1], current[i][2]
-                visible, show_markers, shaded = current[i][3:6]
+                visible, show_markers, shaded, size = current[i][3:7]
             elif i < len(self._initial_groups):
                 gs = self._initial_groups[i]
                 color, marker = gs.color, gs.marker
                 visible = gs.visible
                 show_markers = getattr(gs, "show_markers", True)
                 shaded = gs.shaded
+                size = getattr(gs, "size", None)
             else:
                 color = DEFAULT_COLORS[i % len(DEFAULT_COLORS)]
                 marker = DEFAULT_MARKERS[i % len(DEFAULT_MARKERS)]
-                visible, show_markers, shaded = True, True, False
+                visible, show_markers, shaded, size = True, True, False, None
 
             row = GroupRow(i, name, color, marker, visible=visible,
-                            show_markers=show_markers, shaded=shaded)
+                            show_markers=show_markers, shaded=shaded,
+                            size=size)
             # Bind the ↑/↓ buttons to dialog-level reorder; ``row=row`` in
             # the lambda captures the actual GroupRow instance instead of
             # the loop variable.

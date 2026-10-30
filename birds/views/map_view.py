@@ -1133,7 +1133,6 @@ class MapView(QWidget):
 
     def _draw_samples(self, ax, samples) -> None:
         """Markers per group -- coloured by group, or by the variable."""
-        size = self.marker_size.value() ** 2
         edge = self.marker_edge_chk.isChecked()
         variable = self._variable()
         by_value = self.colour_by_value_chk.isChecked() and variable
@@ -1153,6 +1152,10 @@ class MapView(QWidget):
         for label, sub, gs, lon, lat in samples:
             ok = lon.notna() & lat.notna()
             marker = gs.marker if gs else "o"
+            # A group made larger in Edit plot is larger here too, in
+            # proportion to this view's own Size.
+            size = (self.marker_size.value()
+                    * self.plot_style.size_scale(gs)) ** 2
             common = dict(s=size, alpha=self.marker_alpha.value(),
                           marker=marker, label=label, zorder=5,
                           edgecolors="black" if edge else "none",
@@ -1182,9 +1185,10 @@ class MapView(QWidget):
 
     def _draw_sample_markers(self, ax, samples) -> None:
         """Where the data are, over a surface: small, white, outlined."""
-        size = max(self.marker_size.value() - 2, 3) ** 2
+        base = max(self.marker_size.value() - 2, 3)
         for label, _sub, gs, lon, lat in samples:
             ok = lon.notna() & lat.notna()
+            size = (base * self.plot_style.size_scale(gs)) ** 2
             ax.scatter(lon[ok], lat[ok], s=size,
                        marker=gs.marker if gs else "o", facecolors="white",
                        edgecolors="black", linewidths=0.6, label=label,

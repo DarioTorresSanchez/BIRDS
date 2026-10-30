@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 
 #: How many groups B.I.R.D.S lets you style.  It was 10, which ran short;
@@ -65,6 +65,17 @@ DEFAULT_MARKERS = (
 )
 
 
+def _size_or_none(value) -> Optional[float]:
+    """A saved group size, or ``None`` (follow the plot's) when it is
+    missing -- a session or preset saved before groups had sizes -- or
+    not a positive number."""
+    try:
+        size = float(value)
+    except (TypeError, ValueError):
+        return None
+    return size if size > 0 else None
+
+
 def legend_columns(n_entries: int, per_column: int = 12) -> int:
     """Columns for a legend of *n_entries*, so that a long one -- up to
     ``MAX_GROUPS`` groups -- wraps instead of running down off the axes."""
@@ -97,6 +108,10 @@ class GroupStyle:
         * ☑ markers ☑ hull  → symbols + envelope
         * ☐ markers ☑ hull  → only the envelope (e.g. background field)
         * ☐ markers ☐ hull  → group is muted but kept in legend memory
+    size
+        The group's symbol size in points, to make one group stand out
+        from the rest.  ``None`` (the default) follows the Point size
+        of the whole plot.
     """
 
     name: str
@@ -105,6 +120,7 @@ class GroupStyle:
     visible: bool = True
     show_markers: bool = True
     shaded: bool = False
+    size: Optional[float] = None
 
 
 @dataclass
@@ -135,6 +151,16 @@ class PlotStyle:
     def n_groups(self) -> int:
         return len(self.groups)
 
+    def size_of(self, gs: Optional[GroupStyle]) -> float:
+        """The symbol size of group *gs*: its own, or the plot's."""
+        own = getattr(gs, "size", None)
+        return float(own) if own else float(self.point_size)
+
+    def size_scale(self, gs: Optional[GroupStyle]) -> float:
+        """Group *gs*'s size relative to the plot's, for views that set
+        a size of their own (the map's Markers size)."""
+        return self.size_of(gs) / self.point_size if self.point_size else 1.0
+
     @property
     def group_column(self) -> str:
         """Backward-compat: first selected grouping column or empty string."""
@@ -157,6 +183,7 @@ class PlotStyle:
                     "visible": g.visible,
                     "show_markers": g.show_markers,
                     "shaded": g.shaded,
+                    "size": g.size,
                 }
                 for g in self.groups
             ],
@@ -173,6 +200,7 @@ class PlotStyle:
                 visible=g.get("visible", True),
                 show_markers=g.get("show_markers", True),
                 shaded=g.get("shaded", False),
+                size=_size_or_none(g.get("size")),
             )
             for i, g in enumerate(data.get("groups", []))
         ]
@@ -198,6 +226,7 @@ class PlotStyle:
             GroupStyle(
                 name=g.name, color=g.color, marker=g.marker,
                 visible=g.visible, show_markers=g.show_markers, shaded=g.shaded,
+                size=g.size,
             )
             for g in other.groups
         ]

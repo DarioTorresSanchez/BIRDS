@@ -9,6 +9,8 @@ Handles the common quirks of real-world geochemical datasets:
   after replacing ``,`` with ``.`` are converted to ``float``.
 * Stray whitespace around column names is stripped.
 * Comment lines beginning with ``#`` at the top of the file are skipped.
+* A row of units under the column names -- as in the data-entry template
+  up to version 0.1.0b3 -- is dropped.
 """
 
 from __future__ import annotations
@@ -26,6 +28,19 @@ ENCODINGS = ("utf-8-sig", "utf-8", "latin-1", "cp1252")
 
 # Candidate delimiters tried during sniffing.
 DELIMITERS = (",", ";", "\t", "|")
+
+# What a row of units holds under each column: the template's units, and
+# the usual spellings of the same.
+UNIT_TOKENS = frozenset({
+    "wt%", "wt.%", "wt. %", "wt %", "%", "vol %", "vol%", "ppm", "ppb",
+    "ppt", "µg/g", "ng/g", "°", "deg", "m", "mm", "km", "ma", "ka", "ga",
+    "yr", "‰", "‰ vpdb", "‰ vsmow", "permil",
+})
+# Of which a row must hold one to be taken for units: a row of nothing
+# but metres and degrees could be data.
+_CONCENTRATION_UNITS = frozenset({"wt%", "wt.%", "wt. %", "wt %", "ppm",
+                                  "ppb", "ppt", "µg/g", "ng/g", "vol %",
+                                  "vol%"})
 
 
 # ---------------------------------------------------------------------------
@@ -57,7 +72,7 @@ def read_tabular(path: str | Path,
     else:
         df = _read_csv_text(path)
 
-    return _clean_dataframe(df)
+    return _clean_dataframe(_drop_units_row(df))
 
 
 # ---------------------------------------------------------------------------
@@ -137,6 +152,27 @@ def _sniff_delimiter(sample: str) -> str:
         ordered = sorted(counts.items(), key=lambda kv: (-kv[1], DELIMITERS.index(kv[0])))
         best = ordered[0]
         return best[0] if best[1] > 0 else ","
+
+
+def _drop_units_row(df: pd.DataFrame) -> pd.DataFrame:
+    """Drop a first row that gives units and nothing else.
+
+    The data-entry template had the units under the column names, in row
+    2.  Read as data, that row became a sample with no name, and with a
+    handful of samples it turned every number column to text -- "wt%"
+    among two numbers is a third of the column.  A row is taken for units
+    when every cell it fills is a unit and one of them a concentration
+    (wt%, ppm…); a sample always has a name or a number, so it is never
+    dropped.
+    """
+    if df.empty:
+        return df
+    cells = [str(v).strip().lower() for v in df.iloc[0]
+             if pd.notna(v) and str(v).strip()]
+    if (cells and all(c in UNIT_TOKENS for c in cells)
+            and any(c in _CONCENTRATION_UNITS for c in cells)):
+        return df.iloc[1:].reset_index(drop=True)
+    return df
 
 
 def _clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:

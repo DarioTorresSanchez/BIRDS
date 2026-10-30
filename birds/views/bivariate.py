@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -36,6 +37,9 @@ from ..diagrams.templates.base import (
 from ..derived import DESCRIPTIONS as _DERIVED_DESCRIPTIONS
 from ..derived import available as _derived_available
 from ..expression import ExpressionError, evaluate, evaluate_scalar
+from ..per_sample import default_normaliser
+from ..per_sample import describe as _describe_calculated
+from ..stats_engine import ANOMALY_DESCRIPTIONS, compute_anomalies_extended
 from ..preprocess import ADJ_SUFFIX, adjusted_name, interleave_twins
 from ..reservoirs import composition as reservoir_composition
 from .plot_canvas import PlotCanvas
@@ -297,6 +301,10 @@ class BivariateView(QWidget):
         self.data = data_manager
         self.plot_style = plot_style
         self._mode = "individual"
+        # The chondrite the anomalies are normalised to.  The main window
+        # points this at the one Statistics and the data table share, so
+        # an Eu/Eu* plotted here is the Eu/Eu* they show.
+        self.anomaly_reference = default_normaliser
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
@@ -501,14 +509,49 @@ class BivariateView(QWidget):
                            if a in out), None)
             at = out.index(anchor) + 1 if anchor else len(out)
             out[at:at] = derived
+        # The anomalies follow the chemistry, ahead of the context.
+        anomalies = list(self._anomaly_frame().columns)
+        at = next((i for i, c in enumerate(out) if c in _CONTEXT_COLUMNS),
+                  len(out))
+        out[at:at] = anomalies
         return out
 
-    @staticmethod
-    def _variable_hint(name: str):
-        """(colour, tooltip) marking an adjusted or derived variable, or
-        None for a plain column."""
+    def _anomaly_frame(self) -> pd.DataFrame:
+        """Each sample's anomalies -- Eu/Eu*, Nb/Nb*, (La/Yb)N… -- as
+        the Statistics view computes them, from the majors the adjusted
+        switch selects, against the shared chondrite.  Only those the
+        data can give, and none the dataset already has as a column."""
+        df = self.data.df
+        if df is None or df.empty:
+            return pd.DataFrame(index=getattr(df, "index", None))
+        frame = compute_anomalies_extended(self.data.majors_df(),
+                                           self.anomaly_reference())
+        keep = [c for c in frame.columns
+                if c not in df.columns and frame[c].notna().any()]
+        return frame[keep]
+
+    def _frame(self) -> Optional[pd.DataFrame]:
+        """What the axes read: the dataset with its anomalies alongside as
+        columns.  An anomaly's name ("Eu/Eu*") is not an expression the
+        evaluator could parse, but a column of that name is read as it
+        stands.  Nothing is written into the dataset."""
+        df = self.data.df
+        if df is None or df.empty:
+            return df
+        anomalies = self._anomaly_frame()
+        return df.join(anomalies) if not anomalies.empty else df
+
+    def _variable_hint(self, name: str):
+        """(colour, tooltip) marking an adjusted, derived or anomaly
+        variable, or None for a plain column."""
         if name in _DERIVED_DESCRIPTIONS:
             return QColor("#2a7a3b"), _DERIVED_DESCRIPTIONS[name]
+        if name in ANOMALY_DESCRIPTIONS and (
+                self.data.df is None or name not in self.data.df.columns):
+            return QColor("#8a3b8a"), (
+                _describe_calculated(name, self.anomaly_reference())
+                + " The chondrite is the one chosen in Statistics and in "
+                "the data table.")
         if name.endswith(ADJ_SUFFIX):
             return QColor("#1f4e99"), (
                 f"{name[:-len(ADJ_SUFFIX)]} adjusted to 100 % "
@@ -714,7 +757,7 @@ class BivariateView(QWidget):
         (None, None, None) when unavailable (paired mode, bad expr…)."""
         if self._mode != "individual":
             return None, None, None
-        df = self.data.df
+        df = self._frame()
         if df is None or df.empty:
             return None, None, None
         ctrl = self._individual
@@ -730,7 +773,7 @@ class BivariateView(QWidget):
     def _panel_xy(self, x_col: str, y_col: str):
         """(df, xs, ys) of one X-Y pair, NaN wherever the sample is not
         drawn -- its group switched off -- so it cannot be picked."""
-        df = self.data.df
+        df = self._frame()
         if df is None or df.empty:
             return None, None, None
         try:
@@ -849,7 +892,7 @@ class BivariateView(QWidget):
             self._empty_canvas("Pick X and Y variables.")
             return
 
-        df = self.data.df
+        df = self._frame()
         # Validate both axes once up-front; show a friendly message instead
         # of crashing when the user mistypes ("Nb+Ta" with no Nb column).
         try:
@@ -1085,7 +1128,7 @@ class BivariateView(QWidget):
             )
             return
 
-        df = self.data.df
+        df = self._frame()
         legend = ctrl.legend_grp.legend_style()
         groups_data = get_groups(df, self.plot_style)
         show_reg = ctrl.regression_grp.show.isChecked()

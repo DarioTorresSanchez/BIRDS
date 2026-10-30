@@ -341,7 +341,7 @@ def draw_group(ax, x, y, label, gs, plot_style, options=None, *,
     color = gs.color if gs else "#1f77b4"
     show_markers = getattr(gs, "show_markers", True) if gs else True
     if show_markers:
-        ax.scatter(x, y, s=plot_style.point_size ** 2,
+        ax.scatter(x, y, s=plot_style.size_of(gs) ** 2,
                    alpha=plot_style.alpha, c=color,
                    marker=gs.marker if gs else "o", label=label,
                    edgecolors="black", linewidths=0.4, zorder=zorder)

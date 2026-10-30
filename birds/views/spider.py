@@ -674,7 +674,7 @@ class SpiderView(QWidget):
                 else:
                     xs, ys = x_pos, median
                 ax.plot(xs, ys, color=color, marker=marker,
-                        linewidth=2.0, markersize=self.plot_style.point_size,
+                        linewidth=2.0, markersize=self.plot_style.size_of(gs),
                         alpha=min(self.plot_style.alpha + 0.1, 1.0),
                         label=label, zorder=4)
             else:
@@ -689,7 +689,7 @@ class SpiderView(QWidget):
                         xs, ys = x_pos, sample_vals
                     ax.plot(xs, ys, color=color, marker=marker,
                             linewidth=1.0,
-                            markersize=self.plot_style.point_size,
+                            markersize=self.plot_style.size_of(gs),
                             alpha=self.plot_style.alpha,
                             label=label if first else None,
                             zorder=3)
